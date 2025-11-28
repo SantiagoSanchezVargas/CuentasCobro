@@ -59,6 +59,29 @@
         color: white;
     }
 
+    /* Toast animations */
+    @keyframes toastSlideIn {
+        from {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes toastSlideOut {
+        from {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+    }
+
     .modal-header.permission {
         background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
         color: white;
@@ -444,12 +467,12 @@ function showToast(message, type = 'success') {
         font-weight: 600;
         box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         z-index: 10000;
-        animation: slideInRight 0.3s ease;
+        animation: toastSlideIn 0.3s ease;
     `;
     
     document.body.appendChild(toast);
     setTimeout(() => {
-        toast.style.animation = 'slideOutRight 0.3s ease';
+        toast.style.animation = 'toastSlideOut 0.3s ease forwards';
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 }

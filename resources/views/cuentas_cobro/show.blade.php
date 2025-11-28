@@ -768,6 +768,12 @@
 }
 </style>
 
+<style>
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+</style>
+
 <script>
 // Deshabilitar botón de aprobación mientras se procesa
 document.getElementById('approveForm')?.addEventListener('submit', function(e) {
@@ -779,9 +785,5 @@ document.getElementById('approveForm')?.addEventListener('submit', function(e) {
         btn.innerHTML = '<span class="material-symbols-rounded" style="animation: spin 1s linear infinite;">autorenew</span> Procesando...';
     }
 });
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
 </script>
 @endsection

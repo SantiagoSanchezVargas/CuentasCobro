@@ -308,10 +308,20 @@
 
 {{-- Stats Bar --}}
 @php
+    // Optimized: single query with aggregation
+    $stats = App\Models\CuentaCobro::whereNull('archived_at')
+        ->selectRaw("
+            COUNT(*) as total,
+            SUM(CASE WHEN estado_aprobacion = 'en_revision' THEN 1 ELSE 0 END) as en_revision,
+            SUM(CASE WHEN estado_aprobacion = 'aprobado' THEN 1 ELSE 0 END) as aprobadas,
+            SUM(CASE WHEN estado_pago = 'approved' THEN 1 ELSE 0 END) as pagadas
+        ")
+        ->first();
+    
     $totalCuentas = $cuentas->total();
-    $enRevision = App\Models\CuentaCobro::where('estado_aprobacion', 'en_revision')->whereNull('archived_at')->count();
-    $aprobadas = App\Models\CuentaCobro::where('estado_aprobacion', 'aprobado')->whereNull('archived_at')->count();
-    $pagadas = App\Models\CuentaCobro::where('estado_pago', 'approved')->whereNull('archived_at')->count();
+    $enRevision = $stats->en_revision ?? 0;
+    $aprobadas = $stats->aprobadas ?? 0;
+    $pagadas = $stats->pagadas ?? 0;
 @endphp
 <div class="stats-bar">
     <div class="stat-card">
