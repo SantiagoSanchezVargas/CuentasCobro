@@ -13,6 +13,9 @@ use App\Http\Controllers\NotificacionController;
 use App\Http\Controllers\SoporteController;
 use App\Http\Controllers\InteraccionController;
 use App\Http\Controllers\ReportesController;
+use App\Http\Controllers\DocumentoController;
+use App\Http\Controllers\AprobacionController;
+use App\Http\Controllers\PermisoController;
 
 // ========================================
 // RUTA PRINCIPAL
@@ -57,14 +60,46 @@ Route::middleware(['auth'])->group(function () {
 
     // NOTIFICACIONES
     Route::get('/notificaciones', [NotificacionController::class, 'index'])->name('notificaciones.index');
+    Route::get('/notificaciones/{id}/visitar', [NotificacionController::class, 'visitar'])->name('notificaciones.visitar');
     Route::post('/notificaciones/{id}/marcar-leida', [NotificacionController::class, 'marcarLeida'])->name('notificaciones.marcarLeida');
     Route::post('/notificaciones/marcar-todas-leidas', [NotificacionController::class, 'marcarTodasLeidas'])->name('notificaciones.marcarTodasLeidas');
 
     // ========================================
-    // ADMIN (alcalde, super_admin, ordenador_gasto)
+    // DOCUMENTOS (gestión de archivos)
     // ========================================
-    Route::middleware(['check.role:alcalde,super_admin,ordenador_gasto'])
+    Route::prefix('documentos')->name('documentos.')->group(function () {
+        Route::get('cuentas/{cuentaCobroId}', [DocumentoController::class, 'index'])->name('index');
+        Route::get('crear/{cuentaCobroId}', [DocumentoController::class, 'create'])->name('create');
+        Route::post('guardar/{cuentaCobroId}', [DocumentoController::class, 'store'])->name('store');
+        Route::get('{documentoId}/descargar', [DocumentoController::class, 'descargar'])->name('descargar');
+        Route::get('{documentoId}/ver', [DocumentoController::class, 'ver'])->name('ver');
+        Route::delete('{documentoId}', [DocumentoController::class, 'destroy'])->name('destroy');
+        Route::post('{documentoId}/version', [DocumentoController::class, 'crearVersion'])->name('crearVersion');
+        Route::get('{documentoId}/versiones', [DocumentoController::class, 'versiones'])->name('versiones');
+        Route::post('{documentoId}/archivar', [DocumentoController::class, 'archivar'])->name('archivar');
+        Route::post('{documentoId}/desarchivizar', [DocumentoController::class, 'desarchivizar'])->name('desarchivizar');
+    });
+
+    // ========================================
+    // APROBACIONES MEJORADAS
+    // ========================================
+    Route::prefix('aprobaciones')->name('aprobaciones.')->group(function () {
+        Route::post('{cuentaId}/modal', [AprobacionController::class, 'mostrarModalAprobacion'])->name('modal');
+        Route::post('{cuentaId}/enviar-siguiente', [AprobacionController::class, 'enviarAlSiguiente'])->name('enviarSiguiente');
+        Route::post('{cuentaId}/rechazar', [AprobacionController::class, 'rechazar'])->name('rechazar');
+        Route::post('{cuentaId}/devolver-anterior', [AprobacionController::class, 'devolverAnterior'])->name('devolverAnterior');
+        Route::post('{cuentaId}/devolver-correccion', [AprobacionController::class, 'devolverCorreccion'])->name('devolverCorreccion');
+        Route::post('{cuentaId}/interaccion', [AprobacionController::class, 'agregarInteraccion'])->name('agregarInteraccion');
+        Route::get('{cuentaId}/historial', [AprobacionController::class, 'obtenerHistorial'])->name('obtenerHistorial');
+    });
+
+    // ========================================
+    // ADMIN DEL PROGRAMA
+    // ========================================
+    Route::middleware(['check.role:admin_programa'])
         ->prefix('admin')->name('admin.')->group(function () {
+
+        Route::view('/dashboard', 'dashboard.admin_programa')->name('dashboard');
 
         Route::resource('users', UserController::class)->except(['show']);
         Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
@@ -79,28 +114,50 @@ Route::middleware(['auth'])->group(function () {
         // Configuración y reportes
         Route::view('settings', 'admin.settings')->name('settings');
         Route::view('reports', 'admin.reports')->name('reports');
+
+        // ========================================
+        // GESTIÓN DE PERMISOS GRANULARES
+        // ========================================
+        Route::prefix('permisos')->name('permisos.')->group(function () {
+            Route::get('/', [PermisoController::class, 'index'])->name('index');
+            Route::get('crear', [PermisoController::class, 'create'])->name('create');
+            Route::post('guardar', [PermisoController::class, 'store'])->name('store');
+            Route::get('{id}/editar', [PermisoController::class, 'edit'])->name('edit');
+            Route::put('{id}', [PermisoController::class, 'update'])->name('update');
+            Route::delete('{id}', [PermisoController::class, 'destroy'])->name('destroy');
+            Route::get('matriz-json', [PermisoController::class, 'matrizJson'])->name('matrizJson');
+            Route::post('{roleId}/plantilla', [PermisoController::class, 'aplicarPlantilla'])->name('aplicarPlantilla');
+        });
     });
 
     // ========================================
-    // CONTRATISTA
+    // AUXILIAR
     // ========================================
-    Route::middleware(['check.role:contratista'])
-        ->prefix('contratista')->name('contratista.')->group(function () {
-        Route::view('/dashboard', 'dashboard.contratista')->name('dashboard');
+    Route::middleware(['check.role:auxiliar'])
+        ->prefix('auxiliar')->name('auxiliar.')->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'auxiliar'])->name('dashboard');
     });
 
     // ========================================
-    // SUPERVISOR
+    // ADMINISTRADOR
     // ========================================
-    Route::middleware(['check.role:supervisor'])
-        ->prefix('supervisor')->name('supervisor.')->group(function () {
-        Route::view('/dashboard', 'dashboard.supervisor')->name('dashboard');
+    Route::middleware(['check.role:administrador'])
+        ->prefix('administrador')->name('administrador.')->group(function () {
+        Route::view('/dashboard', 'dashboard.administrador')->name('dashboard');
     });
 
     // ========================================
-    // CONTRATACIÓN (contratación, super_admin, alcalde)
+    // TESORERIA
     // ========================================
-    Route::middleware(['check.role:contratacion,super_admin,alcalde'])
+    Route::middleware(['check.role:tesoreria'])
+        ->prefix('tesoreria')->name('tesoreria.')->group(function () {
+        Route::view('/dashboard', 'dashboard.tesoreria')->name('dashboard');
+    });
+
+    // ========================================
+    // CONTRATOS (Administrador, Admin Programa)
+    // ========================================
+    Route::middleware(['check.role:administrador,admin_programa'])
         ->prefix('contratacion')->name('contratacion.')->group(function () {
         Route::resource('contratos', ContratoController::class);
     });
@@ -108,12 +165,16 @@ Route::middleware(['auth'])->group(function () {
     // ========================================
     // CUENTAS DE COBRO (todos los roles del flujo)
     // ========================================
-    Route::middleware(['check.role:contratista,ordenador_gasto,supervisor,tesoreria,contratacion,alcalde,super_admin'])
+    Route::middleware(['check.role:auxiliar,administrador,tesoreria,admin_programa'])
         ->group(function () {
         
         // Ruta de pagos (acceso también para Tesorería)
         Route::get('cuentas_cobro/pagos', [CuentaCobroController::class, 'pagos'])
             ->name('cuentas_cobro.pagos');
+
+        // Exportar pagos
+        Route::get('cuentas_cobro/exportar-pagos', [CuentaCobroController::class, 'exportarPagos'])
+            ->name('cuentas_cobro.exportar_pagos');
         
         // Generar/visualizar PDF de una cuenta de cobro
         Route::get('cuentas_cobro/{id}/pdf', [CuentaCobroController::class, 'pdf'])
@@ -123,9 +184,9 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // ========================================
-    // REPORTES (acceso a ordenador_gasto y super_admin)
+    // REPORTES (Administrador, Admin Programa, Tesorería)
     // ========================================
-    Route::middleware(['check.role:ordenador_gasto,super_admin'])
+    Route::middleware(['check.role:administrador,admin_programa,tesoreria'])
         ->prefix('reportes')->name('reportes.')->group(function () {
         Route::get('/', [ReportesController::class, 'index'])->name('index');
         Route::get('/departamento/{nombre}', [ReportesController::class, 'departamento'])->name('departamento');
@@ -137,7 +198,7 @@ Route::middleware(['auth'])->group(function () {
     // ========================================
     // INTERACCIONES (agregar notas a cuentas)
     // ========================================
-    Route::middleware(['check.role:contratista,ordenador_gasto,supervisor,tesoreria,contratacion,alcalde,super_admin'])
+    Route::middleware(['check.role:auxiliar,administrador,tesoreria,admin_programa'])
         ->prefix('cuentas_cobro')->name('cuentas_cobro.')->group(function () {
         Route::post('{id}/interacciones', [InteraccionController::class, 'store'])->name('interacciones.store');
         Route::delete('{id}/interacciones/{interaccionId}', [InteraccionController::class, 'destroy'])->name('interacciones.destroy');
@@ -150,26 +211,27 @@ Route::middleware(['auth'])->group(function () {
         // Soportes
         Route::post('{cuenta}/soportes', [SoporteController::class, 'store'])->name('soportes.store');
         Route::delete('{cuenta}/soportes/{soporte}', [SoporteController::class, 'destroy'])->name('soportes.destroy');
-        // Archivar (solo contratista)
-        Route::post('{id}/archivar', [CuentaCobroController::class, 'archivar'])->middleware('check.role:contratista')->name('archivar');
-        // Desarchivar (solo contratista)
-        Route::post('{id}/desarchivar', [CuentaCobroController::class, 'desarchivar'])->middleware('check.role:contratista')->name('desarchivar');
+        // Archivar (solo auxiliar)
+        Route::post('{id}/archivar', [CuentaCobroController::class, 'archivar'])->middleware('check.role:auxiliar')->name('archivar');
+        // Desarchivar (solo auxiliar)
+        Route::post('{id}/desarchivar', [CuentaCobroController::class, 'desarchivar'])->middleware('check.role:auxiliar')->name('desarchivar');
     });
 
     // ========================================
-    // APROBACIONES (todas las áreas involucradas)
+    // APROBACIONES (Administrador, Tesorería, Admin Programa)
     // ========================================
-    Route::middleware(['check.role:ordenador_gasto,contratacion,tesoreria,supervisor,alcalde,super_admin'])->group(function () {
+    Route::middleware(['check.role:administrador,tesoreria,admin_programa'])->group(function () {
         Route::get('/aprobaciones', [CuentaCobroController::class, 'misAprobaciones'])->name('aprobaciones.index');
         Route::post('/cuentas_cobro/{id}/aprobar', [CuentaCobroController::class, 'aprobar'])->name('cuentas_cobro.aprobar');
         Route::post('/cuentas_cobro/{id}/rechazar', [CuentaCobroController::class, 'rechazar'])->name('cuentas_cobro.rechazar');
-        // Devolver para corrección (Contratación)
+        // Devolver para corrección (Administrador)
         Route::post('/cuentas_cobro/{id}/devolver', [CuentaCobroController::class, 'devolver'])->name('cuentas_cobro.devolver');
         Route::post('/cuentas_cobro/{id}/enviar-cliente', [CuentaCobroController::class, 'enviarCliente'])->name('cuentas_cobro.enviar_cliente');
-        // Acciones de pago (solo tesorería/super_admin)
+        // Acciones de pago (solo tesorería/admin_programa)
         Route::post('/cuentas_cobro/{id}/pagar', [CuentaCobroController::class, 'registrarPago'])->name('cuentas_cobro.pagar');
         Route::post('/cuentas_cobro/{id}/rechazar-pago', [CuentaCobroController::class, 'rechazarPago'])->name('cuentas_cobro.rechazar_pago');
+        Route::post('/cuentas_cobro/{id}/notificar-cliente', [CuentaCobroController::class, 'notificarCliente'])->name('cuentas_cobro.notificar_cliente');
     });
-    // Reenviar (Contratista)
-    Route::post('/cuentas_cobro/{id}/reenviar', [CuentaCobroController::class, 'reenviar'])->middleware('check.role:contratista')->name('cuentas_cobro.reenviar');
+    // Reenviar (Auxiliar)
+    Route::post('/cuentas_cobro/{id}/reenviar', [CuentaCobroController::class, 'reenviar'])->middleware('check.role:auxiliar')->name('cuentas_cobro.reenviar');
 });

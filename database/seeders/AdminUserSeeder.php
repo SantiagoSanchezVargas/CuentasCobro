@@ -14,39 +14,39 @@ class AdminUserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Buscar el rol de ordenador_gasto
-        $ordenadorRole = Role::where('name', 'ordenador_gasto')->first();
+        // Buscar el rol de admin_programa
+        $adminRole = Role::where('name', 'admin_programa')->first();
 
-        if (!$ordenadorRole) {
-            $this->command->error('El rol de ordenador_gasto no existe. Ejecuta primero el RoleSeeder.');
+        if (!$adminRole) {
+            $this->command->error('El rol de admin_programa no existe. Ejecuta primero el RoleSeeder.');
             return;
         }
 
-        // Crear usuario administrador como ordenador del gasto
+        // Crear usuario administrador
         $admin = User::firstOrCreate(
             ['email' => 'daniel00250@hotmail.com'],
             [
                 'name' => 'Daniel Ramirez',
                 'email' => 'daniel00250@hotmail.com',
                 'password' => Hash::make('cosita1225*'),
-                'role_id' => $ordenadorRole->id,
+                'role_id' => $adminRole->id,
                 'email_verified_at' => now(),
             ]
         );
 
         if ($admin->wasRecentlyCreated) {
-            $this->command->info('✅ Usuario creado exitosamente como Ordenador del Gasto:');
+            $this->command->info('✅ Usuario creado exitosamente como Admin del Programa:');
             $this->command->info('   👤 Nombre: Daniel Ramirez');
             $this->command->info('   📧 Email: daniel00250@hotmail.com');
             $this->command->info('   🔑 Contraseña: cosita1225*');
-            $this->command->info('   👑 Rol: Ordenador del Gasto');
+            $this->command->info('   👑 Rol: Admin del Programa');
         } else {
             $this->command->info('ℹ️  El usuario ya existe.');
 
             // Actualizar el rol si es necesario
-            if ($admin->role_id !== $ordenadorRole->id) {
-                $admin->update(['role_id' => $ordenadorRole->id]);
-                $this->command->info('✅ Rol actualizado a Ordenador del Gasto.');
+            if ($admin->role_id !== $adminRole->id) {
+                $admin->update(['role_id' => $adminRole->id]);
+                $this->command->info('✅ Rol actualizado a Admin del Programa.');
             }
         }
     }

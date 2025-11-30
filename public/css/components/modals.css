@@ -1,0 +1,213 @@
+:root {
+    --flash-success: #34c759;
+    --flash-info: #0a84ff;
+    --flash-warning: #ff9f0a;
+    --flash-danger: #ff453a;
+    --flash-permission: #ff3b30;
+    --flash-surface: #ffffff;
+    --flash-text: #1d1d1f;
+    --flash-muted: #8e8e93;
+}
+
+.flash-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(10px);
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.flash-modal-backdrop.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.flash-modal-card {
+    position: relative;
+    width: min(420px, calc(100% - 32px));
+    background: var(--flash-surface);
+    border-radius: 24px;
+    padding: 28px 28px 24px;
+    box-shadow: 0 25px 80px rgba(15, 23, 42, 0.25);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.flash-modal-backdrop.is-visible .flash-modal-card {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.flash-modal-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    pointer-events: none;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    mix-blend-mode: multiply;
+}
+
+.flash-modal-card.flash-success {
+    --flash-accent: var(--flash-success);
+}
+
+.flash-modal-card.flash-info {
+    --flash-accent: var(--flash-info);
+}
+
+.flash-modal-card.flash-warning {
+    --flash-accent: var(--flash-warning);
+}
+
+.flash-modal-card.flash-danger,
+.flash-modal-card.flash-permission {
+    --flash-accent: var(--flash-danger);
+}
+
+.flash-modal-header {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+}
+
+.flash-modal-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--flash-accent, var(--flash-info));
+    font-size: 30px;
+}
+
+.flash-modal-label {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--flash-muted);
+    margin-bottom: 4px;
+}
+
+.flash-modal-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--flash-text);
+    margin-bottom: 6px;
+}
+
+.flash-modal-message {
+    font-size: 15px;
+    color: var(--flash-muted);
+    line-height: 1.55;
+}
+
+.flash-modal-step {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--flash-muted);
+    display: none;
+}
+
+.flash-modal-step.is-visible {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.flash-modal-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.flash-modal-actions button {
+    flex: 1;
+}
+
+.flash-modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    border: none;
+    background: rgba(0, 0, 0, 0.04);
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.flash-modal-close span {
+    font-size: 20px;
+    color: var(--flash-muted);
+}
+
+.flash-modal-close:hover {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.flash-modal-backdrop button.btn-ghost {
+    background: transparent;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    color: var(--flash-text);
+    font-weight: 600;
+    padding: 12px 18px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.flash-modal-backdrop button.btn-ghost:hover {
+    border-color: rgba(0, 0, 0, 0.18);
+}
+
+.flash-modal-backdrop .btn-primary {
+    background: var(--flash-accent, var(--flash-info));
+    color: white;
+    border: none;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.flash-modal-backdrop .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+@media (max-width: 520px) {
+    .flash-modal-card {
+        padding: 24px;
+        border-radius: 20px;
+    }
+
+    .flash-modal-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 26px;
+        border-radius: 14px;
+    }
+}

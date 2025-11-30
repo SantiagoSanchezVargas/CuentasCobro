@@ -28,9 +28,8 @@ class SoporteController extends Controller
         ]);
 
         foreach ((array) $request->file('soportes', []) as $file) {
-            $dir = 'public/soportes/'.$cuenta->id;
-            Storage::makeDirectory($dir);
-            $path = $file->store($dir);
+            $dir = 'soportes/'.$cuenta->id;
+            $path = $file->store($dir, 'public');
 
             Soporte::create([
                 'cuenta_cobro_id' => $cuenta->id,
@@ -60,7 +59,7 @@ class SoporteController extends Controller
 
         // Eliminar archivo físico
         if ($soporte->path) {
-            Storage::delete($soporte->path);
+            Storage::disk('public')->delete($soporte->path);
         }
         $soporte->delete();
 

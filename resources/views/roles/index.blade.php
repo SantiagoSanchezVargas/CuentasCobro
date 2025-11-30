@@ -242,16 +242,6 @@
     </a>
 </div>
 
-@if(session('success'))
-    <div class="alert-custom">
-        <span class="material-symbols-rounded" style="color: var(--apple-green); font-size: 24px;">check_circle</span>
-        <span style="flex: 1;">{{ session('success') }}</span>
-        <button onclick="this.parentElement.remove()" style="background: none; border: none; cursor: pointer; opacity: 0.5;">
-            <span class="material-symbols-rounded">close</span>
-        </button>
-    </div>
-@endif
-
 <!-- Roles Cards Grid -->
 @if($roles->count() > 0)
     <div class="stats-row">

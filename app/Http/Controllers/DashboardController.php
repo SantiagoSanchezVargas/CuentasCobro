@@ -16,6 +16,20 @@ class DashboardController extends Controller
         $user = Auth::user();
         if (!$user) return redirect()->route('login');
 
+        // Redireccionar según el rol
+        if ($user->hasRole('auxiliar')) {
+            return redirect()->route('auxiliar.dashboard');
+        }
+        if ($user->hasRole('administrador')) {
+            return redirect()->route('administrador.dashboard');
+        }
+        if ($user->hasRole('tesoreria')) {
+            return redirect()->route('tesoreria.dashboard');
+        }
+        if ($user->hasRole('admin_programa')) {
+            return redirect()->route('admin.dashboard');
+        }
+
         // Estadísticas de usuarios
         $totalUsers = User::count();
         $usersWithRoles = User::whereNotNull('role_id')->count();
@@ -44,6 +58,31 @@ class DashboardController extends Controller
             'totalTesoreria',
             'totalContratacion',
             'recentUsers'
+        ));
+    }
+
+    public function auxiliar()
+    {
+        $user = Auth::user();
+        
+        // Proyección de Pagos: Suma de valor_total de cuentas aprobadas pendientes de pago
+        $proyeccionPagos = CuentaCobro::whereIn('estado_aprobacion', ['aprobado', 'enviado_cliente'])
+            ->sum('valor_total');
+
+        // Estados de las cuentas
+        $estados = CuentaCobro::selectRaw('estado_aprobacion, count(*) as total')
+            ->groupBy('estado_aprobacion')
+            ->pluck('total', 'estado_aprobacion');
+
+        $cuentasAprobadas = ($estados['aprobado'] ?? 0) + ($estados['enviado_cliente'] ?? 0) + ($estados['pagado'] ?? 0);
+        $cuentasEnRevision = $estados['en_revision'] ?? 0;
+        $cuentasRechazadas = $estados['rechazado'] ?? 0;
+
+        return view('dashboard.auxiliar', compact(
+            'proyeccionPagos',
+            'cuentasAprobadas',
+            'cuentasEnRevision',
+            'cuentasRechazadas'
         ));
     }
 }

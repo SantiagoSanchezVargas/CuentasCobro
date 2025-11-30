@@ -4,10 +4,6 @@
 <div class="container mt-4">
     <h2 class="mb-3">Listado de Cuentas de Cobro</h2>
 
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
     <a href="{{ route('cuentas_cobro.create') }}" class="btn btn-primary mb-3">+ Nueva Cuenta</a>
 
     <table class="table table-striped table-hover">

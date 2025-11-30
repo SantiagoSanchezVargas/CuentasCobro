@@ -3,7 +3,7 @@
 @section('content')
 <div class="container mt-4">
     <h1>Panel Tesorería</h1>
-    <p>Bienvenido, {{ $user->name }} 👋</p>
+    <p>Bienvenido, {{ Auth::user()->name }} 👋</p>
 
     <div class="row mt-4">
         <div class="col-md-4">
@@ -17,7 +17,7 @@
             </a>
         </div>
         <div class="col-md-4">
-            <a href="{{ route('admin.reports') }}" class="btn btn-info w-100">
+            <a href="{{ route('reportes.index') }}" class="btn btn-info w-100">
                 📊 Reportes Financieros
             </a>
         </div>

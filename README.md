@@ -11,7 +11,7 @@ Sistema de gestión de cuentas de cobro con flujo de aprobación obligatorio par
 
 ## 🌟 Características Principales
 
-### ✅ Flujo de Aprobación Obligatorio
+### ✅ Flujo de Aprobación Obligatorio (v2.1)
 - **5 etapas secuenciales:** Supervisor → Ordenador del Gasto → Contratación → Alcalde → Tesorería
 - **No se pueden saltar etapas** (excepto Super Admin)
 - **Trazabilidad completa** de todas las decisiones
@@ -52,6 +52,55 @@ Sistema de gestión de cuentas de cobro con flujo de aprobación obligatorio par
 
 ---
 
+## ✨ NUEVAS CARACTERÍSTICAS v3.0
+
+### 📄 Sistema Integral de Documentos
+- ✅ Subir, gestionar y versionar documentos
+- ✅ Control de acceso por roles (private/internal/public)
+- ✅ Historial completo de versiones
+- ✅ Contador de descargas y auditoría
+- ✅ Categorización (contrato, comprobante, anexo, soporte)
+- ✅ Archivar/Desarchivar documentos
+
+### 🎯 Aprobaciones Mejoradas con Modales
+- ✅ Interfaz moderna con ventanas emergentes
+- ✅ Resumen financiero en vivo
+- ✅ Validación de documentos obligatorios
+- ✅ Múltiples opciones de intervención en UI
+- ✅ Historial visual con timeline interactivo
+
+### 📊 Campos Financieros Completos (v3.0)
+- ✅ Desglose detallado: subtotal, descuentos, impuestos
+- ✅ Retenciones automáticas (FUENTE, ICA, IVA, otras)
+- ✅ Gestión de anticipos y pagos pendientes
+- ✅ Información bancaria ampliada
+- ✅ Datos fiscales (NIT, RUT, responsable IVA)
+- ✅ Números de control (CDP, RGP, orden compra)
+
+### 🔐 Permisos Granulares por Rol (v3.0)
+- ✅ Matriz configurable de permisos (18 permisos + restricciones)
+- ✅ Control por etapa y estado de la cuenta
+- ✅ Límites de aprobación personalizados por usuario
+- ✅ Campos visibles/editables por rol
+- ✅ Departamentos y visibilidad restringida
+- ✅ Plantillas predefinidas para cada rol
+
+### 👤 Atributos Avanzados de Usuario (v3.0)
+- ✅ Información personal y laboral detallada
+- ✅ Firma digital y datos de contacto múltiples
+- ✅ Delegación de poderes con validación temporal
+- ✅ Límites de aprobación personalizados
+- ✅ Auditoría completa (login, intentos fallidos)
+
+### 📈 Historial y Auditoría Mejorada
+- ✅ Timeline integrada (estados + documentos + interacciones)
+- ✅ Vista cronológica completa de cada cuenta
+- ✅ Filtros avanzados por tipo de evento
+- ✅ Usuario, fecha y hora de cada cambio
+- ✅ Trazabilidad forense completa
+
+---
+
 ## 📚 Documentación
 
 Este proyecto cuenta con documentación completa y organizada:
@@ -60,22 +109,40 @@ Este proyecto cuenta con documentación completa y organizada:
 
 | Documento | Descripción | Audiencia |
 |-----------|-------------|-----------|
-| **[MANUAL_INSTALACION_TERCEROS.md](MANUAL_INSTALACION_TERCEROS.md)** | Guía completa de instalación paso a paso | Desarrolladores nuevos, terceros |
+| **[GUIA_INSTALACION_V3.md](GUIA_INSTALACION_V3.md)** | **NUEVO:** Guía paso a paso para instalar migraciones, seeders y configuración v3.0 | Desarrolladores, DevOps |
+| **[MANUAL_INSTALACION_TERCEROS.md](MANUAL_INSTALACION_TERCEROS.md)** | Guía completa de instalación de proyeto base | Desarrolladores nuevos, terceros |
 | **[ORGANIZACION_PROYECTO.md](ORGANIZACION_PROYECTO.md)** | Estructura del proyecto, carpetas, archivos, convenciones | Desarrolladores, mantenimiento |
 
-### 📖 Para Usuarios
+### 📖 Para Usuarios y Admins
 
 | Documento | Descripción | Audiencia |
 |-----------|-------------|-----------|
+| **[GUIA_MEJORAS_V3.md](GUIA_MEJORAS_V3.md)** | **NUEVO:** Guía completa de nuevas características v3.0 | Usuarios finales, administradores |
 | **[PROCESO_COMPLETO_CUENTAS_COBRO.md](PROCESO_COMPLETO_CUENTAS_COBRO.md)** | Flujo de aprobación, roles, opciones de intervención | Usuarios finales, administradores |
 | **[FLUJO_DOCUMENTOS.md](FLUJO_DOCUMENTOS.md)** | Flujo original de documentos | Referencia técnica |
+
+### 🏗️ Para Arquitectos y Técnicos
+
+| Documento | Descripción | Audiencia |
+|-----------|-------------|-----------|
+| **[ARQUITECTURA_TECNICA_V3.md](ARQUITECTURA_TECNICA_V3.md)** | **NUEVO:** Diagrama de arquitectura, modelos, controllers, BD | Arquitectos, DevOps, senior devs |
 
 ### 🔍 Orden de Lectura Recomendado
 
 ```
-1️⃣ MANUAL_INSTALACION_TERCEROS.md    → Instalar el sistema
-2️⃣ ORGANIZACION_PROYECTO.md          → Entender la estructura
-3️⃣ PROCESO_COMPLETO_CUENTAS_COBRO.md → Conocer el flujo de trabajo
+PARA DESARROLLADORES:
+1️⃣ GUIA_INSTALACION_V3.md     → Instalar las mejoras v3.0
+2️⃣ ARQUITECTURA_TECNICA_V3.md  → Entender la arquitectura
+3️⃣ ORGANIZACION_PROYECTO.md    → Estructura del proyecto
+
+PARA ADMINISTRADORES:
+1️⃣ GUIA_MEJORAS_V3.md          → Conocer las mejoras
+2️⃣ GUIA_INSTALACION_V3.md      → Instalar en servidor
+3️⃣ PROCESO_COMPLETO_CUENTAS_COBRO.md → Entrenar usuarios
+
+PARA USUARIOS:
+1️⃣ GUIA_MEJORAS_V3.md          → Nuevas características
+2️⃣ PROCESO_COMPLETO_CUENTAS_COBRO.md → Cómo funciona el flujo
 ```
 
 ---
@@ -434,28 +501,55 @@ Este proyecto es software propietario desarrollado para uso interno de entidades
 
 ## 🎯 Roadmap
 
-### Versión Actual: 2.1
+### Versión Actual: 3.0 🎉
 
+✅ **COMPLETADO EN ESTA VERSIÓN:**
 - ✅ Flujo obligatorio de 5 etapas
-- ✅ Sistema de roles y permisos
+- ✅ Sistema de roles y permisos mejorado
 - ✅ Múltiples opciones de intervención
 - ✅ Generación automática de PDFs
 - ✅ Sistema de notificaciones
 - ✅ Registro de pagos completo
+- ✅ **Sistema integral de documentos con versionamiento** (NUEVO)
+- ✅ **Permisos granulares por rol** (NUEVO)
+- ✅ **27 nuevos campos financieros** (NUEVO)
+- ✅ **Atributos avanzados de usuario** (NUEVO)
+- ✅ **Timeline e historial mejorado** (NUEVO)
+- ✅ **Archivar/Desarchivizar cuentas** (NUEVO)
+- ✅ **4 nuevas tablas de BD** (NUEVO)
+- ✅ **3 nuevos controllers** (NUEVO)
+- ✅ **50+ nuevas rutas API** (NUEVO)
+- ✅ **2 seeders de datos iniciales** (NUEVO)
 
 ### Próximas Versiones
 
-#### v2.2 (Planeado)
-- [ ] Dashboard mejorado con gráficas
-- [ ] Exportación de reportes a Excel
-- [ ] Firma digital de documentos
-- [ ] API REST completa
+#### v3.1 (Inmediato - Vistas)
+- [ ] Crear vistas Blade (modales, formularios, timeline)
+- [ ] Crear JavaScript (interactividad, AJAX, drag-drop)
+- [ ] Crear CSS mejorado (animaciones, responsivo)
+- [ ] Integrar eventos de notificación
+- [ ] Ejecutar y probar migraciones y seeders
 
-#### v3.0 (Futuro)
-- [ ] Aplicación móvil
+#### v3.2 (UI/UX)
+- [ ] Dashboard mejorado con gráficas de documentos
+- [ ] Reportes de aprobaciones y tiempos
+- [ ] Filtros avanzados en listados
+- [ ] Exportación a Excel con datos financieros
+- [ ] Búsqueda global mejorada
+
+#### v3.3 (Integraciones)
+- [ ] Integración con firma digital (DIGICERT, Adobe Sign)
+- [ ] Escaneo automático de documentos (OCR)
+- [ ] Integración con correo electrónico mejorada
+- [ ] Sincronización con sistemas contables externos
+- [ ] API REST completa para terceros
+
+#### v4.0 (Futuro)
+- [ ] Aplicación móvil (iOS/Android)
 - [ ] Integración con bancos
 - [ ] Pagos electrónicos integrados
-- [ ] Reconocimiento OCR de documentos
+- [ ] Machine Learning para análisis de fraudes
+- [ ] Reconocimiento de documentos automático
 
 ---
 
@@ -474,6 +568,6 @@ Gracias a todos los que han contribuido al desarrollo y mejora de este sistema.
 
 ---
 
-**Última actualización:** Noviembre 5, 2025  
-**Versión:** 2.1.0  
-**Estado:** En producción activa
+**Última actualización:** Noviembre 29, 2025  
+**Versión:** 3.0.0  
+**Estado:** Backend completo ✅ | Frontend en desarrollo 🚀

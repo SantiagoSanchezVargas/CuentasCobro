@@ -17,6 +17,7 @@
     <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
     <link href="{{ asset('css/theme.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/components/modals.css') }}">
     
     <style>
         :root {
@@ -315,6 +316,7 @@
 </head>
 <body>
     @yield('content')
+    @include('components.flash-modal')
     
     <script>
         // Auto-dismiss alerts after 5 seconds

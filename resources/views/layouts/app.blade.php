@@ -22,8 +22,124 @@
         <link rel="stylesheet" href="{{ asset('css/components/buttons.css') }}">
         <link rel="stylesheet" href="{{ asset('css/components/cards.css') }}">
         <link rel="stylesheet" href="{{ asset('css/components/tables.css') }}">
+        <link rel="stylesheet" href="{{ asset('css/components/modals.css') }}">
     
         @stack('styles')
+    @auth
+        @if(auth()->user()->role && auth()->user()->role->name === 'auxiliar')
+        <style>
+            :root {
+                --apple-blue: #116dff;
+                --apple-dark: #20303c;
+                --apple-gray: #f4f4f4;
+                --apple-border: #e1e4e8;
+                --apple-text: #20303c;
+                --apple-text-muted: #6b7c93;
+                --apple-card-bg: #ffffff;
+                --apple-hover: #f0f7ff;
+                --apple-danger: #ff3b30;
+                --apple-success: #34c759;
+                --apple-warning: #ffcc00;
+                --apple-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                --apple-radius: 12px;
+                --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            }
+            body {
+                background-color: #f0f2f5;
+            }
+            .navbar {
+                background: #ffffff;
+                border-bottom: 1px solid #e1e4e8;
+            }
+            .sidebar {
+                display: none !important;
+            }
+            .app-layout {
+                grid-template-columns: 1fr !important;
+            }
+            .btn-apple {
+                border-radius: 8px;
+                font-weight: 600;
+            }
+            .card {
+                border: 1px solid #e1e4e8;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            }
+            /* Navbar Dropdown Styles */
+            .nav-dropdown {
+                position: relative;
+            }
+            .nav-dropdown-content {
+                display: none;
+                position: absolute;
+                top: 100%;
+                right: 0;
+                background: white;
+                border: 1px solid #e1e4e8;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                min-width: 200px;
+                z-index: 1000;
+                padding: 8px 0;
+            }
+            .nav-dropdown:hover .nav-dropdown-content {
+                display: block;
+            }
+            .nav-dropdown-item {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 10px 16px;
+                color: var(--apple-text);
+                text-decoration: none;
+                font-size: 14px;
+            }
+            .nav-dropdown-item:hover {
+                background: #f0f7ff;
+                color: var(--apple-blue);
+            }
+        </style>
+        @endif
+    @endauth
+        <style>
+            /* Sidebar Dropdown Styles */
+            details.sidebar-dropdown summary {
+                list-style: none;
+                cursor: pointer;
+            }
+            details.sidebar-dropdown summary::-webkit-details-marker {
+                display: none;
+            }
+            details.sidebar-dropdown[open] summary .expand-icon {
+                transform: rotate(180deg);
+            }
+            .sidebar-submenu {
+                list-style: none;
+                padding-left: 0;
+                margin-top: 4px;
+                margin-bottom: 4px;
+                background: #f9fafb;
+                border-radius: 10px;
+            }
+            .sidebar-submenu .sidebar-link {
+                padding-left: 44px; /* Indent sub-items */
+                font-size: 14px;
+                background: transparent;
+                color: var(--apple-dark);
+            }
+            .sidebar-submenu .sidebar-link:hover {
+                color: var(--apple-blue);
+                background: rgba(0,0,0,0.03);
+            }
+            .sidebar-submenu .sidebar-link.active {
+                color: var(--apple-blue);
+                font-weight: 600;
+                background: rgba(17, 109, 255, 0.1);
+            }
+            .expand-icon {
+                transition: transform 0.2s;
+            }
+        </style>
 </head>
 <body>
     <!-- Navigation Bar -->
@@ -35,18 +151,64 @@
             </a>
             
             <ul class="nav-menu">
-                <li><a href="{{ route('dashboard') }}" class="nav-link">
-                    <span class="material-symbols-rounded">dashboard</span>
-                    Dashboard
-                </a></li>
-                <li><a href="{{ route('cuentas_cobro.index') }}" class="nav-link">
-                    <span class="material-symbols-rounded">description</span>
-                    Cuentas
-                </a></li>
-                <li><a href="{{ route('admin.users.index') }}" class="nav-link">
-                    <span class="material-symbols-rounded">group</span>
-                    Usuarios
-                </a></li>
+                @php
+                    $userRole = auth()->user()->role->name ?? 'guest';
+                    $isAuxiliar = $userRole === 'auxiliar';
+                    $canViewReports = in_array($userRole, ['admin_programa', 'administrador', 'tesoreria']);
+                @endphp
+
+                @if($isAuxiliar)
+                    <li><a href="{{ route('auxiliar.dashboard') }}" class="nav-link">
+                        <span class="material-symbols-rounded">dashboard</span>
+                        Dashboard
+                    </a></li>
+                    
+                    <li class="nav-dropdown">
+                        <a href="#" class="nav-link">
+                            <span class="material-symbols-rounded">receipt_long</span>
+                            Cuentas
+                            <span class="material-symbols-rounded" style="font-size: 18px;">expand_more</span>
+                        </a>
+                        <div class="nav-dropdown-content">
+                            <a href="{{ route('cuentas_cobro.index') }}" class="nav-dropdown-item">
+                                <span class="material-symbols-rounded">list</span> Mis Cuentas
+                            </a>
+                            <a href="{{ route('cuentas_cobro.pagos') }}" class="nav-dropdown-item">
+                                <span class="material-symbols-rounded">payments</span> Pagos
+                            </a>
+                            
+                            <!-- Restricted Items (Visible for Popup) -->
+                            <div style="border-top: 1px solid #e1e4e8; margin-top: 8px; padding-top: 8px;">
+                                <a href="#" onclick="showPermissionError(); return false;" class="nav-dropdown-item" style="color: var(--apple-text-muted);">
+                                    <span class="material-symbols-rounded">pie_chart</span> Reportes
+                                    <span class="material-symbols-rounded" style="font-size: 14px; margin-left: auto;">lock</span>
+                                </a>
+                                <a href="#" onclick="showPermissionError(); return false;" class="nav-dropdown-item" style="color: var(--apple-text-muted);">
+                                    <span class="material-symbols-rounded">group</span> Usuarios
+                                    <span class="material-symbols-rounded" style="font-size: 14px; margin-left: auto;">lock</span>
+                                </a>
+                                <a href="#" onclick="showPermissionError(); return false;" class="nav-dropdown-item" style="color: var(--apple-text-muted);">
+                                    <span class="material-symbols-rounded">admin_panel_settings</span> Roles
+                                    <span class="material-symbols-rounded" style="font-size: 14px; margin-left: auto;">lock</span>
+                                </a>
+                            </div>
+                        </div>
+                    </li>
+                @else
+                    <li><a href="{{ route('dashboard') }}" class="nav-link">
+                        <span class="material-symbols-rounded">dashboard</span>
+                        Dashboard
+                    </a></li>
+                    <li><a href="{{ route('cuentas_cobro.index') }}" class="nav-link">
+                        <span class="material-symbols-rounded">description</span>
+                        Cuentas
+                    </a></li>
+                    <li><a href="{{ route('admin.users.index') }}" class="nav-link">
+                        <span class="material-symbols-rounded">group</span>
+                        Usuarios
+                    </a></li>
+                @endif
+
                 <li><a href="{{ route('notificaciones.index') }}" class="nav-link" style="position: relative; display: flex; align-items: center; gap: 6px;">
                     <span class="material-symbols-rounded" style="font-size: 24px; position: relative;">
                         notifications_active
@@ -85,47 +247,116 @@
     <div class="app-layout">
         <!-- Sidebar -->
         <aside class="sidebar">
+            @php
+                $userRole = auth()->user()->role->name ?? 'guest';
+                $isAuxiliar = $userRole === 'auxiliar';
+                
+                // Define permissions based on routes/web.php middleware
+                $canViewUsers = in_array($userRole, ['admin_programa']);
+                $canViewRoles = in_array($userRole, ['admin_programa']);
+                // Removed 'auxiliar' as they don't have permission
+                $canViewReports = in_array($userRole, ['admin_programa', 'administrador', 'tesoreria']);
+                // Restrict main dashboard for Auxiliar (who has specific dashboard)
+                $canViewMainDashboard = !in_array($userRole, ['auxiliar']);
+            @endphp
+
             <div class="sidebar-section">
                 <h3 class="sidebar-title">Principal</h3>
                 <ul class="sidebar-menu">
+                    @if(!$isAuxiliar)
                     <li class="sidebar-item">
-                        <a href="{{ route('dashboard') }}" class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                            <span class="material-symbols-rounded">dashboard</span>
-                            Dashboard
-                        </a>
+                        @if($canViewMainDashboard)
+                            <a href="{{ route('dashboard') }}" class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                                <span class="material-symbols-rounded">dashboard</span>
+                                Dashboard
+                            </a>
+                        @else
+                            <a href="#" onclick="showPermissionError(); return false;" class="sidebar-link">
+                                <span class="material-symbols-rounded">dashboard</span>
+                                Dashboard
+                            </a>
+                        @endif
                     </li>
+                    @endif
+                    
+                    {{-- Dropdown Cuentas de Cobro (Auxiliar & Others) --}}
                     <li class="sidebar-item">
-                        <a href="{{ route('cuentas_cobro.index') }}" class="sidebar-link {{ request()->routeIs('cuentas_cobro.*') ? 'active' : '' }}">
-                            <span class="material-symbols-rounded">receipt_long</span>
-                            Cuentas de Cobro
-                        </a>
-                    </li>
-                    <li class="sidebar-item">
-                        <a href="{{ route('cuentas_cobro.pagos') }}" class="sidebar-link">
-                            <span class="material-symbols-rounded">payments</span>
-                            Pagos
-                        </a>
+                        <details class="sidebar-dropdown" {{ request()->routeIs('cuentas_cobro.*') || request()->routeIs('auxiliar.*') ? 'open' : '' }}>
+                            <summary class="sidebar-link">
+                                <span class="material-symbols-rounded">receipt_long</span>
+                                <span style="flex:1">Cuentas de Cobro</span>
+                                <span class="material-symbols-rounded expand-icon">expand_more</span>
+                            </summary>
+                            <ul class="sidebar-submenu">
+                                @if($isAuxiliar)
+                                    <li>
+                                        <a href="{{ route('auxiliar.dashboard') }}" class="sidebar-link {{ request()->routeIs('auxiliar.dashboard') ? 'active' : '' }}">
+                                            <span class="material-symbols-rounded">dashboard</span>
+                                            Dashboard Auxiliar
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('cuentas_cobro.index') }}" class="sidebar-link {{ request()->routeIs('cuentas_cobro.index') ? 'active' : '' }}">
+                                            <span class="material-symbols-rounded">list</span>
+                                            Mis Cuentas
+                                        </a>
+                                    </li>
+                                @else
+                                    <li>
+                                        <a href="{{ route('cuentas_cobro.index') }}" class="sidebar-link {{ request()->routeIs('cuentas_cobro.index') ? 'active' : '' }}">
+                                            <span class="material-symbols-rounded">list</span>
+                                            Listado Cuentas
+                                        </a>
+                                    </li>
+                                @endif
+                                
+                                <li>
+                                    <a href="{{ route('cuentas_cobro.pagos') }}" class="sidebar-link {{ request()->routeIs('cuentas_cobro.pagos') ? 'active' : '' }}">
+                                        <span class="material-symbols-rounded">payments</span>
+                                        Pagos
+                                    </a>
+                                </li>
+                            </ul>
+                        </details>
                     </li>
                 </ul>
             </div>
 
+            @if(!$isAuxiliar)
             <div class="sidebar-section">
                 <h3 class="sidebar-title">Administración</h3>
                 <ul class="sidebar-menu">
                     <li class="sidebar-item">
-                        <a href="{{ route('admin.users.index') }}" class="sidebar-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                            <span class="material-symbols-rounded">group</span>
-                            Usuarios
-                        </a>
+                        @if($canViewUsers)
+                            <a href="{{ route('admin.users.index') }}" class="sidebar-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                                <span class="material-symbols-rounded">group</span>
+                                Usuarios
+                            </a>
+                        @else
+                            <a href="#" onclick="showPermissionError(); return false;" class="sidebar-link">
+                                <span class="material-symbols-rounded">group</span>
+                                Usuarios
+                            </a>
+                        @endif
                     </li>
                     <li class="sidebar-item">
-                        <a href="{{ route('admin.roles.index') }}" class="sidebar-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
-                            <span class="material-symbols-rounded">admin_panel_settings</span>
-                            Roles
-                        </a>
+                        @if($canViewRoles)
+                            <a href="{{ route('admin.roles.index') }}" class="sidebar-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
+                                <span class="material-symbols-rounded">admin_panel_settings</span>
+                                Roles
+                            </a>
+                        @else
+                            <a href="#" onclick="showPermissionError(); return false;" class="sidebar-link">
+                                <span class="material-symbols-rounded">admin_panel_settings</span>
+                                Roles
+                            </a>
+                        @endif
                     </li>
                 </ul>
             </div>
+            @endif
+
+            @if($canViewReports)
             <div class="sidebar-section">
                 <h3 class="sidebar-title">Análisis</h3>
                 <ul class="sidebar-menu">
@@ -137,6 +368,7 @@
                     </li>
                 </ul>
             </div>
+            @endif
         </aside>
 
         <!-- Main Content -->
@@ -145,6 +377,37 @@
         </main>
     </div>
 
+    <!-- Permission Denied Modal -->
+    <div id="permissionModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:12px; padding:32px; width:90%; max-width:400px; text-align:center; box-shadow: 0 20px 60px rgba(0,0,0,0.2);">
+            <div style="width:60px; height:60px; background:#fee2e2; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; color:#ef4444;">
+                <span class="material-symbols-rounded" style="font-size:32px;">lock</span>
+            </div>
+            <h3 style="margin-top:0; margin-bottom:8px; color:#162d3d; font-size:20px; font-family: 'Inter', sans-serif; font-weight: 700;">Acceso Restringido</h3>
+            <p style="color:#6b7c93; margin-bottom:24px; font-size:15px; line-height: 1.5;">No tienes los permisos necesarios para acceder a esta sección. Contacta al administrador si crees que es un error.</p>
+            
+            <div style="display:flex; justify-content:center;">
+                <button type="button" onclick="closePermissionModal()" style="background:#116dff; color:white; border:none; padding:10px 24px; border-radius:30px; font-weight:600; cursor:pointer; font-size:14px; transition: background 0.2s;">
+                    Entendido
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showPermissionError() {
+            document.getElementById('permissionModal').style.display = 'flex';
+        }
+        function closePermissionModal() {
+            document.getElementById('permissionModal').style.display = 'none';
+        }
+        // Close on click outside
+        document.getElementById('permissionModal').addEventListener('click', function(e) {
+            if (e.target === this) closePermissionModal();
+        });
+    </script>
+
+    @include('components.flash-modal')
     @stack('scripts')
 </body>
 </html>

@@ -14,6 +14,10 @@ use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
+
+use App\Mail\CuentaCobroNotification;
+use Illuminate\Support\Facades\Mail;
 
 class CuentaCobroController extends Controller
 {
@@ -34,9 +38,9 @@ class CuentaCobroController extends Controller
      */
    public function create()
 {
-    // Solo contratista puede crear
-    if ((Auth::user()?->role?->name) !== 'contratista') {
-        return redirect()->route('cuentas_cobro.index')->with('error', 'Solo el contratista puede crear cuentas de cobro.');
+    // Solo auxiliar puede crear
+    if ((Auth::user()?->role?->name) !== 'auxiliar') {
+        return redirect()->route('cuentas_cobro.index')->with('error', 'Solo el auxiliar puede crear cuentas de cobro.');
     }
     $contratos = Contrato::all();
 
@@ -47,6 +51,8 @@ class CuentaCobroController extends Controller
     foreach ($departamentos as $dep) {
         $departamentosFormateados[$dep->nombre] = $dep->municipios->pluck('nombre')->toArray();
     }
+    ksort($departamentosFormateados);
+    ksort($departamentosFormateados);
 
     return view('cuentas_cobro.create', [
         'contratos' => $contratos,
@@ -68,9 +74,60 @@ class CuentaCobroController extends Controller
         'tipo_identificacion' => 'required',
         'tipo_cliente' => 'required',
         'nombre_beneficiario' => 'required',
+        'plazo_pago' => 'nullable|integer|min:0|max:365',
         'items.*.item' => 'required|string',
         'items.*.cantidad' => 'required|integer|min:1',
         'items.*.precio_unitario' => 'required|numeric|min:0',
+
+        // Nuevos campos legales
+        'nombre_acreedor' => 'nullable|string|max:255',
+        'tipo_documento_acreedor' => 'nullable|string|max:20',
+        'numero_documento_acreedor' => 'nullable|string|max:50',
+        'ciudad_expedicion_acreedor' => 'nullable|string|max:255',
+        'direccion_acreedor' => 'nullable|string|max:255',
+        'telefono_acreedor' => 'nullable|string|max:50',
+        'email_acreedor' => 'nullable|email|max:255',
+
+        'nombre_deudor' => 'nullable|string|max:255',
+        'tipo_documento_deudor' => 'nullable|string|max:20',
+        'numero_documento_deudor' => 'nullable|string|max:50',
+        'ciudad_expedicion_deudor' => 'nullable|string|max:255',
+        'direccion_deudor' => 'nullable|string|max:255',
+        'telefono_deudor' => 'nullable|string|max:50',
+        'email_deudor' => 'nullable|email|max:255',
+
+        'concepto_cobro' => 'required|string|min:10',
+        'descripcion_servicio' => 'nullable|string',
+        'fecha_prestacion_servicio' => 'required|date',
+        'fecha_inicio_servicio' => 'nullable|date',
+        'fecha_fin_servicio' => 'nullable|date|after_or_equal:fecha_inicio_servicio',
+        'lugar_prestacion_servicio' => 'nullable|string|max:255',
+
+        'numero_contrato_referencia' => 'nullable|string|max:255',
+        'fecha_contrato' => 'nullable|date',
+        'tipo_contrato' => 'nullable|string|max:100',
+        'objeto_contrato' => 'nullable|string|max:500',
+
+        'numero_documento_soporte' => 'nullable|string|max:255',
+        'fecha_documento_soporte' => 'nullable|date',
+        'documento_soporte_url' => 'nullable|url',
+        'requiere_validacion_previa' => 'nullable|boolean',
+
+        'ciudad_expedicion_cuenta' => 'nullable|string|max:255',
+        'prefijo_cuenta' => 'nullable|string|max:10',
+        'serie_cuenta' => 'nullable|string|max:20',
+        'consecutivo_cuenta' => 'nullable|integer|min:0',
+
+        'condiciones_pago' => 'nullable|string',
+        'forma_pago_acordada' => 'nullable|string|max:255',
+        'penalidades_retraso' => 'nullable|string',
+        'interes_mora_porcentaje' => 'nullable|numeric|min:0',
+        'cobra_intereses_mora' => 'nullable|boolean',
+        'dias_gracia' => 'nullable|integer|min:0|max:120',
+        'fecha_vencimiento_real' => 'nullable|date',
+
+        'observaciones_legales' => 'nullable|string',
+        'notas_cobro' => 'nullable|string',
     ]);
 
     // Calcular subtotal de los ítems (servidor)
@@ -93,8 +150,68 @@ class CuentaCobroController extends Controller
         $contratoId = (int) $request->contrato_id;
     }
 
-    // Crear la cuenta de cobro
-    $cuenta = CuentaCobro::create([
+    $legalData = $this->extractLegalPayload($request);
+    $plazoDias = (int) $request->input('plazo_pago', 0);
+    $legalData['dias_plazo_pago'] = $legalData['dias_plazo_pago'] ?? ($plazoDias ?: null);
+
+    $fechaVencimientoCalculada = $legalData['fecha_vencimiento_real']
+        ?? $this->calculateFechaVencimiento($request->fecha_emision, $plazoDias);
+    $legalData['fecha_vencimiento_real'] = $fechaVencimientoCalculada;
+    if (!empty($legalData['dias_gracia']) && $fechaVencimientoCalculada) {
+        $legalData['fecha_vencimiento_con_gracia'] = Carbon::parse($fechaVencimientoCalculada)
+            ->addDays((int) $legalData['dias_gracia'])
+            ->format('Y-m-d');
+    }
+
+    $legalData['fecha_hora_emision'] = $legalData['fecha_hora_emision']
+        ? Carbon::parse($legalData['fecha_hora_emision'])->toDateTimeString()
+        : Carbon::parse($request->fecha_emision)
+            ->setTimeFromTimeString(now()->format('H:i:s'))
+            ->toDateTimeString();
+
+    if (empty($legalData['ciudad_expedicion_cuenta'])) {
+        $legalData['ciudad_expedicion_cuenta'] = $request->departamento;
+    }
+
+    if (empty($legalData['estado_cobro_judicial'])) {
+        $legalData['estado_cobro_judicial'] = 'Sin proceso';
+    }
+
+    if (empty($legalData['nombre_deudor'])) {
+        $legalData['nombre_deudor'] = $request->nombre_beneficiario;
+    }
+    if (empty($legalData['tipo_documento_deudor'])) {
+        $legalData['tipo_documento_deudor'] = $request->tipo_identificacion;
+    }
+    if (empty($legalData['numero_documento_deudor'])) {
+        $legalData['numero_documento_deudor'] = $request->identificacion;
+    }
+
+    if (empty($legalData['nombre_acreedor'])) {
+        $legalData['nombre_acreedor'] = auth()->user()?->name ?? $request->nombre_beneficiario;
+    }
+    if (empty($legalData['tipo_documento_acreedor'])) {
+        $legalData['tipo_documento_acreedor'] = $request->tipo_identificacion;
+    }
+    if (empty($legalData['numero_documento_acreedor'])) {
+        $legalData['numero_documento_acreedor'] = $request->identificacion;
+    }
+    if (empty($legalData['email_acreedor'])) {
+        $legalData['email_acreedor'] = auth()->user()?->email;
+    }
+
+    [$prefijo, $serie, $consecutivo] = $this->splitNumeroCuenta($request->numero);
+    $legalData['prefijo_cuenta'] = $legalData['prefijo_cuenta'] ?? $prefijo;
+    $legalData['serie_cuenta'] = $legalData['serie_cuenta'] ?? $serie;
+    $legalData['consecutivo_cuenta'] = $legalData['consecutivo_cuenta'] ?? $consecutivo;
+    $legalData['subtotal'] = $subtotal;
+    $legalData['iva_valor'] = $iva;
+    $legalData['retencion_fuente_valor'] = $retFuente;
+    $legalData['retencion_ica_valor'] = $retIca;
+    $legalData['retencion_iva_valor'] = $retIva;
+    $legalData['valor_pendiente_pago'] = $valorTotal;
+
+    $baseData = [
         'numero' => $request->numero,
         'fecha_emision' => $request->fecha_emision,
         'valor_total' => $valorTotal,
@@ -107,14 +224,15 @@ class CuentaCobroController extends Controller
         'nombre_beneficiario' => $request->nombre_beneficiario,
         'plazo_pago' => $request->plazo_pago,
         'contrato_id' => $contratoId,
-    'estado_aprobacion' => 'en_revision',
-    // Flujo OBLIGATORIO: Supervisor → Ordenador → Contratación → Alcalde → Tesorería
-    'etapa_aprobacion' => ($startStage = 'supervisor'),
+        'estado_aprobacion' => 'en_revision',
+        // Flujo: Auxiliar -> Administrador -> Tesorería
+        'etapa_aprobacion' => ($startStage = 'administrador'),
         'user_id' => Auth::id(),
-    ]);
-    // Asegurar estado de pago por defecto
-    $cuenta->estado_pago = 'pending';
-    $cuenta->save();
+        'estado_pago' => 'pending',
+    ];
+
+    // Crear la cuenta de cobro con datos legales extendidos
+    $cuenta = CuentaCobro::create(array_merge($baseData, $legalData));
 
     // Guardar ítems
     foreach ($request->items as $item) {
@@ -143,10 +261,10 @@ class CuentaCobroController extends Controller
         $pdf = Pdf::loadView('cuentas_cobro.pdf', $data)->setPaper('letter');
         $fileName = 'CuentaCobro_' . ($cuenta->numero ?? $cuenta->id) . '.pdf';
         // Asegurar carpeta
-        Storage::makeDirectory('public/cuentas_cobro');
-        Storage::put('public/cuentas_cobro/' . $fileName, $pdf->output());
+        Storage::disk('public')->makeDirectory('cuentas_cobro');
+        Storage::disk('public')->put('cuentas_cobro/' . $fileName, $pdf->output());
 
-        $pdfUrl = Storage::url('public/cuentas_cobro/' . $fileName);
+        $pdfUrl = Storage::disk('public')->url('cuentas_cobro/' . $fileName);
     } catch (\Exception $e) {
         // Registrar error y continuar; no bloquear la creación por fallos en PDF
         \Log::error('Error generando PDF de cuenta de cobro: ' . $e->getMessage());
@@ -156,7 +274,7 @@ class CuentaCobroController extends Controller
     // Registrar historial: creado y enviado a revisión (etapa inicial)
     try {
         $cuenta->registrarHistorial(Auth::id(), 'creado', null, 'en_revision', 'Cuenta de cobro creada');
-        $etiquetaInicial = $startStage === 'ordenador_gasto' ? 'Ordenador del Gasto' : ucfirst(str_replace('_',' ', $startStage));
+        $etiquetaInicial = ucfirst($startStage);
         $cuenta->registrarHistorial(Auth::id(), 'revisado', 'pendiente', 'en_revision', 'Enviada a revisión (' . $etiquetaInicial . ')');
     } catch (\Exception $e) {
         \Log::warning('No se pudo registrar historial al crear la cuenta: '.$e->getMessage());
@@ -178,7 +296,7 @@ class CuentaCobroController extends Controller
             Notificacion::create([
                 'user_id' => $usuario->id,
                 'tipo' => 'cuenta_cobro',
-                'titulo' => 'Nueva cuenta para revisión (' . ($startStage === 'ordenador_gasto' ? 'Ordenador del Gasto' : ucfirst(str_replace('_',' ', $startStage))) . ')',
+                'titulo' => 'Nueva cuenta para revisión (' . ucfirst($startStage) . ')',
                 'mensaje' => 'Cuenta #' . $cuenta->numero . ' por $' . number_format($cuenta->valor_total, 2, ',', '.') . ' - Beneficiario: ' . $cuenta->nombre_beneficiario,
                 'cuenta_cobro_id' => $cuenta->id,
             ]);
@@ -207,17 +325,14 @@ class CuentaCobroController extends Controller
     {
         $role = Auth::user()?->role?->name;
         $roleToEtapa = [
-            'ordenador_gasto' => 'ordenador_gasto',
-            'contratacion' => 'contratacion',
+            'administrador' => 'administrador',
             'tesoreria' => 'tesoreria',
-            'supervisor' => 'supervisor',
-            'alcalde' => 'alcalde',
         ];
 
         $etapa = $roleToEtapa[$role] ?? null;
         
-        // Super Admin ve todas las cuentas en revisión
-        if ($role === 'super_admin') {
+        // Admin del programa ve todas las cuentas en revisión
+        if ($role === 'admin_programa') {
             $cuentas = CuentaCobro::where('estado_aprobacion', 'en_revision')
                 ->whereNull('archived_at')
                 ->orderByDesc('created_at')
@@ -251,57 +366,37 @@ class CuentaCobroController extends Controller
         $comentario = $request->input('comentario');
         $estadoAnterior = $cuenta->estado_aprobacion;
 
-        // 0) Supervisor -> Ordenador del Gasto (si la etapa es supervisor)
-        if ($cuenta->etapa_aprobacion === 'supervisor' && in_array($role, ['supervisor', 'super_admin'])) {
-            $cuenta->etapa_aprobacion = 'ordenador_gasto';
-            $cuenta->save();
-            $cuenta->registrarHistorial(Auth::id(), 'revisado', $estadoAnterior, 'en_revision', $comentario ?: 'Supervisor aprobó y envió a Ordenador del Gasto.');
-            $this->notificarRoles(['ordenador_gasto'], 'Cuenta para revisión (Ordenador del Gasto)', $cuenta);
-            return back()->with('success', 'Cuenta enviada a Ordenador del Gasto.');
-        }
-
-        // Avance por etapas (nuevo flujo)
-        // 1) Ordenador del gasto -> Contratación
-        if ($cuenta->etapa_aprobacion === 'ordenador_gasto' && in_array($role, ['ordenador_gasto', 'super_admin'])) {
-            $cuenta->etapa_aprobacion = 'contratacion';
-            $cuenta->save();
-            $cuenta->registrarHistorial(Auth::id(), 'revisado', $estadoAnterior, 'en_revision', $comentario ?: 'Ordenador del Gasto aprobó y envió a Contratación.');
-            $this->notificarRoles(['contratacion'], 'Cuenta para revisión (Contratación)', $cuenta);
-            return back()->with('success', 'Cuenta enviada a Contratación.');
-        }
-
-        // 2) Contratación -> Alcalde (OBLIGATORIO, sin chequeo dinámico)
-        if ($cuenta->etapa_aprobacion === 'contratacion' && in_array($role, ['contratacion', 'super_admin'])) {
-            $cuenta->etapa_aprobacion = 'alcalde';
-            $cuenta->save();
-            $cuenta->registrarHistorial(Auth::id(), 'revisado', $estadoAnterior, 'en_revision', $comentario ?: 'Contratación aprobó y envió a Alcalde.');
-            $this->notificarRoles(['alcalde'], 'Cuenta para revisión (Alcalde)', $cuenta);
-            return back()->with('success', 'Cuenta enviada a Alcalde.');
-        }
-
-        // 3) Alcalde -> Tesorería (aquí consideramos la cuenta como aprobada)
-        if ($cuenta->etapa_aprobacion === 'alcalde' && in_array($role, ['alcalde', 'super_admin'])) {
-            $cuenta->estado_aprobacion = 'aprobado';
+        // 1) Administrador -> Tesorería
+        if ($cuenta->etapa_aprobacion === 'administrador' && in_array($role, ['administrador', 'admin_programa'])) {
             $cuenta->etapa_aprobacion = 'tesoreria';
+            $cuenta->save();
+            $cuenta->registrarHistorial(Auth::id(), 'revisado', $estadoAnterior, 'en_revision', $comentario ?: 'Administrador aprobó y envió a Tesorería.');
+            $this->notificarRoles(['tesoreria'], 'Cuenta para revisión (Tesorería)', $cuenta);
+            return back()->with('success', 'Cuenta enviada a Tesorería.');
+        }
+
+        // 2) Tesorería -> Aprobado (Listo para pago)
+        if ($cuenta->etapa_aprobacion === 'tesoreria' && in_array($role, ['tesoreria', 'admin_programa'])) {
+            $cuenta->estado_aprobacion = 'aprobado';
+            // Se mantiene en etapa tesoreria para que puedan registrar el pago
             $cuenta->aprobado_por_id = Auth::id();
             $cuenta->fecha_aprobacion = now();
             $cuenta->save();
-            $cuenta->registrarHistorial(Auth::id(), 'aprobado', $estadoAnterior, 'aprobado', $comentario ?: 'Alcalde aprobó y envió a Tesorería para pago.');
-            $this->notificarRoles(['tesoreria'], 'Cuenta aprobada. Pendiente de pago (Tesorería)', $cuenta);
+            $cuenta->registrarHistorial(Auth::id(), 'aprobado', $estadoAnterior, 'aprobado', $comentario ?: 'Tesorería aprobó la cuenta.');
+            
             if ($cuenta->user_id) {
                 Notificacion::create([
                     'user_id' => $cuenta->user_id,
                     'tipo' => 'cuenta_cobro',
                     'titulo' => 'Tu cuenta fue aprobada',
-                    'mensaje' => 'La cuenta #' . $cuenta->numero . ' fue aprobada. Enviada a Tesorería para pago.',
+                    'mensaje' => 'La cuenta #' . $cuenta->numero . ' fue aprobada por Tesorería.',
                     'cuenta_cobro_id' => $cuenta->id,
                 ]);
             }
-            return back()->with('success', 'Cuenta enviada a Tesorería para registro de pago.');
+            return back()->with('success', 'Cuenta aprobada. Lista para registrar pago.');
         }
 
-        // Tesorería no aprueba aquí: registra pago en otra acción
-        return back()->with('error', 'No tienes permisos para aprobar esta etapa o la etapa requiere registrar pago.');
+        return back()->with('error', 'No tienes permisos para aprobar esta etapa.');
     }
 
     /**
@@ -345,7 +440,7 @@ class CuentaCobroController extends Controller
         if ($cuenta->estado_aprobacion !== 'aprobado') {
             return back()->with('error', 'La cuenta debe estar aprobada para enviarse al cliente.');
         }
-        if (!in_array($role, ['ordenador_gasto', 'alcalde', 'super_admin', 'tesoreria'])) {
+        if (!in_array($role, ['administrador', 'tesoreria', 'admin_programa'])) {
             return back()->with('error', 'No tienes permisos para enviar al cliente.');
         }
         $cuenta->update([
@@ -370,7 +465,7 @@ class CuentaCobroController extends Controller
 
         $cuenta = CuentaCobro::findOrFail($id);
         $role = Auth::user()?->role?->name;
-        if (!in_array($role, ['tesoreria', 'super_admin'])) {
+        if (!in_array($role, ['tesoreria', 'admin_programa'])) {
             return back()->with('error', 'No tienes permisos para registrar pagos.');
         }
         if ($cuenta->etapa_aprobacion !== 'tesoreria' || $cuenta->estado_aprobacion !== 'aprobado') {
@@ -387,8 +482,8 @@ class CuentaCobroController extends Controller
             ( $request->filled('referencia_pago') ? (" | Ref: " . $request->input('referencia_pago')) : '' ) .
             ( $request->filled('observacion_pago') ? (" | Obs: " . $request->input('observacion_pago')) : '' );
         $cuenta->observaciones = trim(($cuenta->observaciones ? ($cuenta->observaciones . "\n") : '') . $detallePago);
-        // Al notificar pago, devolver la cuenta al contratista (para su control/seguimiento)
-        $cuenta->etapa_aprobacion = 'contratista';
+        // Al notificar pago, devolver la cuenta al auxiliar (para su control/seguimiento)
+        $cuenta->etapa_aprobacion = 'auxiliar';
         $cuenta->save();
 
         // Historial y notificación
@@ -416,7 +511,7 @@ class CuentaCobroController extends Controller
         ]);
         $cuenta = CuentaCobro::findOrFail($id);
         $role = Auth::user()?->role?->name;
-        if (!in_array($role, ['tesoreria', 'super_admin'])) {
+        if (!in_array($role, ['tesoreria', 'admin_programa'])) {
             return back()->with('error', 'No tienes permisos para rechazar pagos.');
         }
         if ($cuenta->etapa_aprobacion !== 'tesoreria' || $cuenta->estado_aprobacion !== 'aprobado') {
@@ -472,7 +567,7 @@ class CuentaCobroController extends Controller
     // Restricciones de edición
     $role = Auth::user()?->role?->name;
     $readonly = false;
-    if ($role === 'contratista') {
+    if ($role === 'auxiliar') {
         if ($cuenta->user_id !== Auth::id() || $cuenta->estado_aprobacion !== 'en_correccion') {
             return redirect()->route('cuentas_cobro.show', $cuenta->id)->with('error', 'Solo puedes editar cuentas devueltas para corrección.');
         }
@@ -500,7 +595,7 @@ class CuentaCobroController extends Controller
 {
     $cuenta = CuentaCobro::findOrFail($id);
     $role = Auth::user()?->role?->name;
-    if ($role === 'contratista') {
+    if ($role === 'auxiliar') {
         if ($cuenta->user_id !== Auth::id() || $cuenta->estado_aprobacion !== 'en_correccion') {
             return redirect()->route('cuentas_cobro.show', $cuenta->id)->with('error', 'Solo puedes actualizar cuentas devueltas para corrección.');
         }
@@ -513,9 +608,59 @@ class CuentaCobroController extends Controller
         'tipo_identificacion' => 'required',
         'tipo_cliente' => 'required',
         'nombre_beneficiario' => 'required',
+        'plazo_pago' => 'nullable|integer|min:0|max:365',
         'items.*.item' => 'required|string',
         'items.*.cantidad' => 'required|integer|min:1',
         'items.*.precio_unitario' => 'required|numeric|min:0',
+
+        'nombre_acreedor' => 'nullable|string|max:255',
+        'tipo_documento_acreedor' => 'nullable|string|max:20',
+        'numero_documento_acreedor' => 'nullable|string|max:50',
+        'ciudad_expedicion_acreedor' => 'nullable|string|max:255',
+        'direccion_acreedor' => 'nullable|string|max:255',
+        'telefono_acreedor' => 'nullable|string|max:50',
+        'email_acreedor' => 'nullable|email|max:255',
+
+        'nombre_deudor' => 'nullable|string|max:255',
+        'tipo_documento_deudor' => 'nullable|string|max:20',
+        'numero_documento_deudor' => 'nullable|string|max:50',
+        'ciudad_expedicion_deudor' => 'nullable|string|max:255',
+        'direccion_deudor' => 'nullable|string|max:255',
+        'telefono_deudor' => 'nullable|string|max:50',
+        'email_deudor' => 'nullable|email|max:255',
+
+        'concepto_cobro' => 'required|string|min:10',
+        'descripcion_servicio' => 'nullable|string',
+        'fecha_prestacion_servicio' => 'required|date',
+        'fecha_inicio_servicio' => 'nullable|date',
+        'fecha_fin_servicio' => 'nullable|date|after_or_equal:fecha_inicio_servicio',
+        'lugar_prestacion_servicio' => 'nullable|string|max:255',
+
+        'numero_contrato_referencia' => 'nullable|string|max:255',
+        'fecha_contrato' => 'nullable|date',
+        'tipo_contrato' => 'nullable|string|max:100',
+        'objeto_contrato' => 'nullable|string|max:500',
+
+        'numero_documento_soporte' => 'nullable|string|max:255',
+        'fecha_documento_soporte' => 'nullable|date',
+        'documento_soporte_url' => 'nullable|url',
+        'requiere_validacion_previa' => 'nullable|boolean',
+
+        'ciudad_expedicion_cuenta' => 'nullable|string|max:255',
+        'prefijo_cuenta' => 'nullable|string|max:10',
+        'serie_cuenta' => 'nullable|string|max:20',
+        'consecutivo_cuenta' => 'nullable|integer|min:0',
+
+        'condiciones_pago' => 'nullable|string',
+        'forma_pago_acordada' => 'nullable|string|max:255',
+        'penalidades_retraso' => 'nullable|string',
+        'interes_mora_porcentaje' => 'nullable|numeric|min:0',
+        'cobra_intereses_mora' => 'nullable|boolean',
+        'dias_gracia' => 'nullable|integer|min:0|max:120',
+        'fecha_vencimiento_real' => 'nullable|date',
+
+        'observaciones_legales' => 'nullable|string',
+        'notas_cobro' => 'nullable|string',
     ]);
 
     $subtotal = collect($request->items)->sum(function($item) {
@@ -527,7 +672,27 @@ class CuentaCobroController extends Controller
     $retIva = (float) $request->input('retencion_iva', 0);
     $valorTotal = round($subtotal + $iva - $retFuente - $retIca - $retIva, 2);
 
-    $cuenta->update([
+    $legalData = $this->extractLegalPayload($request);
+    $plazoDias = (int) $request->input('plazo_pago', 0);
+    $legalData['dias_plazo_pago'] = $legalData['dias_plazo_pago'] ?? ($plazoDias ?: null);
+
+    $fechaVencimientoCalculada = $legalData['fecha_vencimiento_real']
+        ?? $this->calculateFechaVencimiento($request->fecha_emision, $plazoDias);
+    $legalData['fecha_vencimiento_real'] = $fechaVencimientoCalculada;
+    if (!empty($legalData['dias_gracia']) && $fechaVencimientoCalculada) {
+        $legalData['fecha_vencimiento_con_gracia'] = Carbon::parse($fechaVencimientoCalculada)
+            ->addDays((int) $legalData['dias_gracia'])
+            ->format('Y-m-d');
+    }
+    
+    $legalData['subtotal'] = $subtotal;
+    $legalData['iva_valor'] = $iva;
+    $legalData['retencion_fuente_valor'] = $retFuente;
+    $legalData['retencion_ica_valor'] = $retIca;
+    $legalData['retencion_iva_valor'] = $retIva;
+    $legalData['valor_pendiente_pago'] = $valorTotal;
+
+    $cuenta->update(array_merge([
         'fecha_emision' => $request->fecha_emision,
         'valor_total' => $valorTotal,
         'departamento' => $request->departamento,
@@ -539,7 +704,7 @@ class CuentaCobroController extends Controller
         'nombre_beneficiario' => $request->nombre_beneficiario,
         'plazo_pago' => $request->plazo_pago,
         'contrato_id' => $request->contrato_id ?? null,
-    ]);
+    ], $legalData));
 
     // Eliminar ítems anteriores y guardar los nuevos
     $cuenta->items()->delete();
@@ -568,8 +733,8 @@ class CuentaCobroController extends Controller
 
         $pdf = Pdf::loadView('cuentas_cobro.pdf', $data)->setPaper('letter');
         $fileName = 'CuentaCobro_' . ($cuenta->numero ?? $cuenta->id) . '.pdf';
-        Storage::makeDirectory('public/cuentas_cobro');
-        Storage::put('public/cuentas_cobro/' . $fileName, $pdf->output());
+        Storage::disk('public')->makeDirectory('cuentas_cobro');
+        Storage::disk('public')->put('cuentas_cobro/' . $fileName, $pdf->output());
     } catch (\Exception $e) {
         \Log::error('Error regenerando PDF de cuenta de cobro: ' . $e->getMessage());
     }
@@ -578,46 +743,46 @@ class CuentaCobroController extends Controller
 }
 
     /**
-     * Devolver para corrección (Contratación)
+     * Devolver para corrección (Administrador)
      */
     public function devolver(Request $request, $id)
     {
         $cuenta = CuentaCobro::findOrFail($id);
         $role = Auth::user()?->role?->name;
         $request->validate(['motivo' => 'required|string|min:5']);
-        if ($cuenta->estado_aprobacion !== 'en_revision' || $cuenta->etapa_aprobacion !== 'contratacion') {
-            return back()->with('error', 'La cuenta no está en etapa de Contratación.');
+        if ($cuenta->estado_aprobacion !== 'en_revision' || $cuenta->etapa_aprobacion !== 'administrador') {
+            return back()->with('error', 'La cuenta no está en etapa de Administrador.');
         }
-        if (!in_array($role, ['contratacion', 'super_admin'])) {
+        if (!in_array($role, ['administrador', 'admin_programa'])) {
             return back()->with('error', 'No tienes permisos para devolver esta cuenta.');
         }
         $estadoAnterior = $cuenta->estado_aprobacion;
         $cuenta->estado_aprobacion = 'en_correccion';
-        $cuenta->etapa_aprobacion = 'contratista';
+        $cuenta->etapa_aprobacion = 'auxiliar';
         // Guardar motivo de devolución específico
         $cuenta->motivo_devolucion = $request->input('motivo');
         $cuenta->save();
-        $cuenta->registrarHistorial(Auth::id(), 'devuelto', $estadoAnterior, 'en_correccion', 'Contratación devolvió: '.$request->input('motivo'));
+        $cuenta->registrarHistorial(Auth::id(), 'devuelto', $estadoAnterior, 'en_correccion', 'Administrador devolvió: '.$request->input('motivo'));
         // Notificar al creador
         if ($cuenta->user_id) {
             Notificacion::create([
                 'user_id' => $cuenta->user_id,
                 'tipo' => 'cuenta_cobro',
                 'titulo' => 'Cuenta devuelta para corrección',
-                'mensaje' => 'La cuenta #'.$cuenta->numero.' fue devuelta por Contratación: '.$request->input('motivo'),
+                'mensaje' => 'La cuenta #'.$cuenta->numero.' fue devuelta por Administrador: '.$request->input('motivo'),
                 'cuenta_cobro_id' => $cuenta->id,
             ]);
         }
-        return back()->with('success', 'Cuenta devuelta al contratista para corrección.');
+        return back()->with('success', 'Cuenta devuelta al auxiliar para corrección.');
     }
 
     /**
-     * Reenviar a revisión (Contratista)
+     * Reenviar a revisión (Auxiliar)
      */
     public function reenviar($id)
     {
         $cuenta = CuentaCobro::findOrFail($id);
-        if (Auth::user()?->role?->name !== 'contratista' || $cuenta->user_id !== Auth::id()) {
+        if (Auth::user()?->role?->name !== 'auxiliar' || $cuenta->user_id !== Auth::id()) {
             return back()->with('error', 'No puedes reenviar esta cuenta.');
         }
         if ($cuenta->estado_aprobacion !== 'en_correccion') {
@@ -625,11 +790,11 @@ class CuentaCobroController extends Controller
         }
         $estadoAnterior = $cuenta->estado_aprobacion;
         $cuenta->estado_aprobacion = 'en_revision';
-        $cuenta->etapa_aprobacion = 'ordenador_gasto';
+        $cuenta->etapa_aprobacion = 'administrador';
         $cuenta->motivo_devolucion = null; // limpiar motivo de devolución al reenviar
         $cuenta->save();
-        $cuenta->registrarHistorial(Auth::id(), 'reenviado', $estadoAnterior, 'en_revision', 'Contratista realizó correcciones y reenvió.');
-        $this->notificarRoles(['ordenador_gasto'], 'Cuenta reenviada para revisión (Ordenador del Gasto)', $cuenta);
+        $cuenta->registrarHistorial(Auth::id(), 'reenviado', $estadoAnterior, 'en_revision', 'Auxiliar realizó correcciones y reenvió.');
+        $this->notificarRoles(['administrador'], 'Cuenta reenviada para revisión (Administrador)', $cuenta);
         return back()->with('success', 'Cuenta reenviada a revisión.');
     }
     /**
@@ -641,6 +806,66 @@ class CuentaCobroController extends Controller
         $cuenta->delete();
 
         return redirect()->route('cuentas_cobro.index')->with('success', 'Cuenta de cobro eliminada correctamente.');
+    }
+
+    /**
+     * Exportar pagos a CSV.
+     */
+    public function exportarPagos()
+    {
+        $cuentas = CuentaCobro::with(['user', 'items', 'contrato'])
+            ->whereNull('archived_at')
+            ->latest()
+            ->get();
+
+        $filename = "pagos_" . date('Y-m-d_H-i-s') . ".csv";
+        $handle = fopen('php://memory', 'w');
+
+        // Add BOM for Excel compatibility
+        fputs($handle, "\xEF\xBB\xBF");
+
+        // Headers
+        fputcsv($handle, [
+            'ID',
+            'Número',
+            'Beneficiario',
+            'Identificación',
+            'Valor Total',
+            'Fecha Emisión',
+            'Estado Aprobación',
+            'Estado Pago',
+            'Fecha Pago',
+            'Observaciones / Detalles Pago'
+        ]);
+
+        foreach ($cuentas as $cuenta) {
+            fputcsv($handle, [
+                $cuenta->id,
+                $cuenta->numero,
+                $cuenta->nombre_beneficiario,
+                $cuenta->identificacion,
+                number_format($cuenta->valor_total, 2, '.', ''),
+                $cuenta->fecha_emision,
+                ucfirst(str_replace('_', ' ', $cuenta->estado_aprobacion)),
+                ucfirst($cuenta->estado_pago),
+                $cuenta->fecha_pago,
+                $cuenta->observaciones
+            ]);
+        }
+
+        fseek($handle, 0);
+
+        return response()->stream(
+            function () use ($handle) {
+                fpassthru($handle);
+                fclose($handle);
+            },
+            200,
+            [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => "attachment; filename=\"$filename\"",
+            ]
+        );
     }
 
     /**
@@ -696,13 +921,103 @@ class CuentaCobroController extends Controller
     }
 
     /**
-     * Archivar una cuenta (solo contratista dueño)
+     * Notificar al cliente (Email / WhatsApp / SMS)
+     */
+    public function notificarCliente(Request $request, $id)
+    {
+        $request->validate([
+            'canales' => 'required|array',
+            'mensaje' => 'nullable|string',
+        ]);
+
+        $cuenta = CuentaCobro::findOrFail($id);
+        $role = Auth::user()?->role?->name;
+
+        // Solo Tesorería (o admin) puede enviar esta notificación final
+        if (!in_array($role, ['tesoreria', 'admin_programa'])) {
+            return response()->json(['success' => false, 'message' => 'No tienes permisos.'], 403);
+        }
+
+        // Generar o recuperar PDF
+        $fileName = 'CuentaCobro_' . ($cuenta->numero ?? $cuenta->id) . '.pdf';
+        $pdfPath = 'cuentas_cobro/' . $fileName;
+        
+        if (!Storage::disk('public')->exists($pdfPath)) {
+            // Regenerar si no existe
+             $subtotal = $cuenta->items->sum(function ($it) {
+                return ($it->cantidad ?? 0) * ($it->precio_unitario ?? 0);
+            });
+            $total = $cuenta->valor_total ?? $subtotal;
+            $data = [
+                'cuenta' => $cuenta,
+                'subtotal' => $subtotal,
+                'total' => $total,
+                'appName' => config('app.name'),
+            ];
+            $pdf = Pdf::loadView('cuentas_cobro.pdf', $data)->setPaper('letter');
+            Storage::disk('public')->put($pdfPath, $pdf->output());
+        }
+        
+        $fullPdfPath = Storage::disk('public')->path($pdfPath);
+        $publicPdfUrl = Storage::disk('public')->url($pdfPath);
+        $mensaje = $request->input('mensaje', 'Adjunto encontrará su cuenta de cobro aprobada.');
+
+        $results = [];
+
+        // 1. Email
+        if (in_array('email', $request->canales)) {
+            $emailCliente = $cuenta->email_deudor; // Asumiendo que el deudor es el cliente
+            if ($emailCliente) {
+                try {
+                    Mail::to($emailCliente)->send(new CuentaCobroNotification($cuenta, $mensaje, $fullPdfPath));
+                    $results['email'] = 'Enviado correctamente a ' . $emailCliente;
+                } catch (\Exception $e) {
+                    $results['email'] = 'Error al enviar: ' . $e->getMessage();
+                    \Log::error('Error enviando email cliente: ' . $e->getMessage());
+                }
+            } else {
+                $results['email'] = 'No se encontró email del cliente (Deudor).';
+            }
+        }
+
+        // 2. WhatsApp (Generar Link)
+        if (in_array('whatsapp', $request->canales)) {
+            $telefono = $cuenta->telefono_deudor; // Asumiendo teléfono del deudor
+            if ($telefono) {
+                // Limpiar teléfono
+                $telefono = preg_replace('/[^0-9]/', '', $telefono);
+                // Agregar código país si falta (asumiendo Colombia +57)
+                if (strlen($telefono) == 10) {
+                    $telefono = '57' . $telefono;
+                }
+                
+                $texto = urlencode($mensaje . " Puede descargarla aquí: " . $publicPdfUrl);
+                $link = "https://wa.me/{$telefono}?text={$texto}";
+                $results['whatsapp_link'] = $link;
+            } else {
+                $results['whatsapp'] = 'No se encontró teléfono del cliente.';
+            }
+        }
+
+        // 3. SMS (Simulado o implementación futura)
+        if (in_array('sms', $request->canales)) {
+             $results['sms'] = 'Envío de SMS no configurado en esta versión.';
+        }
+
+        return response()->json([
+            'success' => true,
+            'results' => $results
+        ]);
+    }
+
+    /**
+     * Archivar una cuenta (solo auxiliar dueño)
      */
     public function archivar($id)
     {
         $cuenta = CuentaCobro::findOrFail($id);
         $role = Auth::user()?->role?->name;
-        if ($role !== 'contratista' || $cuenta->user_id !== Auth::id()) {
+        if ($role !== 'auxiliar' || $cuenta->user_id !== Auth::id()) {
             return back()->with('error', 'No puedes archivar esta cuenta.');
         }
         if ($cuenta->archived_at) {
@@ -710,8 +1025,111 @@ class CuentaCobroController extends Controller
         }
         $cuenta->archived_at = now();
         $cuenta->save();
-        $cuenta->registrarHistorial(Auth::id(), 'archivado', $cuenta->estado_aprobacion, $cuenta->estado_aprobacion, 'Cuenta archivada por el contratista.');
+        $cuenta->registrarHistorial(Auth::id(), 'archivado', $cuenta->estado_aprobacion, $cuenta->estado_aprobacion, 'Cuenta archivada por el auxiliar.');
         return redirect()->route('cuentas_cobro.index')->with('success', 'Cuenta archivada.');
+    }
+
+    /**
+     * Extrae y normaliza los campos legales adicionales del request.
+     */
+    private function extractLegalPayload(Request $request): array
+    {
+        $fields = [
+            'nombre_acreedor', 'tipo_documento_acreedor', 'numero_documento_acreedor',
+            'ciudad_expedicion_acreedor', 'direccion_acreedor', 'telefono_acreedor', 'email_acreedor',
+            'nombre_deudor', 'tipo_documento_deudor', 'numero_documento_deudor',
+            'ciudad_expedicion_deudor', 'direccion_deudor', 'telefono_deudor', 'email_deudor',
+            'concepto_cobro', 'descripcion_servicio', 'fecha_prestacion_servicio',
+            'fecha_inicio_servicio', 'fecha_fin_servicio', 'lugar_prestacion_servicio',
+            'numero_contrato_referencia', 'fecha_contrato', 'tipo_contrato', 'objeto_contrato',
+            'numero_documento_soporte', 'fecha_documento_soporte', 'documento_soporte_url',
+            'ciudad_expedicion_cuenta', 'prefijo_cuenta', 'serie_cuenta', 'consecutivo_cuenta',
+            'condiciones_pago', 'forma_pago_acordada', 'penalidades_retraso', 'interes_mora_porcentaje',
+            'cobra_intereses_mora', 'dias_gracia', 'fecha_vencimiento_real', 'observaciones_legales', 'notas_cobro',
+            'estado_cobro_judicial', 'numero_proceso_judicial', 'fecha_inicio_proceso', 'juzgado',
+            'radicado_judicial', 'tiene_merito_ejecutivo', 'deuda_reconocida_deudor',
+            'evidencias_obligacion', 'testigos', 'clausulas_especiales', 'fecha_hora_emision',
+            'dias_plazo_pago', 'fecha_vencimiento_con_gracia', 'valor_pendiente_pago',
+            'iva_valor', 'retencion_fuente_valor', 'retencion_ica_valor', 'retencion_iva_valor',
+        ];
+
+        $payload = [];
+        foreach ($fields as $field) {
+            if ($request->has($field)) {
+                $payload[$field] = $request->input($field);
+            }
+        }
+
+        // Ensure non-nullable fields with defaults in DB are not null in payload
+        $payload['interes_mora_porcentaje'] = $payload['interes_mora_porcentaje'] ?? 0;
+        $payload['dias_gracia'] = $payload['dias_gracia'] ?? 0;
+
+        $booleanFields = [
+            'requiere_validacion_previa',
+            'cobra_intereses_mora',
+            'tiene_merito_ejecutivo',
+            'deuda_reconocida_deudor',
+            'recordatorio_habilitado',
+        ];
+        foreach ($booleanFields as $field) {
+            $payload[$field] = $request->boolean($field);
+        }
+
+        return $payload;
+    }
+
+    /**
+     * Calcula la fecha de vencimiento sumando el plazo configurado.
+     */
+    private function calculateFechaVencimiento(?string $fechaEmision, int $plazoDias): ?string
+    {
+        if (!$fechaEmision) {
+            return null;
+        }
+
+        try {
+            $fecha = Carbon::parse($fechaEmision);
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        if ($plazoDias <= 0) {
+            return $fecha->format('Y-m-d');
+        }
+
+        return $fecha->copy()->addDays($plazoDias)->format('Y-m-d');
+    }
+
+    /**
+     * Divide el número de la cuenta en prefijo, serie y consecutivo.
+     */
+    private function splitNumeroCuenta(?string $numero): array
+    {
+        if (!$numero) {
+            return [null, null, null];
+        }
+
+        $prefijo = $serie = null;
+        $consecutivo = null;
+        $parts = preg_split('/[-\s]+/', trim($numero));
+
+        if (count($parts) >= 3) {
+            $prefijo = $parts[0] ?: null;
+            $serie = $parts[1] ?: null;
+            $consecutivo = $parts[2] ?? null;
+        } elseif (count($parts) === 2) {
+            $prefijo = $parts[0] ?: null;
+            $consecutivo = $parts[1] ?? null;
+        } else {
+            $consecutivo = $parts[0] ?? null;
+        }
+
+        if ($consecutivo !== null) {
+            $soloDigitos = preg_replace('/\D+/', '', (string) $consecutivo);
+            $consecutivo = $soloDigitos === '' ? $consecutivo : (int) ltrim($soloDigitos, '0');
+        }
+
+        return [$prefijo, $serie, $consecutivo];
     }
 
     /**

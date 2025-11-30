@@ -36,26 +36,15 @@ class RoleSeeder extends Seeder
             'manage_users',
             'system_admin',
 
-            // Ordenador del gasto
+            // Pagos
             'authorize_payment',
-            'view_budget',
-            'manage_budget',
-            'generate_payment_orders',
-            'view_financial_reports',
-
-            // Tesorería
             'process_payment',
-            'generate_checks',
-            'bank_transfers',
             'payment_confirmation',
             'financial_reports',
 
             // Contratación
             'manage_contracts',
             'manage_contractors',
-            'contract_validation',
-            'contractor_registration',
-            'contract_reports',
         ];
 
         // 🔹 Crear permisos si no existen
@@ -65,7 +54,7 @@ class RoleSeeder extends Seeder
 
         // 🔹 Definir roles y sus permisos
         $rolesData = [
-            'contratista' => [
+            'auxiliar' => [
                 'permissions' => [
                     'create_cuenta_cobro',
                     'view_own_cuenta_cobro',
@@ -73,70 +62,40 @@ class RoleSeeder extends Seeder
                     'upload_documents',
                     'view_contract_info'
                 ],
-                'description' => 'Contratista - Presenta cuentas de cobro'
+                'description' => 'Auxiliar - Crea y gestiona sus cuentas de cobro'
             ],
-            'supervisor' => [
+            'administrador' => [
                 'permissions' => [
                     'view_cuenta_cobro',
                     'review_cuenta_cobro',
                     'approve_cuenta_cobro',
                     'reject_cuenta_cobro',
                     'add_comments',
-                    'request_corrections'
+                    'request_corrections',
+                    'manage_contracts',
+                    'view_reports'
                 ],
-                'description' => 'Supervisor - Revisa y valida las cuentas de cobro'
+                'description' => 'Administrador - Aprueba cuentas y gestiona contratos'
             ],
-            'alcalde' => [
-                'permissions' => [
-                    'view_all_cuenta_cobro',
-                    'final_approval'
-                ],
-                'description' => 'Alcalde - Autoriza decisiones finales sobre cuentas de cobro'
-            ],
-           'ordenador_gasto' => [
-    'permissions' => [
-        'view_cuenta_cobro',
-        'authorize_payment',
-        'view_budget',
-        'manage_budget',
-        'generate_payment_orders',
-        'view_financial_reports',
-        'manage_users',   // necesario para editar usuarios
-        'manage_roles',   // necesario para editar roles
-    ],
-    'description' => 'Ordenador del Gasto - Autoriza pagos y gestiona roles de usuarios'
-],
-
-
             'tesoreria' => [
                 'permissions' => [
                     'view_cuenta_cobro',
                     'process_payment',
-                    'generate_checks',
-                    'bank_transfers',
                     'payment_confirmation',
                     'financial_reports'
                 ],
-                'description' => 'Tesorería - Procesa los pagos'
+                'description' => 'Tesorería - Realiza y confirma pagos'
             ],
-            'contratacion' => [
-                'permissions' => [
-                    'manage_contracts',
-                    'manage_contractors',
-                    'view_all_cuenta_cobro',
-                    'contract_validation',
-                    'contractor_registration',
-                    'contract_reports'
-                ],
-                'description' => 'Contratación - Administra contratos y contratistas'
-            ],
-            'super_admin' => [
+            'admin_programa' => [
                 'permissions' => [
                     'system_admin',
                     'manage_users',
-                    'override_decisions'
+                    'override_decisions',
+                    'view_all_cuenta_cobro',
+                    'view_reports',
+                    'manage_contracts'
                 ],
-                'description' => 'Administrador del sistema - Control total del software'
+                'description' => 'Admin del Programa - Control total del sistema'
             ]
         ];
 
@@ -152,6 +111,6 @@ class RoleSeeder extends Seeder
             );
         }
 
-        $this->command->info('Roles y permisos creados exitosamente.');
+        $this->command->info('Roles y permisos actualizados exitosamente.');
     }
 }

@@ -335,16 +335,6 @@
     </div>
 </div>
 
-@if(session('success'))
-    <div class="alert-custom">
-        <span class="material-symbols-rounded" style="color: var(--apple-green); font-size: 24px;">check_circle</span>
-        <span style="flex: 1;">{{ session('success') }}</span>
-        <button onclick="this.parentElement.remove()" style="background: none; border: none; cursor: pointer; opacity: 0.5;">
-            <span class="material-symbols-rounded">close</span>
-        </button>
-    </div>
-@endif
-
 <div class="table-container">
     <div class="table-header-section">
         <h3 class="table-title">Lista de Usuarios</h3>

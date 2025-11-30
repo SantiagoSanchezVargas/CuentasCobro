@@ -51,4 +51,26 @@ class NotificacionController extends Controller
 
         return back()->with('success', 'Todas las notificaciones fueron marcadas como leídas.');
     }
+
+    /**
+     * Marcar como leída y redirigir al recurso relacionado.
+     */
+    public function visitar($id)
+    {
+        $notificacion = Notificacion::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        if (!$notificacion->leida) {
+            $notificacion->marcarComoLeida();
+        }
+
+        // Redirigir según el tipo de notificación o recurso asociado
+        if ($notificacion->cuenta_cobro_id) {
+            return redirect()->route('cuentas_cobro.show', $notificacion->cuenta_cobro_id);
+        }
+
+        // Si no hay recurso específico, volver atrás
+        return back();
+    }
 }

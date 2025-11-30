@@ -26,15 +26,6 @@
             </div>
         @endif
 
-        @if (session('success'))
-            <div class="alert alert-success">
-                <span class="material-symbols-rounded">check_circle</span>
-                <div class="alert-content">
-                    {{ session('success') }}
-                </div>
-            </div>
-        @endif
-
         <form method="POST" action="{{ url('/login') }}">
             @csrf
             

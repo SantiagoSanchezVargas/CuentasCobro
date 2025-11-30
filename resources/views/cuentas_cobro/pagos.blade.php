@@ -1,9 +1,35 @@
 @extends('layouts.app')
 
-@section('title', 'Gestión de Pagos')
+@section('title', 'Gestión de Pagos - Dewey Accounts')
 
 @section('content')
 <style>
+    /* Professional Enterprise Design System */
+    :root {
+        --primary: #116dff;
+        --primary-dark: #0056d6;
+        --secondary: #0f172a; /* Slate 900 */
+        --text-main: #334155; /* Slate 700 */
+        --text-light: #64748b; /* Slate 500 */
+        --bg-body: #f8fafc; /* Slate 50 */
+        --bg-card: #ffffff;
+        --border-color: #e2e8f0; /* Slate 200 */
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --radius-md: 12px;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .main-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 40px;
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* Header */
     .page-header {
         display: flex;
         align-items: center;
@@ -11,94 +37,78 @@
         margin-bottom: 32px;
     }
 
-    .page-title {
+    .page-title h1 {
         font-size: 32px;
-        font-weight: 700;
-        color: var(--apple-dark);
-        letter-spacing: -0.5px;
-        margin: 0;
+        font-weight: 800;
+        color: var(--secondary);
+        margin-bottom: 8px;
+        letter-spacing: -0.025em;
     }
 
-    .stats-row {
+    /* Stats Grid */
+    .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 20px;
-        margin-bottom: 32px;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 24px;
+        margin-bottom: 40px;
     }
 
-    .stat-card-payment {
-        background: white;
-        padding: 28px;
-        border-radius: 16px;
+    .stat-card {
+        background: var(--bg-card);
+        border-radius: var(--radius-md);
+        padding: 24px;
+        border: 1px solid var(--border-color);
         box-shadow: var(--shadow-sm);
-        transition: all 0.3s;
-        border-left: 4px solid;
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+        border-color: var(--primary);
     }
 
-    .stat-card-payment.total {
-        border-left-color: #0071e3;
-    }
-
-    .stat-card-payment.pending {
-        border-left-color: #ff9500;
-    }
-
-    .stat-card-payment.approved {
-        border-left-color: #30d158;
-    }
-
-    .stat-card-payment.rejected {
-        border-left-color: #ff3b30;
-    }
-
-    .stat-card-payment:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-lg);
-    }
-
-    .stat-card-icon {
-        width: 56px;
-        height: 56px;
-        border-radius: 14px;
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
         margin-bottom: 16px;
     }
+    .stat-icon span { font-size: 24px; }
 
-    .stat-card-icon.total { background: linear-gradient(135deg, #0071e3, #00c6ff); }
-    .stat-card-icon.pending { background: linear-gradient(135deg, #ff9500, #ffb84d); }
-    .stat-card-icon.approved { background: linear-gradient(135deg, #30d158, #5de88a); }
-    .stat-card-icon.rejected { background: linear-gradient(135deg, #ff3b30, #ff6b5e); }
-
-    .stat-card-icon .material-symbols-rounded {
-        font-size: 28px;
-        color: white;
-    }
-
-    .stat-card-value {
+    .stat-value {
         font-size: 32px;
-        font-weight: 700;
-        color: var(--apple-dark);
-        margin-bottom: 8px;
+        font-weight: 800;
+        color: var(--secondary);
+        margin-bottom: 4px;
+        line-height: 1;
     }
 
-    .stat-card-label {
-        font-size: 14px;
-        color: var(--apple-gray);
-        font-weight: 500;
+    .stat-label {
+        font-size: 13px;
+        color: var(--text-light);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
+    /* Filters */
     .filters-bar {
-        background: white;
-        padding: 20px 24px;
-        border-radius: 14px;
+        background: var(--bg-card);
+        padding: 24px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-color);
         margin-bottom: 24px;
-        box-shadow: var(--shadow-sm);
         display: flex;
-        gap: 16px;
+        gap: 20px;
         flex-wrap: wrap;
-        align-items: center;
+        align-items: flex-end;
+        box-shadow: var(--shadow-sm);
     }
 
     .filter-group {
@@ -107,324 +117,371 @@
     }
 
     .filter-group label {
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--apple-gray);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 8px;
         display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-main);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
     }
 
-    .filter-group select,
-    .filter-group input {
+    .form-control {
         width: 100%;
-        padding: 10px 14px;
-        border: 1px solid rgba(0, 0, 0, 0.15);
-        border-radius: 10px;
+        padding: 10px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
         font-size: 14px;
+        color: var(--text-main);
         transition: all 0.2s;
+        background-color: #fff;
     }
-
-    .filter-group select:focus,
-    .filter-group input:focus {
+    
+    .form-control:focus {
         outline: none;
-        border-color: var(--apple-blue);
-        box-shadow: 0 0 0 3px var(--apple-blue-light);
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(17, 109, 255, 0.1);
     }
 
-    .table-container {
-        background: white;
-        border-radius: 18px;
+    /* Table */
+    .table-card {
+        background: var(--bg-card);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-color);
         overflow: hidden;
         box-shadow: var(--shadow-sm);
-        margin-bottom: 24px;
     }
 
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .data-table th {
+        background: #f8fafc;
+        padding: 16px 24px;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .data-table td {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-main);
+        font-size: 14px;
+        vertical-align: middle;
+    }
+
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #f8fafc; }
+
+    /* Badges */
     .status-badge {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 6px 14px;
-        border-radius: 100px;
+        padding: 4px 12px;
+        border-radius: 9999px;
         font-size: 12px;
         font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
     }
 
-    .status-badge.pending {
-        background: rgba(255, 149, 0, 0.15);
-        color: #ff9500;
-    }
-
-    .status-badge.approved {
-        background: rgba(48, 209, 88, 0.15);
-        color: #30d158;
-    }
-
-    .status-badge.rejected {
-        background: rgba(255, 59, 48, 0.15);
-        color: #ff3b30;
-    }
-
-    .status-badge.processing {
-        background: rgba(0, 113, 227, 0.15);
-        color: #0071e3;
-    }
-
-    .status-badge .material-symbols-rounded {
-        font-size: 16px;
-    }
-
-    .payment-amount {
-        font-size: 16px;
-        font-weight: 700;
-        color: var(--apple-blue);
-    }
-
-    .table-actions {
-        display: flex;
-        gap: 8px;
-        justify-content: center;
-    }
-
-    .btn-icon {
-        width: 36px;
-        height: 36px;
-        padding: 0;
+    /* Buttons */
+    .btn {
         display: inline-flex;
         align-items: center;
-        justify-content: center;
+        gap: 8px;
+        padding: 10px 20px;
         border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
         border: none;
         cursor: pointer;
         transition: all 0.2s;
         text-decoration: none;
     }
-
-    .btn-icon-view {
-        background: var(--apple-blue-light);
-        color: var(--apple-blue);
-    }
-
-    .btn-icon-view:hover {
-        background: var(--apple-blue);
+    
+    .btn-primary {
+        background: var(--primary);
         color: white;
-        transform: translateY(-2px);
+        box-shadow: 0 2px 4px rgba(17, 109, 255, 0.2);
+    }
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+        background: white;
+        border: 1px solid var(--border-color);
+        color: var(--text-main);
+    }
+    .btn-secondary:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
     }
 
-    .btn-icon-approve {
-        background: rgba(48, 209, 88, 0.15);
-        color: #30d158;
-    }
+    .btn-success { background: var(--success); color: white; }
+    .btn-danger { background: var(--danger); color: white; }
 
-    .btn-icon-approve:hover {
-        background: #30d158;
-        color: white;
-        transform: translateY(-2px);
+    .action-icon-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: transparent;
+        color: var(--text-light);
     }
+    .action-icon-btn:hover { background: #f1f5f9; color: var(--primary); }
 
-    .btn-icon-reject {
-        background: rgba(255, 59, 48, 0.15);
-        color: var(--apple-red);
-    }
+    .action-icon-btn.approve { color: var(--success); }
+    .action-icon-btn.approve:hover { background: #dcfce7; }
 
-    .btn-icon-reject:hover {
-        background: var(--apple-red);
-        color: white;
-        transform: translateY(-2px);
-    }
+    .action-icon-btn.reject { color: var(--danger); }
+    .action-icon-btn.reject:hover { background: #fee2e2; }
 
-    .empty-illustration {
+    /* Empty State */
+    .empty-state {
         text-align: center;
-        padding: 80px 32px;
+        padding: 60px 20px;
     }
-
-    .empty-illustration .material-symbols-rounded {
-        font-size: 120px;
-        color: var(--apple-blue);
-        opacity: 0.2;
-        margin-bottom: 24px;
+    .empty-icon {
+        font-size: 64px;
+        color: #e2e8f0;
+        margin-bottom: 16px;
     }
-
-    .empty-title {
-        font-size: 24px;
-        font-weight: 600;
-        color: var(--apple-dark);
-        margin-bottom: 12px;
-    }
-
-    .empty-text {
-        font-size: 16px;
-        color: var(--apple-gray);
-        margin-bottom: 32px;
+    
+    @media (max-width: 768px) {
+        .main-container { padding: 20px; }
+        .page-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+        .data-table { display: block; overflow-x: auto; }
     }
 </style>
 
-<div class="page-header">
-    <h1 class="page-title">Gestión de Pagos</h1>
-    <div style="display: flex; gap: 12px;">
-        <a href="{{ route('cuentas_cobro.index') }}" class="btn-apple btn-apple-secondary">
-            <span class="material-symbols-rounded" style="font-size: 20px;">receipt_long</span>
-            Ver Cuentas
-        </a>
-        <button onclick="exportPayments()" class="btn-apple">
-            <span class="material-symbols-rounded" style="font-size: 20px;">download</span>
-            Exportar
-        </button>
-    </div>
-</div>
-
-<!-- Statistics Cards -->
-<div class="stats-row">
-    <div class="stat-card-payment total">
-        <div class="stat-card-icon total">
-            <span class="material-symbols-rounded">payments</span>
+<div class="main-container">
+    <div class="page-header">
+        <div class="page-title">
+            <h1>Gestión de Pagos</h1>
         </div>
-        <div class="stat-card-value">${{ number_format($totalPagos ?? 0, 0, ',', '.') }}</div>
-        <div class="stat-card-label">Total en Pagos</div>
-    </div>
-
-    <div class="stat-card-payment pending">
-        <div class="stat-card-icon pending">
-            <span class="material-symbols-rounded">schedule</span>
-        </div>
-        <div class="stat-card-value">{{ $pagosPendientes ?? 0 }}</div>
-        <div class="stat-card-label">Pagos Pendientes</div>
-    </div>
-
-    <div class="stat-card-payment approved">
-        <div class="stat-card-icon approved">
-            <span class="material-symbols-rounded">check_circle</span>
-        </div>
-        <div class="stat-card-value">{{ $pagosAprobados ?? 0 }}</div>
-        <div class="stat-card-label">Pagos Aprobados</div>
-    </div>
-
-    <div class="stat-card-payment rejected">
-        <div class="stat-card-icon rejected">
-            <span class="material-symbols-rounded">cancel</span>
-        </div>
-        <div class="stat-card-value">{{ $pagosRechazados ?? 0 }}</div>
-        <div class="stat-card-label">Pagos Rechazados</div>
-    </div>
-</div>
-
-<!-- Filters Bar -->
-<div class="filters-bar">
-    <div class="filter-group">
-        <label>Estado</label>
-        <select id="statusFilter" onchange="filterTable()">
-            <option value="">Todos los estados</option>
-            <option value="pending">Pendiente</option>
-            <option value="approved">Aprobado</option>
-            <option value="rejected">Rechazado</option>
-            <option value="processing">En Proceso</option>
-        </select>
-    </div>
-
-    <div class="filter-group">
-        <label>Fecha Desde</label>
-        <input type="date" id="dateFrom" onchange="filterTable()">
-    </div>
-
-    <div class="filter-group">
-        <label>Fecha Hasta</label>
-        <input type="date" id="dateTo" onchange="filterTable()">
-    </div>
-
-    <div class="filter-group">
-        <label>Buscar</label>
-        <input type="text" id="searchInput" placeholder="Número de cuenta..." onkeyup="filterTable()">
-    </div>
-</div>
-
-<!-- Payments Table -->
-<div class="table-container">
-    @if(isset($cuentas) && $cuentas->count() > 0)
-        <table class="apple-table" id="paymentsTable">
-            <thead>
-                <tr>
-                    <th>Número</th>
-                    <th>Contratista</th>
-                    <th>Fecha Emisión</th>
-                    <th>Monto</th>
-                    <th>Estado</th>
-                    <th>Fecha Pago</th>
-                    <th style="text-align: center;">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($cuentas as $cuenta)
-                    <tr data-status="{{ $cuenta->estado_pago ?? 'pending' }}">
-                        <td><strong>{{ $cuenta->numero }}</strong></td>
-                        <td style="color: var(--apple-gray);">{{ $cuenta->user->name ?? 'N/A' }}</td>
-                        <td style="color: var(--apple-gray);">{{ \Carbon\Carbon::parse($cuenta->fecha_emision)->format('d/m/Y') }}</td>
-                        <td>
-                            <span class="payment-amount">${{ number_format($cuenta->valor_total, 0, ',', '.') }}</span>
-                        </td>
-                        <td>
-                            @php
-                                $estado = $cuenta->estado_pago ?? 'pending';
-                                $iconos = [
-                                    'pending' => 'schedule',
-                                    'approved' => 'check_circle',
-                                    'rejected' => 'cancel',
-                                    'processing' => 'sync'
-                                ];
-                                $textos = [
-                                    'pending' => 'Pendiente',
-                                    'approved' => 'Aprobado',
-                                    'rejected' => 'Rechazado',
-                                    'processing' => 'En Proceso'
-                                ];
-                            @endphp
-                            <span class="status-badge {{ $estado }}">
-                                <span class="material-symbols-rounded">{{ $iconos[$estado] ?? 'help' }}</span>
-                                {{ $textos[$estado] ?? 'Desconocido' }}
-                            </span>
-                        </td>
-                        <td style="color: var(--apple-gray);">
-                            {{ $cuenta->fecha_pago ? \Carbon\Carbon::parse($cuenta->fecha_pago)->format('d/m/Y') : '-' }}
-                        </td>
-                        <td>
-                            <div class="table-actions">
-                                <a href="{{ route('cuentas_cobro.show', $cuenta) }}" class="btn-icon btn-icon-view" title="Ver detalles">
-                                    <span class="material-symbols-rounded" style="font-size: 18px;">visibility</span>
-                                </a>
-                                @if(($cuenta->estado_pago ?? 'pending') === 'pending' && ($cuenta->estado_aprobacion === 'aprobado') && ($cuenta->etapa_aprobacion === 'tesoreria'))
-                                    <button onclick="openPagoModal({{ $cuenta->id }}, {{ (float)($cuenta->valor_total ?? 0) }})" class="btn-icon btn-icon-approve" title="Registrar pago">
-                                        <span class="material-symbols-rounded" style="font-size: 18px;">paid</span>
-                                    </button>
-                                    <button onclick="openRejectPago({{ $cuenta->id }})" class="btn-icon btn-icon-reject" title="Rechazar pago">
-                                        <span class="material-symbols-rounded" style="font-size: 18px;">close</span>
-                                    </button>
-                                @endif
-                            </div>
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    @else
-        <div class="empty-illustration">
-            <span class="material-symbols-rounded">payments</span>
-            <h2 class="empty-title">No hay pagos registrados</h2>
-            <p class="empty-text">Las cuentas de cobro aparecerán aquí cuando sean creadas</p>
-            <a href="{{ route('cuentas_cobro.index') }}" class="btn-apple">
-                <span class="material-symbols-rounded" style="font-size: 20px;">receipt_long</span>
-                Ver Cuentas de Cobro
+        <div style="display: flex; gap: 12px;">
+            <a href="{{ route('cuentas_cobro.index') }}" class="btn btn-secondary">
+                <span class="material-symbols-rounded">receipt_long</span> Ver Cuentas
+            </a>
+            <a href="{{ route('cuentas_cobro.exportar_pagos') }}" class="btn btn-primary">
+                <span class="material-symbols-rounded">download</span> Exportar
             </a>
         </div>
-    @endif
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #e0f2fe; color: #0284c7;">
+                <span class="material-symbols-rounded">payments</span>
+            </div>
+            <div class="stat-value">${{ number_format($totalPagos ?? 0, 0, ',', '.') }}</div>
+            <div class="stat-label">Total en Pagos</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #fff7ed; color: #ea580c;">
+                <span class="material-symbols-rounded">schedule</span>
+            </div>
+            <div class="stat-value">{{ $pagosPendientes ?? 0 }}</div>
+            <div class="stat-label">Pagos Pendientes</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #f0fdf4; color: #16a34a;">
+                <span class="material-symbols-rounded">check_circle</span>
+            </div>
+            <div class="stat-value">{{ $pagosAprobados ?? 0 }}</div>
+            <div class="stat-label">Pagos Aprobados</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #fef2f2; color: #dc2626;">
+                <span class="material-symbols-rounded">cancel</span>
+            </div>
+            <div class="stat-value">{{ $pagosRechazados ?? 0 }}</div>
+            <div class="stat-label">Pagos Rechazados</div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-bar">
+        <div class="filter-group">
+            <label>Estado</label>
+            <select id="statusFilter" class="form-control" onchange="filterTable()">
+                <option value="">Todos los estados</option>
+                <option value="pending">Pendiente</option>
+                <option value="sent_to_client">Enviado al Cliente</option>
+                <option value="approved">Aprobado</option>
+                <option value="rejected">Rechazado</option>
+                <option value="processing">En Proceso</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Fecha Desde</label>
+            <input type="date" id="dateFrom" class="form-control" onchange="filterTable()">
+        </div>
+        <div class="filter-group">
+            <label>Fecha Hasta</label>
+            <input type="date" id="dateTo" class="form-control" onchange="filterTable()">
+        </div>
+        <div class="filter-group" style="flex: 2;">
+            <label>Buscar</label>
+            <input type="text" id="searchInput" class="form-control" placeholder="Número de cuenta, contratista..." onkeyup="filterTable()">
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+        @if(isset($cuentas) && $cuentas->count() > 0)
+            <table class="data-table" id="paymentsTable">
+                <thead>
+                    <tr>
+                        <th>Número</th>
+                        <th>Contratista</th>
+                        <th>Fecha Emisión</th>
+                        <th>Monto</th>
+                        <th>Estado</th>
+                        <th>Fecha Pago</th>
+                        <th style="text-align: center;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($cuentas as $cuenta)
+                        @php
+                            $estadoPago = $cuenta->estado_pago ?? 'pending';
+                            $estadoAprobacion = $cuenta->estado_aprobacion;
+                            
+                            // Determine display status
+                            $displayStatus = $estadoPago;
+                            if ($estadoPago === 'pending' && $estadoAprobacion === 'enviado_cliente') {
+                                $displayStatus = 'sent_to_client';
+                            }
+
+                            $colors = [
+                                'pending' => ['bg' => '#fff7ed', 'text' => '#c2410c'],
+                                'approved' => ['bg' => '#f0fdf4', 'text' => '#15803d'],
+                                'rejected' => ['bg' => '#fef2f2', 'text' => '#b91c1c'],
+                                'processing' => ['bg' => '#eff6ff', 'text' => '#1d4ed8'],
+                                'sent_to_client' => ['bg' => '#e0e7ff', 'text' => '#4338ca']
+                            ];
+                            $style = $colors[$displayStatus] ?? ['bg' => '#f1f5f9', 'text' => '#64748b'];
+                            $textos = [
+                                'pending' => 'Pendiente',
+                                'approved' => 'Aprobado',
+                                'rejected' => 'Rechazado',
+                                'processing' => 'En Proceso',
+                                'sent_to_client' => 'Enviado al Cliente'
+                            ];
+                        @endphp
+                        <tr data-status="{{ $displayStatus }}">
+                            <td><strong style="color: var(--secondary);">{{ $cuenta->numero }}</strong></td>
+                            <td>{{ $cuenta->user->name ?? 'N/A' }}</td>
+                            <td>{{ \Carbon\Carbon::parse($cuenta->fecha_emision)->format('d/m/Y') }}</td>
+                            <td style="font-weight: 600; color: var(--secondary);">${{ number_format($cuenta->valor_total, 0, ',', '.') }}</td>
+                            <td>
+                                <span class="status-badge" style="background: {{ $style['bg'] }}; color: {{ $style['text'] }};">
+                                    {{ $textos[$displayStatus] ?? 'Desconocido' }}
+                                </span>
+                            </td>
+                            <td>{{ $cuenta->fecha_pago ? \Carbon\Carbon::parse($cuenta->fecha_pago)->format('d/m/Y') : '-' }}</td>
+                            <td style="text-align: center;">
+                                <div style="display: inline-flex; gap: 4px;">
+                                    <a href="{{ route('cuentas_cobro.show', $cuenta) }}" class="action-icon-btn" title="Ver detalles">
+                                        <span class="material-symbols-rounded">visibility</span>
+                                    </a>
+                                    @if(($cuenta->estado_pago ?? 'pending') === 'pending' && ($cuenta->estado_aprobacion === 'aprobado') && ($cuenta->etapa_aprobacion === 'tesoreria'))
+                                        <button onclick="openPagoModal({{ $cuenta->id }}, {{ (float)($cuenta->valor_total ?? 0) }})" class="action-icon-btn approve" title="Registrar pago">
+                                            <span class="material-symbols-rounded">paid</span>
+                                        </button>
+                                        <button onclick="openRejectPago({{ $cuenta->id }})" class="action-icon-btn reject" title="Rechazar pago">
+                                            <span class="material-symbols-rounded">close</span>
+                                        </button>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @else
+            <div class="empty-state">
+                <span class="material-symbols-rounded empty-icon">payments</span>
+                <h3 style="color: var(--secondary); margin-bottom: 8px;">No hay pagos registrados</h3>
+                <p style="color: var(--text-light);">Las cuentas de cobro aparecerán aquí cuando sean creadas.</p>
+            </div>
+        @endif
+    </div>
+</div>
+
+<!-- Modal Registrar Pago -->
+<div id="pagoModal" style="display:none; position: fixed; inset:0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: white; border-radius: 16px; padding: 32px; max-width: 500px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.2);">
+        <h3 style="margin-top:0; margin-bottom: 20px; color: var(--secondary); font-weight: 700;">Registrar Pago</h3>
+        <form id="pagoForm" method="POST">
+            @csrf
+            <div style="display: grid; gap: 16px;">
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--text-main); font-size: 13px;">Valor pagado</label>
+                    <input type="number" name="valor_pagado" id="valor_pagado" step="0.01" required class="form-control" />
+                </div>
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--text-main); font-size: 13px;">Medio de pago</label>
+                    <select name="medio_pago" required class="form-control">
+                        <option value="Transferencia">Transferencia</option>
+                        <option value="Cheque">Cheque</option>
+                        <option value="Consignación">Consignación</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--text-main); font-size: 13px;">Referencia</label>
+                    <input type="text" name="referencia_pago" placeholder="# de transacción" class="form-control" />
+                </div>
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--text-main); font-size: 13px;">Observaciones</label>
+                    <textarea name="observacion_pago" rows="3" placeholder="Comentario opcional" class="form-control" style="font-family: inherit;"></textarea>
+                </div>
+            </div>
+            <div style="display:flex; gap:12px; justify-content:flex-end; margin-top: 24px;">
+                <button type="button" class="btn btn-secondary" onclick="closePagoModal()">Cancelar</button>
+                <button type="submit" class="btn btn-success">Confirmar Pago</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Rechazar Pago -->
+<div id="rejectPagoModal" style="display:none; position: fixed; inset:0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: white; border-radius: 16px; padding: 32px; max-width: 500px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.2);">
+        <h3 style="margin-top:0; margin-bottom: 20px; color: var(--secondary); font-weight: 700;">Rechazar Pago</h3>
+        <form id="rejectPagoForm" method="POST">
+            @csrf
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--text-main); font-size: 13px;">Motivo</label>
+                <textarea name="motivo" rows="3" required class="form-control" style="font-family: inherit;"></textarea>
+            </div>
+            <div style="display:flex; gap:12px; justify-content:flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeRejectPago()">Cancelar</button>
+                <button type="submit" class="btn btn-danger">Rechazar Pago</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script>
 function filterTable() {
     const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
-    const dateFrom = document.getElementById('dateFrom').value;
-    const dateTo = document.getElementById('dateTo').value;
     const searchInput = document.getElementById('searchInput').value.toUpperCase();
     const table = document.getElementById('paymentsTable');
     
@@ -438,12 +495,10 @@ function filterTable() {
         const cells = row.getElementsByTagName('td');
         let showRow = true;
 
-        // Filter by status
         if (statusFilter && status !== statusFilter) {
             showRow = false;
         }
 
-        // Filter by search
         if (searchInput && showRow) {
             let found = false;
             for (let j = 0; j < cells.length; j++) {
@@ -468,98 +523,10 @@ function openPagoModal(id, valor){
 function closePagoModal(){
   document.getElementById('pagoModal').style.display = 'none';
 }
+document.getElementById('pagoModal').addEventListener('click', function(e){
+    if(e.target === this) closePagoModal();
+});
 
-function exportPayments() {
-    alert('Exportando pagos a Excel...');
-    // Aquí iría la lógica de exportación
-}
-</script>
-
-<style>
-    @media (max-width: 768px) {
-        .page-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 16px;
-        }
-        
-        .page-header > div {
-            width: 100%;
-            flex-direction: column;
-        }
-
-        .page-header .btn-apple {
-            width: 100%;
-            justify-content: center;
-        }
-
-        .stats-row {
-            grid-template-columns: 1fr;
-        }
-
-        .filters-bar {
-            flex-direction: column;
-        }
-
-        .filter-group {
-            width: 100%;
-        }
-    }
-</style>
-<!-- Modal Registrar Pago -->
-<div id="pagoModal" style="display:none; position: fixed; inset:0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
-    <div style="background: white; border-radius: 20px; padding: 24px; max-width: 560px; width: 92%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
-        <h2 style="margin-top:0;">Registrar pago</h2>
-        <form id="pagoForm" method="POST">
-            @csrf
-            <div class="filters-bar" style="box-shadow:none; padding:0; gap:12px;">
-                <div class="filter-group">
-                    <label>Valor pagado</label>
-                    <input type="number" name="valor_pagado" id="valor_pagado" step="0.01" required />
-                </div>
-                <div class="filter-group">
-                    <label>Medio de pago</label>
-                    <select name="medio_pago" required>
-                        <option value="Transferencia">Transferencia</option>
-                        <option value="Cheque">Cheque</option>
-                        <option value="Consignación">Consignación</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label>Referencia</label>
-                    <input type="text" name="referencia_pago" placeholder="# de transacción" />
-                </div>
-                <div class="filter-group" style="grid-column:1/-1;">
-                    <label>Observaciones</label>
-                    <textarea name="observacion_pago" rows="3" placeholder="Comentario opcional"></textarea>
-                </div>
-            </div>
-            <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
-                <button type="button" class="btn-action btn-back" onclick="closePagoModal()">Cancelar</button>
-                <button type="submit" class="btn-action" style="background:#34C759;color:white;border:none;">Confirmar pago</button>
-            </div>
-        </form>
-    </div>
-  
-</div>
-<!-- Modal Rechazar Pago -->
-<div id="rejectPagoModal" style="display:none; position: fixed; inset:0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
-    <div style="background: white; border-radius: 20px; padding: 24px; max-width: 520px; width: 92%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
-        <h2 style="margin-top:0;">Rechazar pago</h2>
-        <form id="rejectPagoForm" method="POST">
-            @csrf
-            <div style="margin-bottom: 16px;">
-                <label>Motivo</label>
-                <textarea name="motivo" rows="3" required class="form-control"></textarea>
-            </div>
-            <div style="display:flex; gap:8px; justify-content:flex-end;">
-                <button type="button" class="btn-action btn-back" onclick="closeRejectPago()">Cancelar</button>
-                <button type="submit" class="btn-action" style="background:#FF3B30;color:white;border:none;">Rechazar pago</button>
-            </div>
-        </form>
-    </div>
-</div>
-<script>
 function openRejectPago(id){
     const form = document.getElementById('rejectPagoForm');
     form.action = `{{ url('/cuentas_cobro') }}/${id}/rechazar-pago`;
@@ -568,5 +535,9 @@ function openRejectPago(id){
 function closeRejectPago(){
     document.getElementById('rejectPagoModal').style.display = 'none';
 }
+document.getElementById('rejectPagoModal').addEventListener('click', function(e){
+    if(e.target === this) closeRejectPago();
+});
+
 </script>
 @endsection

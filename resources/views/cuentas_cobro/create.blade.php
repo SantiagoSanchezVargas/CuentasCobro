@@ -1,126 +1,138 @@
 @extends('layouts.app')
 
+@section('title', 'Nueva Cuenta - Dewey Accounts')
+
 @section('content')
 <style>
+    /* Wix-inspired Design System (Matching Show View) */
     :root {
-        --apple-blue: #0071e3;
-        --apple-dark: #1d1d1f;
-        --apple-gray: #86868b;
-        --apple-light-gray: #f5f5f7;
+        --wix-blue: #116dff;
+        --wix-dark: #20303c;
+        --wix-gray: #f4f4f4;
+        --wix-text: #162d3d;
+        --wix-border: #eef1f5;
+        --wix-success: #10b981;
     }
 
-    .form-breadcrumb {
+    .wix-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+
+    /* Header */
+    .wix-header {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 2rem;
-        color: var(--apple-gray);
-        font-size: 0.9rem;
+        justify-content: space-between;
+        margin-bottom: 32px;
     }
 
-    .form-breadcrumb a {
-        color: var(--apple-blue);
+    .wix-title h1 {
+        font-family: 'Inter', sans-serif;
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--wix-text);
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .wix-back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #6b7c93;
         text-decoration: none;
-        transition: opacity 0.3s ease;
+        font-weight: 600;
+        font-size: 14px;
+        transition: color 0.2s;
     }
 
-    .form-breadcrumb a:hover {
-        opacity: 0.7;
+    .wix-back-btn:hover {
+        color: var(--wix-blue);
     }
 
-    .form-container {
-        max-width: 1100px;
-        margin: 0 auto;
-        padding: 2rem;
-    }
-
-    .form-card {
-        background: white;
-        border-radius: 24px;
-        overflow: hidden;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-        animation: fadeInUp 0.6s ease;
-    }
-
-    .form-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 2.5rem;
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .form-header::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
-        animation: shimmer 3s infinite;
-    }
-
-    .form-header-icon {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
-    }
-
-    .form-header h1 {
+    /* Summary Banner (Adapted for Create) */
+    .summary-banner {
+        background: linear-gradient(135deg, var(--wix-dark) 0%, #2c3e50 100%);
         color: white;
-        font-size: 2rem;
-        font-weight: 700;
-        margin: 0;
-        letter-spacing: -0.5px;
+        border-radius: 12px;
+        padding: 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+        box-shadow: 0 10px 30px rgba(32, 48, 60, 0.15);
     }
 
-    .form-header p {
-        color: rgba(255, 255, 255, 0.9);
-        margin: 0.5rem 0 0;
-        font-size: 1rem;
+    .summary-info h2 {
+        font-size: 32px;
+        font-weight: 800;
+        margin-bottom: 4px;
     }
 
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    .summary-info p {
+        opacity: 0.7;
+        font-size: 14px;
     }
 
-    @keyframes shimmer {
-        0%, 100% { transform: translateX(-100%); }
-        50% { transform: translateX(100%); }
+    /* Card Style */
+    .wix-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+        border: 1px solid var(--wix-border);
+        overflow: hidden; /* Contains the form partial */
     }
 
-    @media (max-width: 768px) {
-        .form-container {
-            padding: 1rem;
-        }
+    /* Override Form Partial Styles to match Card */
+    .form-body {
+        padding: 32px !important;
+    }
+    
+    .section-title {
+        font-size: 18px !important;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--wix-border);
+        margin-bottom: 24px !important;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+        .summary-banner { flex-direction: column; align-items: flex-start; gap: 20px; }
     }
 </style>
 
-<div class="form-container">
-    <div class="form-breadcrumb">
-        <a href="{{ route('cuentas_cobro.index') }}">Cuentas de Cobro</a>
-        <span class="material-symbols-rounded" style="font-size: 1rem;">chevron_right</span>
-        <span>Nueva cuenta de cobro</span>
+<div class="wix-container">
+    <div class="wix-header">
+        <div class="wix-title">
+            <a href="{{ route('cuentas_cobro.index') }}" class="wix-back-btn">
+                <span class="material-symbols-rounded">arrow_back</span>
+                Volver
+            </a>
+            <h1>
+                Nueva Cuenta de Cobro
+            </h1>
+        </div>
     </div>
 
-    <div class="form-card">
-        <div class="form-header">
-            <span class="material-symbols-rounded form-header-icon">receipt_long</span>
-            <h1>Nueva Cuenta de Cobro</h1>
-            <p>Completa los datos para crear una nueva cuenta de cobro</p>
+    <div class="summary-banner">
+        <div class="summary-info">
+            <h2>Crear Nueva Cuenta</h2>
+            <p>Completa la información para generar tu documento de cobro.</p>
         </div>
+        <div style="background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600;">
+            <span class="material-symbols-rounded" style="vertical-align: bottom; font-size: 18px; margin-right: 4px;">edit_document</span>
+            Borrador
+        </div>
+    </div>
 
-        <form action="{{ route('cuentas_cobro.store') }}" method="POST" id="cuentaCobroForm">
+    <div class="wix-card">
+        <form action="{{ route('cuentas_cobro.store') }}" method="POST" id="cuentaCobroForm" enctype="multipart/form-data">
             @csrf
-            @include('cuentas_cobro.partials.form', ['btnText' => 'Crear Cuenta de Cobro', 'cuenta' => null])
+            @include('cuentas_cobro.partials.form', ['btnText' => 'Crear Cuenta', 'cuenta' => null])
         </form>
     </div>
 </div>
