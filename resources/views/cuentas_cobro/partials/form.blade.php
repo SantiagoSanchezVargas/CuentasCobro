@@ -460,83 +460,98 @@
         $canManageAttachments = isset($cuenta) && auth()->check() && $cuenta->isOwner(auth()->user()) && in_array($cuenta->estado_aprobacion, ['en_revision', 'en_correccion']);
         $supportErrors = $errors->get('soportes.*');
     @endphp
-    {{-- Sección: Información del Beneficiario --}}
-    <div class="form-section">
-        <h2 class="section-title">
-            <span class="material-symbols-rounded">person</span>
-            Información del Beneficiario
-        </h2>
-
+    {{-- Sección: Datos del Vendedor (Beneficiario) --}}
+    <details class="form-section optional-section" open>
+        <summary>
+            <span class="section-title">
+                <span class="material-symbols-rounded">person</span>
+                Datos del Vendedor (Beneficiario)
+            </span>
+        </summary>
+        <div class="optional-content">
         <div class="form-grid">
-            <div class="form-group">
-                <label for="tipo_identificacion" class="form-label">
-                    <span class="material-symbols-rounded">badge</span>
-                    Tipo de Identificación
-                </label>
-                <div class="form-input-wrapper">
-                    <select name="tipo_identificacion" id="tipo_identificacion" class="form-select" required>
-                        <option value="">Seleccione...</option>
-                        <option value="CC" {{ old('tipo_identificacion', $cuenta->tipo_identificacion ?? '') == 'CC' ? 'selected' : '' }}>Cédula de Ciudadanía</option>
-                        <option value="NIT" {{ old('tipo_identificacion', $cuenta->tipo_identificacion ?? '') == 'NIT' ? 'selected' : '' }}>NIT</option>
-                    </select>
-                    <span class="material-symbols-rounded form-icon">credit_card</span>
+            <!-- Search/Select Component -->
+            <div class="form-group full-width" id="beneficiario-search-container">
+                <label class="form-label">Buscar Vendedor</label>
+                <div class="form-input-wrapper" style="display:flex; gap:8px;">
+                    <input type="text" id="search_beneficiario" class="form-input" placeholder="Buscar por nombre o identificación..." onkeyup="handleTerceroSearch(this.value, 'beneficiario')">
+                    <span class="material-symbols-rounded form-icon">search</span>
+                    <button type="button" onclick="openTerceroModal('beneficiario')" class="btn-add-item" style="margin:0; padding:0 12px; border-radius:8px;" title="Crear Nuevo">
+                        <span class="material-symbols-rounded">add</span>
+                    </button>
+                </div>
+                <div id="beneficiario-results" class="search-results" style="display:none; position:absolute; z-index:1000; background:white; border:1px solid #ddd; width:100%; max-height:200px; overflow-y:auto;"></div>
+            </div>
+
+            <!-- Selected Info Card (Initially Hidden) -->
+            <div class="form-group full-width" id="beneficiario-selected-card" style="display:none;">
+                <div style="background:#f8f9fa; padding:15px; border-radius:8px; border:1px solid #e9ecef; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <strong id="beneficiario-display-name" style="display:block; font-size:1.1em; color:#2c3e50;"></strong>
+                        <span id="beneficiario-display-id" style="color:#6c757d; font-size:0.9em;"></span>
+                    </div>
+                    <button type="button" onclick="clearTerceroSelection('beneficiario')" style="background:none; border:none; color:#dc3545; cursor:pointer;">
+                        <span class="material-symbols-rounded">close</span>
+                    </button>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="identificacion" class="form-label">
-                    <span class="material-symbols-rounded">fingerprint</span>
-                    Número de Identificación
-                </label>
-                <div class="form-input-wrapper">
-                    <input 
-                        type="text" 
-                        name="identificacion" 
-                        id="identificacion"
-                        value="{{ old('identificacion', $cuenta->identificacion ?? '') }}" 
-                        class="form-input" 
-                        placeholder="1234567890"
-                        required
-                    >
-                    <span class="material-symbols-rounded form-icon">tag</span>
-                </div>
-            </div>
-
-            <div class="form-group full-width">
-                <label for="nombre_beneficiario" class="form-label">
-                    <span class="material-symbols-rounded">account_circle</span>
-                    Nombre del Beneficiario
-                </label>
-                <div class="form-input-wrapper">
-                    <input 
-                        type="text" 
-                        name="nombre_beneficiario" 
-                        id="nombre_beneficiario"
-                        value="{{ old('nombre_beneficiario', $cuenta->nombre_beneficiario ?? '') }}" 
-                        class="form-input" 
-                        placeholder="Juan Pérez García o Empresa S.A.S."
-                        required
-                    >
-                    <span class="material-symbols-rounded form-icon">person</span>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="tipo_cliente" class="form-label">
-                    <span class="material-symbols-rounded">groups</span>
-                    Tipo de Cliente
-                </label>
-                <div class="form-input-wrapper">
-                    <select name="tipo_cliente" id="tipo_cliente" class="form-select" required>
-                        <option value="">Seleccione...</option>
-                        <option value="natural" {{ old('tipo_cliente', $cuenta->tipo_cliente ?? '') == 'natural' ? 'selected' : '' }}>Persona Natural</option>
-                        <option value="juridico" {{ old('tipo_cliente', $cuenta->tipo_cliente ?? '') == 'juridico' ? 'selected' : '' }}>Persona Jurídica</option>
-                    </select>
-                    <span class="material-symbols-rounded form-icon">business</span>
-                </div>
-            </div>
+            <!-- Hidden Fields for Form Submission -->
+            <input type="hidden" name="tipo_identificacion" id="tipo_identificacion" value="{{ old('tipo_identificacion', $cuenta->tipo_identificacion ?? '') }}">
+            <input type="hidden" name="identificacion" id="identificacion" value="{{ old('identificacion', $cuenta->identificacion ?? '') }}">
+            <input type="hidden" name="nombre_beneficiario" id="nombre_beneficiario" value="{{ old('nombre_beneficiario', $cuenta->nombre_beneficiario ?? '') }}">
+            <input type="hidden" name="tipo_cliente" id="tipo_cliente" value="{{ old('tipo_cliente', $cuenta->tipo_cliente ?? '') }}">
         </div>
-    </div>
+        </div>
+    </details>
+
+    {{-- Sección: Datos del Comprador (Deudor) --}}
+    <details class="form-section optional-section" open>
+        <summary>
+            <span class="section-title">
+                <span class="material-symbols-rounded">domain</span>
+                Datos del Comprador (Deudor)
+            </span>
+        </summary>
+        <div class="optional-content">
+        <div class="form-grid">
+            <!-- Search/Select Component -->
+            <div class="form-group full-width" id="deudor-search-container">
+                <label class="form-label">Buscar Comprador</label>
+                <div class="form-input-wrapper" style="display:flex; gap:8px;">
+                    <input type="text" id="search_deudor" class="form-input" placeholder="Buscar por nombre o identificación..." onkeyup="handleTerceroSearch(this.value, 'deudor')">
+                    <span class="material-symbols-rounded form-icon">search</span>
+                    <button type="button" onclick="openTerceroModal('deudor')" class="btn-add-item" style="margin:0; padding:0 12px; border-radius:8px;" title="Crear Nuevo">
+                        <span class="material-symbols-rounded">add</span>
+                    </button>
+                </div>
+                <div id="deudor-results" class="search-results" style="display:none; position:absolute; z-index:1000; background:white; border:1px solid #ddd; width:100%; max-height:200px; overflow-y:auto;"></div>
+            </div>
+
+            <!-- Selected Info Card (Initially Hidden) -->
+            <div class="form-group full-width" id="deudor-selected-card" style="display:none;">
+                <div style="background:#f8f9fa; padding:15px; border-radius:8px; border:1px solid #e9ecef; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <strong id="deudor-display-name" style="display:block; font-size:1.1em; color:#2c3e50;"></strong>
+                        <span id="deudor-display-id" style="color:#6c757d; font-size:0.9em;"></span>
+                        <br>
+                        <span id="deudor-display-email" style="color:#6c757d; font-size:0.85em;"></span>
+                    </div>
+                    <button type="button" onclick="clearTerceroSelection('deudor')" style="background:none; border:none; color:#dc3545; cursor:pointer;">
+                        <span class="material-symbols-rounded">close</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Hidden Fields for Form Submission -->
+            <input type="hidden" name="nombre_deudor" id="nombre_deudor" value="{{ old('nombre_deudor', $cuenta->nombre_deudor ?? '') }}">
+            <input type="hidden" name="tipo_documento_deudor" id="tipo_documento_deudor" value="{{ old('tipo_documento_deudor', $cuenta->tipo_documento_deudor ?? '') }}">
+            <input type="hidden" name="numero_documento_deudor" id="numero_documento_deudor" value="{{ old('numero_documento_deudor', $cuenta->numero_documento_deudor ?? '') }}">
+            <input type="hidden" name="email_deudor" id="email_deudor" value="{{ old('email_deudor', $cuenta->email_deudor ?? '') }}">
+            <input type="hidden" name="telefono_deudor" id="telefono_deudor" value="{{ old('telefono_deudor', $cuenta->telefono_deudor ?? '') }}">
+        </div>
+        </div>
+    </details>
 
     {{-- Sección: Datos de la Cuenta --}}
     <div class="form-section">
@@ -552,15 +567,25 @@
                     Número de Cuenta
                 </label>
                 <div class="form-input-wrapper">
-                    <input 
-                        type="text" 
-                        id="numero" 
-                        name="numero" 
-                        value="{{ old('numero', $cuenta->numero ?? '') }}" 
-                        class="form-input @error('numero') is-invalid @enderror" 
-                        placeholder="CC-2024-001"
-                        required
-                    >
+                    @if(isset($cuenta) && $cuenta->exists)
+                        <input 
+                            type="text" 
+                            id="numero" 
+                            name="numero" 
+                            value="{{ old('numero', $cuenta->numero) }}" 
+                            class="form-input" 
+                            readonly
+                            style="background-color: #f3f4f6;"
+                        >
+                    @else
+                        <input 
+                            type="text" 
+                            class="form-input" 
+                            value="Generado automáticamente al guardar" 
+                            readonly
+                            style="background-color: #f3f4f6; color: #6b7280; font-style: italic;"
+                        >
+                    @endif
                     <span class="material-symbols-rounded form-icon">confirmation_number</span>
                 </div>
                 @error('numero')
@@ -595,134 +620,11 @@
                 @enderror
             </div>
 
-            <div class="form-group">
-                <label for="plazo_pago" class="form-label">
-                    <span class="material-symbols-rounded">schedule</span>
-                    Plazo de Pago (días)
-                </label>
-                <div class="form-input-wrapper">
-                    <input 
-                        type="number" 
-                        id="plazo_pago" 
-                        name="plazo_pago" 
-                        value="{{ old('plazo_pago', $cuenta->plazo_pago ?? 30) }}" 
-                        class="form-input" 
-                        min="0"
-                        placeholder="30"
-                    >
-                    <span class="material-symbols-rounded form-icon">timer</span>
-                </div>
-            </div>
 
-            <div class="form-group">
-                <label for="contrato_id" class="form-label">
-                    <span class="material-symbols-rounded">handshake</span>
-                    Contrato <span class="optional-tag">(opcional)</span>
-                </label>
-                <div class="form-input-wrapper">
-                    <!-- Cambiado a input para permitir escritura libre. Se mantiene el name/id para compatibilidad con backend. -->
-                    <input
-                        type="text"
-                        id="contrato_id"
-                        name="contrato_id"
-                        class="form-input @error('contrato_id') is-invalid @enderror"
-                        placeholder="Escriba el número o id del contrato (opcional)"
-                        value="{{ old('contrato_id', $cuenta->contrato_id ?? '') }}"
-                    >
-                    <span class="material-symbols-rounded form-icon">handshake</span>
-                </div>
-                @error('contrato_id')
-                    <div class="form-error">
-                        <span class="material-symbols-rounded">error</span>
-                        {{ $message }}
-                    </div>
-                @enderror
-            </div>
         </div>
     </div>
 
-    {{-- Sección: Ubicación --}}
-    <div class="form-section">
-        <h2 class="section-title">
-            <span class="material-symbols-rounded">location_on</span>
-            Ubicación
-        </h2>
 
-        <div class="form-grid">
-            <div class="form-group">
-                <label for="departamento" class="form-label">
-                    <span class="material-symbols-rounded">map</span>
-                    Departamento
-                </label>
-                <div class="form-input-wrapper">
-                    <select id="departamento" name="departamento" class="form-select @error('departamento') is-invalid @enderror" required>
-                        <option value="">Seleccione un departamento</option>
-                        @foreach($departamentos as $dep => $muns)
-                            <option value="{{ $dep }}" {{ old('departamento', $cuenta->departamento ?? '') == $dep ? 'selected' : '' }}>{{ $dep }}</option>
-                        @endforeach
-                    </select>
-                    <span class="material-symbols-rounded form-icon">public</span>
-                </div>
-                @error('departamento')
-                    <div class="form-error">
-                        <span class="material-symbols-rounded">error</span>
-                        {{ $message }}
-                    </div>
-                @enderror
-            </div>
-
-            <div class="form-group">
-                <label for="municipio" class="form-label">
-                    <span class="material-symbols-rounded">location_city</span>
-                    Municipio
-                </label>
-                <div class="form-input-wrapper">
-                    <select
-                        id="municipio"
-                        name="municipio"
-                        class="form-select @error('municipio') is-invalid @enderror"
-                        data-current="{{ $municipioSeleccionado }}"
-                        {{ $departamentoSeleccionado ? '' : 'disabled' }}
-                        required
-                    >
-                        <option value="">Seleccione un municipio</option>
-                        @foreach($municipiosDisponibles as $municipio)
-                            <option value="{{ $municipio }}" {{ $municipioSeleccionado === $municipio ? 'selected' : '' }}>{{ $municipio }}</option>
-                        @endforeach
-                    </select>
-                    <span class="material-symbols-rounded form-icon">apartment</span>
-                </div>
-                @error('municipio')
-                    <div class="form-error">
-                        <span class="material-symbols-rounded">error</span>
-                        {{ $message }}
-                    </div>
-                @enderror
-            </div>
-
-            <div class="form-group full-width">
-                <label for="descripcion" class="form-label">
-                    <span class="material-symbols-rounded">notes</span>
-                    Descripción <span class="optional-tag">(opcional)</span>
-                </label>
-                <div class="form-input-wrapper">
-                    <textarea 
-                        id="descripcion" 
-                        name="descripcion" 
-                        class="form-textarea @error('descripcion') is-invalid @enderror"
-                        placeholder="Descripción detallada de la cuenta de cobro..."
-                    >{{ old('descripcion', $cuenta->descripcion ?? '') }}</textarea>
-                    <span class="material-symbols-rounded form-icon">edit_note</span>
-                </div>
-                @error('descripcion')
-                    <div class="form-error">
-                        <span class="material-symbols-rounded">error</span>
-                        {{ $message }}
-                    </div>
-                @enderror
-            </div>
-        </div>
-    </div>
 
     {{-- Sección: Ítems --}}
     <div class="form-section">
@@ -784,6 +686,28 @@
                         </div>
                     </div>
 
+                    <div class="form-group">
+                        <label class="form-label">
+                            <span class="material-symbols-rounded">percent</span>
+                            IVA (%)
+                        </label>
+                        <div class="form-input-wrapper">
+                            <input type="number" name="items[{{ $i }}][iva]" value="{{ $item['iva'] ?? 19 }}" placeholder="19" class="form-input" step="0.01" min="0" max="100">
+                            <span class="material-symbols-rounded form-icon">percent</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <span class="material-symbols-rounded">price_check</span>
+                            Retefuente (%)
+                        </label>
+                        <div class="form-input-wrapper">
+                            <input type="number" name="items[{{ $i }}][retefuente]" value="{{ $item['retefuente'] ?? 0 }}" placeholder="0" class="form-input" step="0.01" min="0" max="100">
+                            <span class="material-symbols-rounded form-icon">remove</span>
+                        </div>
+                    </div>
+
                     <button type="button" class="btn-remove-item">
                         <span class="material-symbols-rounded">close</span>
                     </button>
@@ -831,6 +755,28 @@
                         <div class="form-input-wrapper">
                             <input type="number" name="items[0][precio_unitario]" placeholder="0.00" class="form-input" step="0.01" required>
                             <span class="material-symbols-rounded form-icon">attach_money</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <span class="material-symbols-rounded">percent</span>
+                            IVA (%)
+                        </label>
+                        <div class="form-input-wrapper">
+                            <input type="number" name="items[0][iva]" value="19" placeholder="19" class="form-input" step="0.01" min="0" max="100">
+                            <span class="material-symbols-rounded form-icon">percent</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <span class="material-symbols-rounded">price_check</span>
+                            Retefuente (%)
+                        </label>
+                        <div class="form-input-wrapper">
+                            <input type="number" name="items[0][retefuente]" value="0" placeholder="0" class="form-input" step="0.01" min="0" max="100">
+                            <span class="material-symbols-rounded form-icon">remove</span>
                         </div>
                     </div>
 
@@ -1115,7 +1061,7 @@
                     <span class="material-symbols-rounded">fingerprint</span>
                     Número de Documento
                 </label>
-                <div class="form-input-wrapper">
+                <div class="form-input-wrapper" style="display:flex; gap:8px;">
                     <input
                         type="text"
                         id="numero_documento_deudor"
@@ -2279,34 +2225,43 @@
             Impuestos y Retenciones
         </h2>
 
-        <div class="form-grid-3">
-            <div class="form-group">
-                <label class="form-label">
-                    <span class="material-symbols-rounded">percent</span>
-                    IVA (%) <span class="optional-tag">Si aplica</span>
-                </label>
-                <div class="form-input-wrapper">
-                    <input type="number" step="0.01" min="0" max="100" id="iva_porcentaje" class="form-input" placeholder="Ej: 19" value="{{ old('iva_porcentaje', 0) }}">
-                    <span class="material-symbols-rounded form-icon">percent</span>
+        {{-- Calculadora de Retención Art. 383 ET --}}
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                <span class="material-symbols-rounded" style="color: #f59e0b;">calculate</span>
+                <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #1e293b;">Calculadora de Retención (Art. 383 ET)</h3>
+            </div>
+            <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">
+                Calcula la retención en la fuente para ingresos laborales gravados (personas naturales) según la tabla del Art. 383 del Estatuto Tributario (Año 2025).
+                <br><strong>UVT 2025 (Estimado): $49.799</strong> (Ajustar si es necesario).
+            </p>
+            
+            <div class="form-grid-3">
+                <div class="form-group">
+                    <label class="form-label">Base Gravable (Mensual)</label>
+                    <div class="form-input-wrapper">
+                        <input type="number" id="calc_base" class="form-input" placeholder="Ingrese valor base">
+                        <span class="material-symbols-rounded form-icon">attach_money</span>
+                    </div>
                 </div>
-                <div class="form-hint" style="color:#86868b; font-size:0.85rem; margin-top:.4rem;">
-                    Si eres no responsable de IVA, déjalo en 0.
+                <div class="form-group">
+                    <label class="form-label">Retención Calculada</label>
+                    <div class="form-input-wrapper">
+                        <input type="text" id="calc_resultado" class="form-input" readonly style="background: #f1f5f9; font-weight: 700; color: #0f172a;">
+                        <span class="material-symbols-rounded form-icon">payments</span>
+                    </div>
+                </div>
+                <div class="form-group" style="justify-content: flex-end;">
+                    <button type="button" id="btn_calcular_retencion" class="wix-btn wix-btn-secondary" style="width: 100%; justify-content: center;">
+                        Calcular y Aplicar
+                    </button>
                 </div>
             </div>
+            <div id="calc_detalle" style="margin-top: 12px; font-size: 12px; color: #64748b; font-style: italic;"></div>
+        </div>
 
-            <div class="form-group">
-                <label class="form-label">
-                    <span class="material-symbols-rounded">percent</span>
-                    ReteFuente (%)
-                </label>
-                <div class="form-input-wrapper">
-                    <input type="number" step="0.01" min="0" max="100" id="retefuente_porcentaje" class="form-input" placeholder="Ej: 2.5" value="{{ old('retefuente_porcentaje', 0) }}">
-                    <span class="material-symbols-rounded form-icon">percent</span>
-                </div>
-                <div class="form-hint" style="color:#86868b; font-size:0.85rem; margin-top:.4rem;">
-                    Servicios profesionales suele ser 10% o 11% con tope; otros 2.5% o 4%. Ver política.
-                </div>
-            </div>
+        <div class="form-grid-3">
+
 
             <div class="form-group">
                 <label class="form-label">
@@ -2337,6 +2292,73 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const btnCalcular = document.getElementById('btn_calcular_retencion');
+            const inputBase = document.getElementById('calc_base');
+            const inputResultado = document.getElementById('calc_resultado');
+            const divDetalle = document.getElementById('calc_detalle');
+            const inputRetefuente = document.getElementById('retencion_fuente'); // Hidden input for value
+            const inputRetefuentePorc = document.getElementById('retefuente_porcentaje'); // Input for percentage (we might need to adjust logic here as Art 383 is value based, not fixed %)
+
+            // UVT 2025 (Provisional)
+            const UVT = 49799; 
+
+            btnCalcular.addEventListener('click', function() {
+                const base = parseFloat(inputBase.value) || 0;
+                if (base <= 0) return;
+
+                // Convertir a UVT
+                const baseUVT = base / UVT;
+                let retencionUVT = 0;
+                let tarifa = 0;
+
+                // Tabla Art. 383 ET
+                if (baseUVT > 2300) {
+                    retencionUVT = (baseUVT - 2300) * 0.39 + 770;
+                    tarifa = 39;
+                } else if (baseUVT > 945) {
+                    retencionUVT = (baseUVT - 945) * 0.37 + 268;
+                    tarifa = 37;
+                } else if (baseUVT > 640) {
+                    retencionUVT = (baseUVT - 640) * 0.35 + 162;
+                    tarifa = 35;
+                } else if (baseUVT > 360) {
+                    retencionUVT = (baseUVT - 360) * 0.33 + 69;
+                    tarifa = 33;
+                } else if (baseUVT > 150) {
+                    retencionUVT = (baseUVT - 150) * 0.28 + 10;
+                    tarifa = 28;
+                } else if (baseUVT > 95) {
+                    retencionUVT = (baseUVT - 95) * 0.19;
+                    tarifa = 19;
+                } else {
+                    retencionUVT = 0;
+                    tarifa = 0;
+                }
+
+                const retencionPesos = Math.round(retencionUVT * UVT);
+                
+                // Formatear resultado
+                inputResultado.value = '$ ' + new Intl.NumberFormat('es-CO').format(retencionPesos);
+                divDetalle.innerHTML = `Base en UVT: ${baseUVT.toFixed(2)} | Tarifa Marginal: ${tarifa}% | Retención en UVT: ${retencionUVT.toFixed(2)}`;
+
+                // Aplicar al formulario principal
+                // Nota: Como Art 383 no es un porcentaje fijo sobre el total, sino progresivo, 
+                // lo ideal es poner el valor calculado directamente en el campo de valor de retención
+                // pero el formulario actual calcula basado en porcentaje.
+                // Solución: Calcular el porcentaje efectivo y ponerlo en el campo de porcentaje.
+                
+                if (base > 0) {
+                    const porcentajeEfectivo = (retencionPesos / base) * 100;
+                    inputRetefuentePorc.value = porcentajeEfectivo.toFixed(2);
+                    // Disparar evento para recalcular totales
+                    inputRetefuentePorc.dispatchEvent(new Event('input'));
+                }
+            });
+        });
+    </script>
 
     {{-- Total --}}
     <div class="form-section">
@@ -2375,6 +2397,80 @@
                 {{ $btnText ?? 'Guardar' }}
             </button>
         @endif
+    </div>
+</div>
+
+<!-- Modal Crear Tercero -->
+<div id="createTerceroModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:white; border-radius:12px; padding:32px; width:90%; max-width:600px; max-height:90vh; overflow-y:auto;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+            <h3 style="margin:0; font-size:20px; font-weight:700; color:var(--wix-text);">Crear Nuevo Tercero</h3>
+            <button type="button" onclick="closeTerceroModal()" style="background:none; border:none; cursor:pointer; font-size:24px; color:#6b7c93;">&times;</button>
+        </div>
+        
+        <form id="createTerceroForm">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Tipo de Persona</label>
+                    <select name="tipo_persona" id="modal_tipo_persona" class="form-select" onchange="toggleModalFields()">
+                        <option value="natural">Persona Natural</option>
+                        <option value="juridica">Persona Jurídica</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tipo Identificación</label>
+                    <select name="tipo_identificacion" class="form-select" required>
+                        <option value="CC">Cédula de Ciudadanía</option>
+                        <option value="NIT">NIT</option>
+                        <option value="CE">Cédula de Extranjería</option>
+                        <option value="PA">Pasaporte</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Identificación</label>
+                    <input type="text" name="identificacion" class="form-input" required>
+                </div>
+                <div class="form-group" id="div_dv" style="display:none;">
+                    <label class="form-label">DV</label>
+                    <input type="text" name="dv" class="form-input" maxlength="1">
+                </div>
+                
+                <div class="form-group full-width" id="div_nombre_completo">
+                    <label class="form-label">Nombre Completo</label>
+                    <input type="text" name="nombre_completo" class="form-input">
+                </div>
+                <div class="form-group full-width" id="div_razon_social" style="display:none;">
+                    <label class="form-label">Razón Social</label>
+                    <input type="text" name="razon_social" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Teléfono</label>
+                    <input type="text" name="telefono" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Departamento</label>
+                    <input type="text" name="departamento" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ciudad</label>
+                    <input type="text" name="ciudad" class="form-input">
+                </div>
+                <div class="form-group full-width">
+                    <label class="form-label">Dirección</label>
+                    <input type="text" name="direccion" class="form-input">
+                </div>
+            </div>
+
+            <div style="margin-top:24px; display:flex; justify-content:flex-end; gap:12px;">
+                <button type="button" onclick="closeTerceroModal()" class="btn-cancel" style="width:auto; padding:10px 20px;">Cancelar</button>
+                <button type="submit" class="btn-submit" style="width:auto; padding:10px 20px;">Guardar Tercero</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -2451,43 +2547,49 @@
 
         function recalcTotal(){
             let subtotal = 0;
+            let totalIva = 0;
+            let totalRetefuente = 0;
+
             container.querySelectorAll('.item-row').forEach(row => {
                 const cant = parseFloat(row.querySelector('[name$="[cantidad]"]').value) || 0;
                 const precio = parseFloat(row.querySelector('[name$="[precio_unitario]"]').value) || 0;
-                subtotal += cant * precio;
+                const ivaP = parseFloat(row.querySelector('[name$="[iva]"]')?.value) || 0;
+                const rfP = parseFloat(row.querySelector('[name$="[retefuente]"]')?.value) || 0;
+
+                const rowTotal = cant * precio;
+                subtotal += rowTotal;
+                totalIva += rowTotal * (ivaP / 100);
+                totalRetefuente += rowTotal * (rfP / 100);
             });
 
-            const ivaPor = parseFloat(ivaPct?.value || 0) / 100;
-            const rfPor = parseFloat(retefuentePct?.value || 0) / 100;
             const icaPor = parseFloat(reteicaPct?.value || 0) / 100;
             const rivaPor = parseFloat(reteivaPct?.value || 0) / 100;
 
-            const iva = subtotal * ivaPor;
-            const retefuente = subtotal * rfPor;
             const reteica = subtotal * icaPor;
-            const reteiva = iva * rivaPor; // sobre IVA
+            const reteiva = totalIva * rivaPor;
 
-            let total = subtotal + iva - retefuente - reteica - reteiva;
+            let total = subtotal + totalIva - totalRetefuente - reteica - reteiva;
 
             // Hidden values
             subtotalHidden.value = subtotal.toFixed(2);
-            ivaHidden.value = iva.toFixed(2);
-            retefuenteHidden.value = retefuente.toFixed(2);
+            ivaHidden.value = totalIva.toFixed(2);
+            retefuenteHidden.value = totalRetefuente.toFixed(2);
             reteicaHidden.value = reteica.toFixed(2);
             reteivaHidden.value = reteiva.toFixed(2);
             totalInput.value = total.toFixed(2);
 
             // UI
             subtotalFormatted.textContent = fmt(subtotal);
-            ivaFormatted.textContent = fmt(iva);
-            retefuenteFormatted.textContent = fmt(retefuente);
+            ivaFormatted.textContent = fmt(totalIva);
+            retefuenteFormatted.textContent = fmt(totalRetefuente);
             reteicaFormatted.textContent = fmt(reteica);
             reteivaFormatted.textContent = fmt(reteiva);
             totalFormatted.textContent = fmt(total);
-            ivaBadge.textContent = (parseFloat(ivaPct.value || 0)).toFixed(2) + '%';
-            retefuenteBadge.textContent = (parseFloat(retefuentePct.value || 0)).toFixed(2) + '%';
-            reteicaBadge.textContent = (parseFloat(reteicaPct.value || 0)).toFixed(3) + '%';
-            reteivaBadge.textContent = (parseFloat(reteivaPct.value || 0)).toFixed(2) + '%';
+            
+            if(ivaBadge) ivaBadge.textContent = '';
+            if(retefuenteBadge) retefuenteBadge.textContent = '';
+            if(reteicaBadge) reteicaBadge.textContent = (parseFloat(reteicaPct?.value || 0)).toFixed(3) + '%';
+            if(reteivaBadge) reteivaBadge.textContent = (parseFloat(reteivaPct?.value || 0)).toFixed(2) + '%';
         }
 
         function bindRow(row){
@@ -2554,6 +2656,19 @@
                     <div class="form-input-wrapper">
                         <input type="number" name="items[${index}][precio_unitario]" placeholder="0.00" class="form-input" step="0.01" required>
                         <span class="material-symbols-rounded form-icon">attach_money</span>
+                    </div>
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label class="form-label">Impuestos</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-input-wrapper">
+                            <span class="form-icon" style="font-size: 0.8em; left: 8px; width: auto;">IVA%</span>
+                            <input type="number" name="items[${index}][iva]" value="19" placeholder="19" class="form-input" step="0.01" min="0" max="100" style="padding-left: 50px;">
+                        </div>
+                        <div class="form-input-wrapper">
+                            <span class="form-icon" style="font-size: 0.8em; left: 8px; width: auto;">Rete%</span>
+                            <input type="number" name="items[${index}][retefuente]" value="0" placeholder="0" class="form-input" step="0.01" min="0" max="100" style="padding-left: 50px;">
+                        </div>
                     </div>
                 </div>
                 <button type="button" class="btn-remove-item">
@@ -2694,6 +2809,284 @@
         // Inicial
         recalcTotal();
     })();
+</script>
+<script>
+    let currentTerceroTarget = '';
+
+    window.openTerceroModal = function(target) {
+        currentTerceroTarget = target;
+        const modal = document.getElementById('createTerceroModal');
+        if(modal) {
+            modal.style.display = 'flex';
+            const form = document.getElementById('createTerceroForm');
+            if(form) form.reset();
+            if(typeof window.toggleModalFields === 'function') {
+                window.toggleModalFields();
+            }
+        } else {
+            console.error('Modal createTerceroModal not found');
+        }
+    }
+
+    window.closeTerceroModal = function() {
+        const modal = document.getElementById('createTerceroModal');
+        if(modal) modal.style.display = 'none';
+    }
+
+    window.toggleModalFields = function() {
+        const tipoSelect = document.getElementById('modal_tipo_persona');
+        if(!tipoSelect) return;
+        
+        const tipo = tipoSelect.value;
+        const isNatural = tipo === 'natural';
+        
+        const divNombre = document.getElementById('div_nombre_completo');
+        const divRazon = document.getElementById('div_razon_social');
+        const divDv = document.getElementById('div_dv');
+        
+        if(divNombre) divNombre.style.display = isNatural ? 'block' : 'none';
+        if(divRazon) divRazon.style.display = isNatural ? 'none' : 'block';
+        if(divDv) divDv.style.display = isNatural ? 'none' : 'block';
+        
+        const nombreInput = document.querySelector('input[name="nombre_completo"]');
+        const razonInput = document.querySelector('input[name="razon_social"]');
+        
+        if(isNatural) {
+            if(nombreInput) nombreInput.setAttribute('required', 'required');
+            if(razonInput) razonInput.removeAttribute('required');
+        } else {
+            if(nombreInput) nombreInput.removeAttribute('required');
+            if(razonInput) razonInput.setAttribute('required', 'required');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const createForm = document.getElementById('createTerceroForm');
+        if(createForm) {
+            createForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData.entries());
+                
+                const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                const csrfToken = csrfMeta ? csrfMeta.content : '';
+
+                fetch('{{ route("terceros.store") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(res => res.json())
+                .then(res => {
+                    if(res.success) {
+                        alert('Tercero creado correctamente');
+                        closeTerceroModal();
+                        if(typeof selectTercero === 'function') {
+                            selectTercero(res.tercero, currentTerceroTarget);
+                        }
+                    } else {
+                        alert('Error al crear tercero: ' + (res.message || 'Desconocido'));
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Error de conexión');
+                });
+            });
+        }
+
+        // Initialize fields on load if values exist
+        // Check Beneficiario
+        const benName = document.getElementById('nombre_beneficiario');
+        if(benName && benName.value) {
+            const container = document.getElementById('beneficiario-search-container');
+            const card = document.getElementById('beneficiario-selected-card');
+            if(container) container.style.display = 'none';
+            if(card) {
+                card.style.display = 'flex';
+                const dispName = document.getElementById('beneficiario-display-name');
+                if(dispName) dispName.textContent = benName.value;
+                
+                const benId = document.getElementById('identificacion').value;
+                const benType = document.getElementById('tipo_identificacion').value;
+                const dispId = document.getElementById('beneficiario-display-id');
+                if(dispId) dispId.textContent = `${benType} ${benId}`;
+            }
+        }
+
+        // Check Deudor
+        const deuName = document.getElementById('nombre_deudor');
+        if(deuName && deuName.value) {
+            const container = document.getElementById('deudor-search-container');
+            const card = document.getElementById('deudor-selected-card');
+            if(container) container.style.display = 'none';
+            if(card) {
+                card.style.display = 'flex';
+                const dispName = document.getElementById('deudor-display-name');
+                if(dispName) dispName.textContent = deuName.value;
+                
+                const deuId = document.getElementById('numero_documento_deudor').value;
+                const deuType = document.getElementById('tipo_documento_deudor').value;
+                const dispId = document.getElementById('deudor-display-id');
+                if(dispId) dispId.textContent = `${deuType} ${deuId}`;
+            }
+        }
+        
+        // Close search results when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.form-group')) {
+                document.querySelectorAll('.search-results').forEach(el => el.style.display = 'none');
+            }
+        });
+    });
+
+    let searchTimeout;
+
+    window.handleTerceroSearch = function(query, target) {
+        clearTimeout(searchTimeout);
+        const resultsDiv = document.getElementById(`${target}-results`);
+        if(!resultsDiv) return;
+        
+        if(query.length < 2) {
+            resultsDiv.style.display = 'none';
+            return;
+        }
+
+        searchTimeout = setTimeout(() => {
+            fetch(`{{ route("terceros.search") }}?q=${query}`)
+            .then(res => res.json())
+            .then(data => {
+                resultsDiv.innerHTML = '';
+                if(data.length > 0) {
+                    data.forEach(item => {
+                        const tercero = item.data;
+                        const div = document.createElement('div');
+                        div.style.padding = '10px';
+                        div.style.cursor = 'pointer';
+                        div.style.borderBottom = '1px solid #eee';
+                        div.innerHTML = `<strong>${item.value}</strong><br><small>${tercero.identificacion}</small>`;
+                        div.onclick = () => selectTercero(tercero, target);
+                        div.onmouseover = () => div.style.background = '#f0f0f0';
+                        div.onmouseout = () => div.style.background = 'white';
+                        resultsDiv.appendChild(div);
+                    });
+                    resultsDiv.style.display = 'block';
+                } else {
+                    resultsDiv.innerHTML = '<div style="padding:10px; color:#666;">No encontrado</div>';
+                    resultsDiv.style.display = 'block';
+                }
+            });
+        }, 300);
+    }
+
+    window.selectTercero = function(tercero, target) {
+        // Hide search, show card
+        const searchContainer = document.getElementById(`${target}-search-container`);
+        const selectedCard = document.getElementById(`${target}-selected-card`);
+        const resultsDiv = document.getElementById(`${target}-results`);
+        
+        if(searchContainer) searchContainer.style.display = 'none';
+        if(selectedCard) selectedCard.style.display = 'flex';
+        if(resultsDiv) resultsDiv.style.display = 'none';
+
+        // Update Card
+        const name = tercero.tipo_persona === 'juridica' ? tercero.razon_social : tercero.nombre_completo;
+        const dispName = document.getElementById(`${target}-display-name`);
+        const dispId = document.getElementById(`${target}-display-id`);
+        
+        if(dispName) dispName.textContent = name;
+        if(dispId) dispId.textContent = `${tercero.tipo_identificacion} ${tercero.identificacion}`;
+        
+        if(target === 'deudor' && tercero.email) {
+             const emailSpan = document.getElementById(`${target}-display-email`);
+             if(emailSpan) emailSpan.textContent = tercero.email;
+        }
+
+        // Fill Hidden Fields
+        fillTerceroFields(tercero, target);
+    }
+
+    window.clearTerceroSelection = function(target) {
+        const searchContainer = document.getElementById(`${target}-search-container`);
+        const selectedCard = document.getElementById(`${target}-selected-card`);
+        const searchInput = document.getElementById(`search_${target}`);
+        
+        if(searchContainer) searchContainer.style.display = 'block';
+        if(selectedCard) selectedCard.style.display = 'none';
+        if(searchInput) searchInput.value = '';
+        
+        // Clear hidden fields
+        if(target === 'beneficiario') {
+            const id = document.getElementById('identificacion'); if(id) id.value = '';
+            const tid = document.getElementById('tipo_identificacion'); if(tid) tid.value = '';
+            const nom = document.getElementById('nombre_beneficiario'); if(nom) nom.value = '';
+            const tcl = document.getElementById('tipo_cliente'); if(tcl) tcl.value = '';
+        } else {
+            const nd = document.getElementById('numero_documento_deudor'); if(nd) nd.value = '';
+            const td = document.getElementById('tipo_documento_deudor'); if(td) td.value = '';
+            const nom = document.getElementById('nombre_deudor'); if(nom) nom.value = '';
+            const em = document.getElementById('email_deudor'); if(em) em.value = '';
+            const tel = document.getElementById('telefono_deudor'); if(tel) tel.value = '';
+        }
+    }
+
+    function fillTerceroFields(tercero, target) {
+        if(target === 'beneficiario') {
+            const idField = document.getElementById('identificacion');
+            if(idField) idField.value = tercero.identificacion;
+
+            const tipoIdField = document.getElementById('tipo_identificacion');
+            if(tipoIdField) tipoIdField.value = tercero.tipo_identificacion;
+
+            const nameField = document.getElementById('nombre_beneficiario');
+            if(nameField) nameField.value = tercero.tipo_persona === 'juridica' ? tercero.razon_social : tercero.nombre_completo;
+
+            const tipoClienteField = document.getElementById('tipo_cliente');
+            if(tipoClienteField) {
+                tipoClienteField.value = tercero.tipo_persona === 'juridica' ? 'juridico' : 'natural';
+            }
+            
+            // Address, phone, etc.
+            const dirAcreedor = document.getElementById('direccion_acreedor');
+            if(dirAcreedor) dirAcreedor.value = tercero.direccion;
+
+            const telAcreedor = document.getElementById('telefono_acreedor');
+            if(telAcreedor) telAcreedor.value = tercero.telefono;
+
+            const emailAcreedor = document.getElementById('email_acreedor');
+            if(emailAcreedor) emailAcreedor.value = tercero.email;
+
+            const ciudadAcreedor = document.getElementById('ciudad_expedicion_acreedor');
+            if(ciudadAcreedor) ciudadAcreedor.value = tercero.ciudad;
+
+        } else {
+            // Deudor
+            const idField = document.getElementById('numero_documento_deudor');
+            if(idField) idField.value = tercero.identificacion;
+            
+            let tipoDoc = document.getElementById('tipo_documento_deudor');
+            if(!tipoDoc) tipoDoc = document.querySelector('select[name="tipo_documento_deudor"]');
+            if(tipoDoc) tipoDoc.value = tercero.tipo_identificacion;
+            
+            const nameField = document.getElementById('nombre_deudor');
+            if(nameField) nameField.value = tercero.tipo_persona === 'juridica' ? tercero.razon_social : tercero.nombre_completo;
+            
+            const dirField = document.getElementById('direccion_deudor');
+            if(dirField) dirField.value = tercero.direccion;
+            
+            const telField = document.getElementById('telefono_deudor');
+            if(telField) telField.value = tercero.telefono;
+            
+            const emailField = document.getElementById('email_deudor');
+            if(emailField) emailField.value = tercero.email;
+            
+            const ciudadField = document.getElementById('ciudad_expedicion_deudor');
+            if(ciudadField) ciudadField.value = tercero.ciudad;
+        }
+    }
 </script>
 @endpush
 

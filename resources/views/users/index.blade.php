@@ -4,6 +4,32 @@
 
 @section('content')
 <style>
+    /* Professional Enterprise Design System */
+    :root {
+        --primary: #116dff;
+        --primary-dark: #0056d6;
+        --secondary: #0f172a; /* Slate 900 */
+        --text-main: #334155; /* Slate 700 */
+        --text-light: #64748b; /* Slate 500 */
+        --bg-body: #f8fafc; /* Slate 50 */
+        --bg-card: #ffffff;
+        --border-color: #e2e8f0; /* Slate 200 */
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --radius-lg: 16px;
+        --radius-md: 12px;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    body {
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* Header */
     .page-header {
         display: flex;
         align-items: center;
@@ -14,96 +40,122 @@
     }
 
     .page-title {
-        font-size: 32px;
-        font-weight: 700;
-        color: var(--apple-dark);
-        letter-spacing: -0.5px;
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--secondary);
+        letter-spacing: -0.025em;
         margin: 0;
     }
 
-    .header-actions {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-    }
-
-    .stats-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
-        margin-bottom: 32px;
-    }
-
-    .stat-mini-card {
-        background: white;
-        padding: 20px 24px;
-        border-radius: 14px;
+    .btn-primary {
+        background-color: var(--primary);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid transparent;
         box-shadow: var(--shadow-sm);
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        transition: all 0.3s;
     }
 
-    .stat-mini-card:hover {
-        transform: translateY(-2px);
+    .btn-primary:hover {
+        background-color: var(--primary-dark);
+        transform: translateY(-1px);
         box-shadow: var(--shadow-md);
-    }
-
-    .stat-mini-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .gradient-blue { background: linear-gradient(135deg, #0071e3, #00c6ff); }
-    .gradient-green { background: linear-gradient(135deg, #11998e, #38ef7d); }
-    .gradient-orange { background: linear-gradient(135deg, #f093fb, #f5576c); }
-
-    .stat-mini-icon .material-symbols-rounded {
-        font-size: 24px;
         color: white;
     }
 
-    .stat-mini-content h4 {
+    /* Stats Row */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+
+    .stat-card {
+        background: var(--bg-card);
+        padding: 24px;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+        border-color: var(--primary);
+    }
+
+    .stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 28px;
+        color: white;
+    }
+
+    .stat-content h4 {
         font-size: 24px;
         font-weight: 700;
-        color: var(--apple-dark);
         margin: 0;
+        line-height: 1.2;
+        color: var(--secondary);
     }
 
-    .stat-mini-content p {
-        font-size: 13px;
-        color: var(--apple-gray);
-        margin: 0;
+    .stat-content p {
+        font-size: 14px;
+        color: var(--text-light);
+        margin: 4px 0 0 0;
+        font-weight: 500;
     }
 
-    .table-container {
+    /* Gradients */
+    .bg-gradient-blue { background: linear-gradient(135deg, #116dff, #3b82f6); }
+    .bg-gradient-green { background: linear-gradient(135deg, #10b981, #34d399); }
+    .bg-gradient-orange { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+
+    /* Table Card */
+    .table-card {
         background: white;
-        border-radius: 18px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-color);
         overflow: hidden;
         box-shadow: var(--shadow-sm);
-        margin-bottom: 24px;
     }
 
     .table-header-section {
-        padding: 24px 32px;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border-color);
         display: flex;
         align-items: center;
         justify-content: space-between;
         flex-wrap: wrap;
         gap: 16px;
+        background: #f8fafc;
     }
 
     .table-title {
-        font-size: 20px;
-        font-weight: 600;
-        color: var(--apple-dark);
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--secondary);
         margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
     .search-box {
@@ -113,81 +165,63 @@
 
     .search-box input {
         width: 100%;
-        padding: 10px 16px 10px 42px;
-        border: 1px solid rgba(0, 0, 0, 0.15);
-        border-radius: 100px;
+        padding: 10px 16px 10px 40px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
         font-size: 14px;
         transition: all 0.2s;
+        background: white;
     }
 
     .search-box input:focus {
         outline: none;
-        border-color: var(--apple-blue);
-        box-shadow: 0 0 0 4px var(--apple-blue-light);
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(17, 109, 255, 0.1);
     }
 
     .search-box .material-symbols-rounded {
         position: absolute;
-        left: 14px;
+        left: 12px;
         top: 50%;
         transform: translateY(-50%);
-        color: var(--apple-gray);
+        color: var(--text-light);
         font-size: 20px;
     }
 
-    .table-actions {
-        display: flex;
-        gap: 8px;
-        justify-content: center;
+    .custom-table {
+        width: 100%;
+        border-collapse: collapse;
     }
 
-    .btn-icon {
-        width: 36px;
-        height: 36px;
-        padding: 0;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 8px;
-        border: none;
-        cursor: pointer;
-        transition: all 0.2s;
-        text-decoration: none;
+    .custom-table th {
+        background: #f8fafc;
+        padding: 16px 24px;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid var(--border-color);
     }
 
-    .btn-icon-view {
-        background: var(--apple-blue-light);
-        color: var(--apple-blue);
+    .custom-table td {
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-main);
+        font-size: 14px;
+        vertical-align: middle;
     }
 
-    .btn-icon-view:hover {
-        background: var(--apple-blue);
-        color: white;
-        transform: translateY(-2px);
+    .custom-table tr:last-child td {
+        border-bottom: none;
     }
 
-    .btn-icon-edit {
-        background: rgba(255, 149, 0, 0.15);
-        color: var(--apple-orange);
+    .custom-table tr:hover td {
+        background-color: #f8fafc;
     }
 
-    .btn-icon-edit:hover {
-        background: var(--apple-orange);
-        color: white;
-        transform: translateY(-2px);
-    }
-
-    .btn-icon-delete {
-        background: rgba(255, 59, 48, 0.15);
-        color: var(--apple-red);
-    }
-
-    .btn-icon-delete:hover {
-        background: var(--apple-red);
-        color: white;
-        transform: translateY(-2px);
-    }
-
+    /* User Avatar */
     .user-avatar-cell {
         display: flex;
         align-items: center;
@@ -195,95 +229,98 @@
     }
 
     .user-avatar-small {
-        width: 40px;
-        height: 40px;
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
-        background: linear-gradient(135deg, var(--apple-blue), #00c6ff);
+        background: var(--primary);
+        color: white;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
         font-weight: 600;
-        font-size: 16px;
+        font-size: 14px;
     }
 
+    /* Badges */
     .badge-role {
-        display: inline-block;
-        padding: 6px 14px;
-        border-radius: 100px;
+        padding: 6px 12px;
+        border-radius: 8px;
         font-size: 12px;
         font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .badge-admin { background: #e3f2fd; color: #1976d2; }
-    .badge-supervisor { background: #f3e5f5; color: #7b1fa2; }
-    .badge-contratista { background: #e8f5e9; color: #388e3c; }
-    .badge-ordenador_gasto { background: #fff3e0; color: #f57c00; }
-    .badge-tesoreria { background: #fce4ec; color: #c2185b; }
-    .badge-alcalde { background: #e0f2f1; color: #00796b; }
-    .badge-super_admin { background: #fff3e0; color: #e65100; }
-    .badge-none { background: #fafafa; color: #9e9e9e; }
-
-    .alert-custom {
-        background: white;
-        border-radius: 12px;
-        padding: 16px 24px;
-        margin-bottom: 24px;
-        border-left: 4px solid var(--apple-green);
-        box-shadow: var(--shadow-sm);
-        display: flex;
+        display: inline-flex;
         align-items: center;
-        gap: 12px;
-        animation: slideInUp 0.4s ease-out;
+        gap: 6px;
+        letter-spacing: 0.025em;
     }
 
-    .empty-illustration {
+    .badge-primary { background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; } /* Blue */
+    .badge-secondary { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; } /* Slate */
+    .badge-success { background: #f0fdf4; color: #15803d; border: 1px solid #dcfce7; } /* Green */
+    .badge-danger { background: #fef2f2; color: #b91c1c; border: 1px solid #fee2e2; } /* Red */
+    .badge-warning { background: #fffbeb; color: #b45309; border: 1px solid #fef3c7; } /* Amber */
+    .badge-info { background: #f0f9ff; color: #0369a1; border: 1px solid #e0f2fe; } /* Sky */
+    .badge-indigo { background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; } /* Indigo */
+    .badge-purple { background: #faf5ff; color: #7e22ce; border: 1px solid #f3e8ff; } /* Purple */
+    .badge-pink { background: #fdf2f8; color: #be185d; border: 1px solid #fce7f3; } /* Pink */
+    .badge-teal { background: #f0fdfa; color: #0f766e; border: 1px solid #ccfbf1; } /* Teal */
+
+    /* Actions */
+    .table-actions {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+    }
+
+    .btn-icon {
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        border: 1px solid transparent;
+        transition: all 0.2s ease;
+        background: transparent;
+        color: var(--text-light);
+    }
+
+    .btn-icon:hover {
+        background: #f1f5f9;
+        color: var(--primary);
+        transform: translateY(-1px);
+    }
+
+    .btn-icon-view:hover { background: #eff6ff; color: #1d4ed8; border-color: #dbeafe; }
+    .btn-icon-edit:hover { background: #fff7ed; color: #c2410c; border-color: #ffedd5; }
+    .btn-icon-delete:hover { background: #fef2f2; color: #b91c1c; border-color: #fee2e2; }
+
+    /* Empty State */
+    .empty-state {
         text-align: center;
-        padding: 80px 32px;
+        padding: 64px 24px;
     }
 
-    .empty-illustration .material-symbols-rounded {
-        font-size: 120px;
-        color: var(--apple-blue);
-        opacity: 0.2;
-        margin-bottom: 24px;
+    .empty-icon {
+        font-size: 64px;
+        color: var(--text-light);
+        margin-bottom: 16px;
+        opacity: 0.5;
     }
 
     .empty-title {
-        font-size: 24px;
-        font-weight: 600;
-        color: var(--apple-dark);
-        margin-bottom: 12px;
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--secondary);
+        margin-bottom: 8px;
     }
 
     .empty-text {
-        font-size: 16px;
-        color: var(--apple-gray);
-        margin-bottom: 32px;
+        color: var(--text-light);
+        margin-bottom: 24px;
     }
 
     @media (max-width: 768px) {
         .page-header {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .header-actions {
-            width: 100%;
-        }
-
-        .header-actions .btn-apple {
-            flex: 1;
-            justify-content: center;
-        }
-
-        .search-box {
-            width: 100%;
-        }
-
-        .table-header-section {
             flex-direction: column;
             align-items: flex-start;
         }
@@ -294,125 +331,141 @@
     }
 </style>
 
-<div class="page-header">
-    <h1 class="page-title">Gestión de Usuarios</h1>
-    <div class="header-actions">
-        <a href="{{ route('admin.users.create') }}" class="btn-apple">
-            <span class="material-symbols-rounded" style="font-size: 20px;">person_add</span>
+<div class="container-fluid px-4 py-4">
+    <!-- Header -->
+    <div class="page-header">
+        <h1 class="page-title">Gestión de Usuarios</h1>
+        <a href="{{ route('admin.users.create') }}" class="btn-primary">
+            <span class="material-symbols-rounded">person_add</span>
             Nuevo Usuario
         </a>
     </div>
+
+    <!-- Stats Row -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-icon bg-gradient-blue">
+                <span class="material-symbols-rounded">group</span>
+            </div>
+            <div class="stat-content">
+                <h4>{{ $users->count() }}</h4>
+                <p>Total Usuarios</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-gradient-green">
+                <span class="material-symbols-rounded">verified_user</span>
+            </div>
+            <div class="stat-content">
+                <h4>{{ $users->whereNotNull('role_id')->count() }}</h4>
+                <p>Con Rol Asignado</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-gradient-orange">
+                <span class="material-symbols-rounded">person_off</span>
+            </div>
+            <div class="stat-content">
+                <h4>{{ $users->whereNull('role_id')->count() }}</h4>
+                <p>Sin Rol</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="table-card">
+        <div class="table-header-section">
+            <h3 class="table-title">
+                <span class="material-symbols-rounded">list</span>
+                Lista de Usuarios
+            </h3>
+            <div class="search-box">
+                <span class="material-symbols-rounded">search</span>
+                <input type="text" id="searchInput" placeholder="Buscar por nombre o email..." onkeyup="searchTable()">
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            @if($users->count() > 0)
+                <table class="custom-table" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Fecha Registro</th>
+                            <th style="text-align: center;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($users as $user)
+                            <tr>
+                                <td>
+                                    <div class="user-avatar-cell">
+                                        <div class="user-avatar-small">{{ strtoupper(substr($user->name, 0, 1)) }}</div>
+                                        <span class="fw-semibold">{{ $user->name }}</span>
+                                    </div>
+                                </td>
+                                <td class="text-muted">{{ $user->email }}</td>
+                                <td>
+                                    @if($user->role)
+                                        @php
+                                            $roleColor = match(strtolower($user->role->name)) {
+                                                'super administrador' => 'danger',
+                                                'administrador' => 'primary',
+                                                'admin programa' => 'indigo',
+                                                'auxiliar' => 'info',
+                                                'tesoreria' => 'pink',
+                                                'contratista' => 'success',
+                                                'ordenador de gasto' => 'warning',
+                                                'alcalde' => 'teal',
+                                                'supervisor' => 'purple',
+                                                default => 'secondary'
+                                            };
+                                        @endphp
+                                        <span class="badge-role badge-{{ $roleColor }}">
+                                            {{ $user->role->name }}
+                                        </span>
+                                    @else
+                                        <span class="badge-role badge-secondary">Sin rol</span>
+                                    @endif
+                                </td>
+                                <td class="text-muted">{{ $user->created_at->format('d/m/Y') }}</td>
+                                <td>
+                                    <div class="table-actions">
+                                        <a href="{{ route('admin.users.show', $user) }}" class="btn-icon btn-icon-view" title="Ver detalles">
+                                            <span class="material-symbols-rounded">visibility</span>
+                                        </a>
+                                        <a href="{{ route('admin.users.edit', $user) }}" class="btn-icon btn-icon-edit" title="Editar usuario">
+                                            <span class="material-symbols-rounded">edit</span>
+                                        </a>
+                                        <form action="{{ route('admin.users.destroy', $user) }}" method="POST" style="display: inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" onclick="return confirm('¿Estás seguro de eliminar este usuario?')" class="btn-icon btn-icon-delete" title="Eliminar usuario">
+                                                <span class="material-symbols-rounded">delete</span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @else
+                <div class="empty-state">
+                    <span class="material-symbols-rounded empty-icon">group_off</span>
+                    <h2 class="empty-title">No hay usuarios registrados</h2>
+                    <p class="empty-text">Comienza agregando tu primer usuario al sistema</p>
+                    <a href="{{ route('admin.users.create') }}" class="btn-primary">
+                        <span class="material-symbols-rounded">person_add</span>
+                        Crear Primer Usuario
+                    </a>
+                </div>
+            @endif
+        </div>
+    </div>
 </div>
-
-<!-- Statistics Cards -->
-<div class="stats-row">
-    <div class="stat-mini-card">
-        <div class="stat-mini-icon gradient-blue">
-            <span class="material-symbols-rounded">group</span>
-        </div>
-        <div class="stat-mini-content">
-            <h4>{{ $users->count() }}</h4>
-            <p>Total Usuarios</p>
-        </div>
-    </div>
-    <div class="stat-mini-card">
-        <div class="stat-mini-icon gradient-green">
-            <span class="material-symbols-rounded">verified_user</span>
-        </div>
-        <div class="stat-mini-content">
-            <h4>{{ $users->whereNotNull('role_id')->count() }}</h4>
-            <p>Con Rol Asignado</p>
-        </div>
-    </div>
-    <div class="stat-mini-card">
-        <div class="stat-mini-icon gradient-orange">
-            <span class="material-symbols-rounded">person_off</span>
-        </div>
-        <div class="stat-mini-content">
-            <h4>{{ $users->whereNull('role_id')->count() }}</h4>
-            <p>Sin Rol</p>
-        </div>
-    </div>
-</div>
-
-<div class="table-container">
-    <div class="table-header-section">
-        <h3 class="table-title">Lista de Usuarios</h3>
-        <div class="search-box">
-            <span class="material-symbols-rounded">search</span>
-            <input type="text" id="searchInput" placeholder="Buscar usuarios..." onkeyup="searchTable()">
-        </div>
-    </div>
-
-    @if($users->count() > 0)
-        <table class="apple-table" id="usersTable">
-            <thead>
-                <tr>
-                    <th>Usuario</th>
-                    <th>Email</th>
-                    <th>Rol</th>
-                    <th>Fecha Registro</th>
-                    <th style="text-align: center;">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($users as $user)
-                    <tr>
-                        <td>
-                            <div class="user-avatar-cell">
-                                <div class="user-avatar-small">{{ strtoupper(substr($user->name, 0, 1)) }}</div>
-                                <strong>{{ $user->name }}</strong>
-                            </div>
-                        </td>
-                        <td style="color: var(--apple-gray);">{{ $user->email }}</td>
-                        <td>
-                            @if($user->role)
-                                <span class="badge-role badge-{{ strtolower(str_replace(' ', '_', $user->role->name)) }}">
-                                    {{ ucfirst(str_replace('_', ' ', $user->role->name)) }}
-                                </span>
-                            @else
-                                <span class="badge-role badge-none">Sin rol</span>
-                            @endif
-                        </td>
-                        <td style="color: var(--apple-gray);">{{ $user->created_at->format('d/m/Y') }}</td>
-                        <td>
-                            <div class="table-actions">
-                                <a href="{{ route('admin.users.show', $user) }}" class="btn-icon btn-icon-view" title="Ver detalles">
-                                    <span class="material-symbols-rounded" style="font-size: 18px;">visibility</span>
-                                </a>
-                                <a href="{{ route('admin.users.edit', $user) }}" class="btn-icon btn-icon-edit" title="Editar usuario">
-                                    <span class="material-symbols-rounded" style="font-size: 18px;">edit</span>
-                                </a>
-                                <form action="{{ route('admin.users.destroy', $user) }}" method="POST" style="display: inline;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" onclick="return confirm('¿Estás seguro de eliminar este usuario?')" class="btn-icon btn-icon-delete" title="Eliminar usuario">
-                                        <span class="material-symbols-rounded" style="font-size: 18px;">delete</span>
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    @else
-        <div class="empty-illustration">
-            <span class="material-symbols-rounded">group_off</span>
-            <h2 class="empty-title">No hay usuarios registrados</h2>
-            <p class="empty-text">Comienza agregando tu primer usuario al sistema</p>
-            <a href="{{ route('admin.users.create') }}" class="btn-apple">
-                <span class="material-symbols-rounded" style="font-size: 20px;">person_add</span>
-                Crear Primer Usuario
-            </a>
-        </div>
-    @endif
-</div>
-
-<!-- Floating Action Button for Mobile -->
-<a href="{{ route('admin.users.create') }}" class="fab-create" title="Nuevo usuario" style="display: none;">
-    <span class="material-symbols-rounded">add</span>
-</a>
 
 <script>
 function searchTable() {

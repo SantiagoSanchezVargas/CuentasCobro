@@ -34,11 +34,20 @@ class UserController extends Controller
             'role_id' => 'required|exists:roles,id',
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role_id' => $request->role_id, // <<--- corregido
+            'role_id' => $request->role_id,
+        ]);
+
+        // Registrar historial de cambio de rol (asignación inicial)
+        \App\Models\RoleChangeHistory::create([
+            'user_id' => $user->id,
+            'previous_role_id' => null,
+            'new_role_id' => $request->role_id,
+            'changed_by' => Auth::id(),
+            'changed_at' => now(),
         ]);
 
         return redirect()->route('admin.users.index')->with('success', 'Usuario creado correctamente.');
@@ -47,6 +56,7 @@ class UserController extends Controller
     // Mostrar detalle del usuario
     public function show(User $user)
     {
+        $user->load(['role', 'roleChangeHistory.previousRole', 'roleChangeHistory.newRole', 'roleChangeHistory.changer']);
         return view('users.show', compact('user'));
     }
 
@@ -66,11 +76,24 @@ class UserController extends Controller
             'role_id' => 'required|exists:roles,id',
         ]);
 
+        $oldRoleId = $user->role_id;
+        $newRoleId = $request->role_id;
+
         $user->update([
             'name' => $request->name,
             'email' => $request->email,
-            'role_id' => $request->role_id, // <<--- corregido
+            'role_id' => $newRoleId,
         ]);
+
+        if ($oldRoleId != $newRoleId) {
+            \App\Models\RoleChangeHistory::create([
+                'user_id' => $user->id,
+                'previous_role_id' => $oldRoleId,
+                'new_role_id' => $newRoleId,
+                'changed_by' => Auth::id(),
+                'changed_at' => now(),
+            ]);
+        }
 
         if ($request->filled('password')) {
             $user->update(['password' => Hash::make($request->password)]);

@@ -145,7 +145,8 @@
 
                             <div class="card-body">
                                 @php
-                                    $assignedPermissions = $role->permissions->pluck('name')->toArray();
+                                    // Use IDs to compare and to submit consistently
+                                    $assignedPermissions = $role->permissions->pluck('id')->toArray();
                                 @endphp
                                 <div class="row">
                                     @foreach($permissionCategories as $category => $categoryPermissions)
@@ -155,13 +156,16 @@
                                                 {{ $category }}
                                             </h6>
                                             @foreach($categoryPermissions as $permission => $description)
+                                            @php
+                                                $permModel = $availablePermissions->where('name', $permission)->first();
+                                            @endphp
                                             <div class="form-check mb-2">
                                                 <input class="form-check-input permission-checkbox"
                                                        type="checkbox"
                                                        id="permission_{{ $permission }}"
                                                        name="permissions[]"
-                                                       value="{{ $permission }}"
-                                                       {{ in_array($permission, old('permissions', $assignedPermissions)) ? 'checked' : '' }}
+                                                       value="{{ $permModel ? $permModel->id : $permission }}"
+                                                       {{ ($permModel && in_array($permModel->id, old('permissions', $assignedPermissions))) ? 'checked' : '' }}
                                                        onchange="updatePermissionCount()">
                                                 <label class="form-check-label" for="permission_{{ $permission }}">
                                                     <small>{{ $description }}</small>

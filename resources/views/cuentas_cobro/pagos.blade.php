@@ -277,8 +277,11 @@
             <a href="{{ route('cuentas_cobro.index') }}" class="btn btn-secondary">
                 <span class="material-symbols-rounded">receipt_long</span> Ver Cuentas
             </a>
-            <a href="{{ route('cuentas_cobro.exportar_pagos') }}" class="btn btn-primary">
-                <span class="material-symbols-rounded">download</span> Exportar
+            <a href="{{ route('cuentas_cobro.exportar_pagos', ['format' => 'csv']) }}" class="btn btn-secondary" title="Exportar CSV">
+                <span class="material-symbols-rounded">description</span> CSV
+            </a>
+            <a href="{{ route('cuentas_cobro.exportar_pagos', ['format' => 'excel']) }}" class="btn btn-primary" title="Exportar Excel">
+                <span class="material-symbols-rounded">table_view</span> Excel
             </a>
         </div>
     </div>
@@ -363,27 +366,59 @@
                             $estadoPago = $cuenta->estado_pago ?? 'pending';
                             $estadoAprobacion = $cuenta->estado_aprobacion;
                             
-                            // Determine display status
-                            $displayStatus = $estadoPago;
-                            if ($estadoPago === 'pending' && $estadoAprobacion === 'enviado_cliente') {
-                                $displayStatus = 'sent_to_client';
-                            }
+                            // Determine display status with granular approval stages
+                            $displayStatus = 'pending';
+                            $statusLabel = 'Pendiente';
+                            $statusColor = ['bg' => '#f1f5f9', 'text' => '#64748b']; // Default Gray
 
-                            $colors = [
-                                'pending' => ['bg' => '#fff7ed', 'text' => '#c2410c'],
-                                'approved' => ['bg' => '#f0fdf4', 'text' => '#15803d'],
-                                'rejected' => ['bg' => '#fef2f2', 'text' => '#b91c1c'],
-                                'processing' => ['bg' => '#eff6ff', 'text' => '#1d4ed8'],
-                                'sent_to_client' => ['bg' => '#e0e7ff', 'text' => '#4338ca']
-                            ];
-                            $style = $colors[$displayStatus] ?? ['bg' => '#f1f5f9', 'text' => '#64748b'];
-                            $textos = [
-                                'pending' => 'Pendiente',
-                                'approved' => 'Aprobado',
-                                'rejected' => 'Rechazado',
-                                'processing' => 'En Proceso',
-                                'sent_to_client' => 'Enviado al Cliente'
-                            ];
+                            if ($estadoPago === 'approved') {
+                                $displayStatus = 'paid';
+                                $statusLabel = 'Pagado';
+                                $statusColor = ['bg' => '#dcfce7', 'text' => '#166534']; // Green
+                            } elseif ($estadoPago === 'rejected') {
+                                $displayStatus = 'payment_rejected';
+                                $statusLabel = 'Pago Rechazado';
+                                $statusColor = ['bg' => '#fee2e2', 'text' => '#991b1b']; // Red
+                            } else {
+                                // Payment is pending, check approval status
+                                switch ($estadoAprobacion) {
+                                    case 'en_revision':
+                                        $displayStatus = 'review_program';
+                                        $statusLabel = 'Revisión (Programa)';
+                                        $statusColor = ['bg' => '#eff6ff', 'text' => '#1e40af']; // Blue
+                                        break;
+                                    case 'en_revision_admin':
+                                        $displayStatus = 'review_admin';
+                                        $statusLabel = 'Revisión (Admin)';
+                                        $statusColor = ['bg' => '#e0e7ff', 'text' => '#3730a3']; // Indigo
+                                        break;
+                                    case 'aprobado':
+                                        $displayStatus = 'approved_pending_pay';
+                                        $statusLabel = 'Aprobado (Por Pagar)';
+                                        $statusColor = ['bg' => '#fef3c7', 'text' => '#92400e']; // Amber
+                                        break;
+                                    case 'rechazado':
+                                        $displayStatus = 'rejected';
+                                        $statusLabel = 'Rechazado';
+                                        $statusColor = ['bg' => '#fee2e2', 'text' => '#991b1b']; // Red
+                                        break;
+                                    case 'en_correccion':
+                                        $displayStatus = 'correction';
+                                        $statusLabel = 'En Corrección';
+                                        $statusColor = ['bg' => '#ffedd5', 'text' => '#9a3412']; // Orange
+                                        break;
+                                    case 'enviado_cliente':
+                                        $displayStatus = 'sent_client';
+                                        $statusLabel = 'Enviado al Cliente';
+                                        $statusColor = ['bg' => '#f0fdf4', 'text' => '#15803d']; // Green (Light)
+                                        break;
+                                    default:
+                                        $displayStatus = 'pending';
+                                        $statusLabel = 'Borrador / Pendiente';
+                                        $statusColor = ['bg' => '#f3f4f6', 'text' => '#4b5563']; // Gray
+                                        break;
+                                }
+                            }
                         @endphp
                         <tr data-status="{{ $displayStatus }}">
                             <td><strong style="color: var(--secondary);">{{ $cuenta->numero }}</strong></td>
@@ -391,8 +426,8 @@
                             <td>{{ \Carbon\Carbon::parse($cuenta->fecha_emision)->format('d/m/Y') }}</td>
                             <td style="font-weight: 600; color: var(--secondary);">${{ number_format($cuenta->valor_total, 0, ',', '.') }}</td>
                             <td>
-                                <span class="status-badge" style="background: {{ $style['bg'] }}; color: {{ $style['text'] }};">
-                                    {{ $textos[$displayStatus] ?? 'Desconocido' }}
+                                <span class="status-badge" style="background: {{ $statusColor['bg'] }}; color: {{ $statusColor['text'] }}; padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 600; display: inline-block;">
+                                    {{ $statusLabel }}
                                 </span>
                             </td>
                             <td>{{ $cuenta->fecha_pago ? \Carbon\Carbon::parse($cuenta->fecha_pago)->format('d/m/Y') : '-' }}</td>

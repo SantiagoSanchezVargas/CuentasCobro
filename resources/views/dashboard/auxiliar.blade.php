@@ -334,6 +334,13 @@
         mask-image: linear-gradient(to left, black, transparent);
         -webkit-mask-image: linear-gradient(to left, black, transparent);
     }
+
+    /* Icon Fixes */
+    .material-symbols-rounded {
+        line-height: 1;
+        display: inline-block;
+        vertical-align: middle;
+    }
 </style>
 
 <div class="hero-section">
@@ -354,8 +361,8 @@
         <!-- Proyección de Pagos Widget -->
         <div class="proyeccion-card">
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
-                <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px;">
-                    <span class="material-symbols-rounded" style="color: #38bdf8;">account_balance_wallet</span>
+                <div style="background: rgba(255,255,255,0.1); padding: 10px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                    <span class="material-symbols-rounded" style="color: #38bdf8; font-size: 24px;">account_balance_wallet</span>
                 </div>
                 <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: white;">Proyección de Pagos</h3>
             </div>

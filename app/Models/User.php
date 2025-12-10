@@ -52,6 +52,12 @@ class User extends Authenticatable
         return $this->hasMany(CuentaCobro::class, 'user_id');
     }
 
+    // Relación: historial de cambios de rol
+    public function roleChangeHistory()
+    {
+        return $this->hasMany(RoleChangeHistory::class, 'user_id')->orderBy('changed_at', 'desc');
+    }
+
     // Métodos de verificación de rol
     public function hasRole($roleName)
     {
@@ -82,6 +88,21 @@ class User extends Authenticatable
     public function isContractAdmin(): bool
     {
         return $this->hasRole('administrador');
+    }
+
+    /**
+     * Verificar si el usuario tiene un permiso específico a través de su rol.
+     */
+    public function hasPermission($permissionName)
+    {
+        if (!$this->role) {
+            return false;
+        }
+
+        // Resolve alias to canonical name via config
+        $canonical = config('permission_aliases.' . $permissionName, $permissionName);
+
+        return $this->role->permissions()->where('name', $canonical)->exists();
     }
 
     /**

@@ -439,13 +439,108 @@
                     <div style="margin-top: 24px; padding-top: 24px; border-top: 1px dashed var(--wix-border);">
                         <form action="{{ route('cuentas_cobro.soportes.store', $cuenta->id) }}" method="POST" enctype="multipart/form-data">
                             @csrf
-                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Subir nuevo soporte</label>
-                            <div style="display: flex; gap: 12px;">
-                                <input type="file" name="soportes[]" multiple required style="flex: 1; padding: 8px; border: 1px solid var(--wix-border); border-radius: 8px;">
-                                <button type="submit" class="wix-btn-primary" style="width: auto; margin: 0;">Subir</button>
+                            <label style="display: block; margin-bottom: 16px; font-weight: 700; color: var(--wix-text); font-size: 16px;">
+                                <span class="material-symbols-rounded" style="vertical-align: bottom; margin-right: 6px; color: var(--wix-blue);">cloud_upload</span>
+                                Subir nuevo soporte
+                            </label>
+                            
+                            <div class="upload-area" id="uploadArea">
+                                <input type="file" name="soportes[]" id="fileInput" multiple required class="file-input-hidden" onchange="updateFileName(this)">
+                                <label for="fileInput" class="upload-label">
+                                    <div class="upload-icon-circle">
+                                        <span class="material-symbols-rounded">upload_file</span>
+                                    </div>
+                                    <span class="upload-text">Haz clic para seleccionar archivos</span>
+                                    <span class="upload-hint" id="fileNameDisplay">o arrastra y suelta tus documentos aquí</span>
+                                </label>
+                            </div>
+
+                            <div style="margin-top: 16px; display: flex; justify-content: flex-end;">
+                                <button type="submit" class="wix-btn wix-btn-primary" style="width: 100%; justify-content: center; padding: 12px;">
+                                    <span class="material-symbols-rounded">add_circle</span>
+                                    Adjuntar Archivos Seleccionados
+                                </button>
                             </div>
                         </form>
                     </div>
+
+                    <style>
+                        .upload-area {
+                            border: 2px dashed #cfd4da;
+                            border-radius: 12px;
+                            background: #f8fafc;
+                            transition: all 0.2s ease;
+                            position: relative;
+                            overflow: hidden;
+                        }
+                        .upload-area:hover {
+                            border-color: var(--wix-blue);
+                            background: #f0f7ff;
+                        }
+                        .file-input-hidden {
+                            position: absolute;
+                            width: 100%;
+                            height: 100%;
+                            opacity: 0;
+                            cursor: pointer;
+                            z-index: 2;
+                        }
+                        .upload-label {
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: center;
+                            padding: 40px 24px;
+                            cursor: pointer;
+                            text-align: center;
+                        }
+                        .upload-icon-circle {
+                            width: 48px;
+                            height: 48px;
+                            background: #e0e7ff;
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            margin-bottom: 12px;
+                            color: var(--wix-blue);
+                        }
+                        .upload-icon-circle .material-symbols-rounded {
+                            font-size: 24px;
+                        }
+                        .upload-text {
+                            font-weight: 600;
+                            color: var(--wix-text);
+                            font-size: 15px;
+                            margin-bottom: 4px;
+                        }
+                        .upload-hint {
+                            font-size: 13px;
+                            color: var(--wix-text-muted);
+                            margin-top: 4px;
+                        }
+                    </style>
+
+                    <script>
+                        function updateFileName(input) {
+                            const display = document.getElementById('fileNameDisplay');
+                            if (input.files && input.files.length > 0) {
+                                if (input.files.length === 1) {
+                                    display.textContent = input.files[0].name;
+                                    display.style.color = 'var(--wix-primary)';
+                                    display.style.fontWeight = '600';
+                                } else {
+                                    display.textContent = input.files.length + ' archivos seleccionados';
+                                    display.style.color = 'var(--wix-primary)';
+                                    display.style.fontWeight = '600';
+                                }
+                            } else {
+                                display.textContent = 'o arrastra y suelta aquí';
+                                display.style.color = 'var(--wix-text-muted)';
+                                display.style.fontWeight = 'normal';
+                            }
+                        }
+                    </script>
                 @endif
             </div>
 
@@ -457,6 +552,10 @@
             <!-- Actions Card -->
             <div class="wix-card">
                 <h3 class="wix-card-title">Acciones</h3>
+
+                <a href="{{ route('cuentas_cobro.seguimiento', $cuenta->id) }}" class="wix-btn wix-btn-secondary" style="margin-bottom: 12px; width: 100%; justify-content: center;">
+                    <span class="material-symbols-rounded">timeline</span> Ver Seguimiento Detallado
+                </a>
                 
                 @if($isContratistaOwner && $cuenta->estado_aprobacion === 'en_correccion')
                     <a href="{{ route('cuentas_cobro.edit', $cuenta) }}" class="wix-btn wix-btn-secondary">
@@ -486,28 +585,74 @@
 
             <!-- Timeline -->
             <div class="wix-card">
-                <h3 class="wix-card-title">Historial</h3>
-                <div class="timeline">
-                    @forelse($cuenta->historial ?? [] as $evento)
-                        <div class="timeline-item">
-                            <div class="timeline-dot"></div>
+                <h3 class="wix-card-title" style="display: flex; align-items: center; gap: 8px;">
+                    <span class="material-symbols-rounded" style="color: var(--primary);">history</span>
+                    Historial de Actividad
+                </h3>
+                <div class="timeline" style="position: relative; padding-left: 12px; border-left: 2px solid #e2e8f0; margin-left: 8px;">
+                    @forelse($cuenta->historial->sortByDesc('created_at') ?? [] as $evento)
+                        @php
+                            $icon = 'circle';
+                            $color = '#94a3b8';
+                            $bg = '#f1f5f9';
+                            
+                            switch($evento->accion) {
+                                case 'creado':
+                                    $icon = 'add_circle'; $color = '#3b82f6'; $bg = '#eff6ff'; break;
+                                case 'enviado':
+                                case 'reenviado':
+                                    $icon = 'send'; $color = '#6366f1'; $bg = '#e0e7ff'; break;
+                                case 'revisado':
+                                    $icon = 'rate_review'; $color = '#8b5cf6'; $bg = '#f3e8ff'; break;
+                                case 'aprobado':
+                                    $icon = 'check_circle'; $color = '#22c55e'; $bg = '#dcfce7'; break;
+                                case 'rechazado':
+                                    $icon = 'cancel'; $color = '#ef4444'; $bg = '#fee2e2'; break;
+                                case 'devuelto':
+                                case 'corregido':
+                                    $icon = 'build'; $color = '#f97316'; $bg = '#ffedd5'; break;
+                                case 'pagado':
+                                    $icon = 'paid'; $color = '#10b981'; $bg = '#d1fae5'; break;
+                                case 'enviado_cliente':
+                                    $icon = 'mark_email_read'; $color = '#0ea5e9'; $bg = '#e0f2fe'; break;
+                                default:
+                                    $icon = 'info'; $color = '#64748b'; $bg = '#f8fafc'; break;
+                            }
+                        @endphp
+                        <div class="timeline-item" style="position: relative; margin-bottom: 24px; padding-left: 24px;">
+                            <!-- Icon Dot -->
+                            <div style="position: absolute; left: -21px; top: 0; width: 36px; height: 36px; background: {{ $bg }}; border: 2px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: {{ $color }}; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                                <span class="material-symbols-rounded" style="font-size: 20px;">{{ $icon }}</span>
+                            </div>
+                            
                             <div class="timeline-content">
-                                <div class="timeline-header">
-                                    <span class="timeline-action">{{ ucfirst($evento->accion) }}</span>
-                                    <span class="timeline-date">{{ $evento->created_at->format('d/m H:i') }}</span>
+                                <div class="timeline-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                                    <span class="timeline-action" style="font-weight: 600; color: var(--wix-text); font-size: 14px;">
+                                        {{ ucfirst(str_replace('_', ' ', $evento->accion)) }}
+                                    </span>
+                                    <span class="timeline-date" style="font-size: 12px; color: #94a3b8; background: #f8fafc; padding: 2px 8px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                                        {{ $evento->created_at->format('d M, H:i') }}
+                                    </span>
                                 </div>
+                                
+                                <div style="font-size: 13px; color: #64748b; margin-bottom: 4px;">
+                                    <span style="font-weight: 500;">{{ $evento->user->name ?? 'Sistema' }}</span>
+                                    @if($evento->user && $evento->user->role)
+                                        <span style="font-size: 11px; color: #94a3b8;">({{ $evento->user->role->name }})</span>
+                                    @endif
+                                </div>
+
                                 @if($evento->comentario)
-                                    <div style="font-size: 13px; color: #6b7c93; margin-top: 4px;">
+                                    <div style="font-size: 13px; color: #475569; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border-left: 3px solid {{ $color }}; margin-top: 8px; font-style: italic;">
                                         "{{ $evento->comentario }}"
                                     </div>
                                 @endif
-                                <div style="font-size: 12px; color: #8795a1; margin-top: 8px;">
-                                    Por: {{ $evento->user->name ?? 'Sistema' }}
-                                </div>
                             </div>
                         </div>
                     @empty
-                        <p style="color: #8795a1; font-size: 13px;">No hay historial disponible.</p>
+                        <div style="padding: 16px; text-align: center; color: #94a3b8; font-style: italic;">
+                            No hay historial registrado.
+                        </div>
                     @endforelse
                 </div>
             </div>

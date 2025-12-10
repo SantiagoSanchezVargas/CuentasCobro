@@ -15,10 +15,19 @@ class SoporteController extends Controller
         $cuenta = CuentaCobro::findOrFail($cuentaId);
         $user = Auth::user();
 
-        // Permitir solo al contratista dueño cuando está en corrección o en revisión inicial
-        if ($user->role?->name !== 'contratista' || $cuenta->user_id !== $user->id) {
+        // Verificar si es el dueño de la cuenta
+        $isOwner = $cuenta->user_id === $user->id;
+        
+        // Verificar permisos granulares mediante PermisoGranular
+        // Esto es coherente con Documentos, que usa 'subir_documentos'
+        // Support both granular permissions and global Permission entries
+        $hasPermission = $user->hasPermission('subir_soportes') || $user->puedeRealizarAccion('subir_documentos');
+
+        // Permitir si es dueño Y tiene permiso
+        if (! $isOwner || ! $hasPermission) {
             return back()->with('error', 'No tienes permisos para adjuntar soportes.');
         }
+
         if (!in_array($cuenta->estado_aprobacion, ['en_correccion', 'en_revision'])) {
             return back()->with('error', 'La cuenta no está en estado válido para adjuntar soportes.');
         }
@@ -50,9 +59,14 @@ class SoporteController extends Controller
         $soporte = Soporte::where('cuenta_cobro_id', $cuenta->id)->findOrFail($soporteId);
         $user = Auth::user();
 
-        if ($user->role?->name !== 'contratista' || $cuenta->user_id !== $user->id) {
+        $isOwner = $cuenta->user_id === $user->id;
+        // Para eliminar, usamos el mismo permiso granular (o podrías definir otro)
+        $hasPermission = $user->hasPermission('eliminar_soportes') || $user->puedeRealizarAccion('subir_documentos');
+
+        if (! $isOwner || ! $hasPermission) {
             return back()->with('error', 'No tienes permisos para eliminar el soporte.');
         }
+
         if (!in_array($cuenta->estado_aprobacion, ['en_correccion', 'en_revision'])) {
             return back()->with('error', 'La cuenta no está en estado válido para eliminar soportes.');
         }

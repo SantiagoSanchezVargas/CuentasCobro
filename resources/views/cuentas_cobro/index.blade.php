@@ -126,6 +126,8 @@
     .status-badge.aprobado { background: #f0fdf4; color: #15803d; }
     .status-badge.rechazado { background: #fef2f2; color: #b91c1c; }
     .status-badge.pagado { background: #ecfdf5; color: #047857; }
+    .status-badge.en_correccion { background: #ffedd5; color: #9a3412; }
+    .status-badge.enviado_cliente { background: #e0f2fe; color: #0369a1; }
 
     .action-btn {
         width: 36px;
@@ -224,8 +226,23 @@
                             <td>{{ \Carbon\Carbon::parse($cuenta->fecha_emision)->format('d M, Y') }}</td>
                             <td style="font-weight: 600; color: var(--secondary);">${{ number_format($cuenta->valor_total, 0, ',', '.') }}</td>
                             <td>
-                                <span class="status-badge {{ $cuenta->estado_aprobacion }}">
-                                    {{ ucfirst(str_replace('_', ' ', $cuenta->estado_aprobacion)) }}
+                                @php
+                                    $statusClass = $cuenta->estado_aprobacion;
+                                    $statusLabel = ucfirst(str_replace('_', ' ', $cuenta->estado_aprobacion));
+                                    
+                                    if (($cuenta->estado_pago ?? 'pending') === 'approved') {
+                                        $statusClass = 'pagado';
+                                        $statusLabel = 'Pagado';
+                                    } elseif ($cuenta->estado_aprobacion === 'en_revision') {
+                                        $statusLabel = 'En Revisión';
+                                    } elseif ($cuenta->estado_aprobacion === 'en_correccion') {
+                                        $statusLabel = 'En Corrección';
+                                    } elseif ($cuenta->estado_aprobacion === 'enviado_cliente') {
+                                        $statusLabel = 'Enviado al Cliente';
+                                    }
+                                @endphp
+                                <span class="status-badge {{ $statusClass }}">
+                                    {{ $statusLabel }}
                                 </span>
                             </td>
                             <td>{{ $cuenta->municipio }}, {{ $cuenta->departamento }}</td>

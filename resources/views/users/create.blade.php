@@ -1,459 +1,284 @@
 @extends('layouts.app')
 
+@section('title', 'Crear Usuario - Dewey Accounts')
+
 @section('content')
 <style>
+    /* Professional Enterprise Design System */
     :root {
-        --apple-blue: #0071e3;
-        --apple-dark: #1d1d1f;
-        --apple-gray: #86868b;
-        --apple-light-gray: #f5f5f7;
+        --primary: #116dff;
+        --primary-dark: #0056d6;
+        --secondary: #0f172a; /* Slate 900 */
+        --text-main: #334155; /* Slate 700 */
+        --text-light: #64748b; /* Slate 500 */
+        --bg-body: #f8fafc; /* Slate 50 */
+        --bg-card: #ffffff;
+        --border-color: #e2e8f0; /* Slate 200 */
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --radius-md: 12px;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
-    .form-breadcrumb {
+    .main-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 40px;
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* Header */
+    .page-header {
+        margin-bottom: 32px;
+    }
+
+    .breadcrumb {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 2rem;
-        color: var(--apple-gray);
-        font-size: 0.9rem;
+        gap: 8px;
+        color: var(--text-light);
+        font-size: 14px;
+        margin-bottom: 16px;
     }
 
-    .form-breadcrumb a {
-        color: var(--apple-blue);
+    .breadcrumb a {
+        color: var(--text-light);
         text-decoration: none;
-        transition: opacity 0.3s ease;
+        transition: color 0.2s;
     }
 
-    .form-breadcrumb a:hover {
-        opacity: 0.7;
+    .breadcrumb a:hover { color: var(--primary); }
+
+    .page-title h1 {
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--secondary);
+        margin-bottom: 8px;
+        letter-spacing: -0.025em;
     }
 
-    .form-container {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 2rem;
+    .page-subtitle {
+        color: var(--text-light);
+        font-size: 16px;
     }
 
+    /* Form Card */
     .form-card {
-        background: white;
-        border-radius: 24px;
-        overflow: hidden;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-        animation: fadeInUp 0.6s ease;
-    }
-
-    .form-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 2.5rem;
-        text-align: center;
-        position: relative;
+        background: var(--bg-card);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-sm);
         overflow: hidden;
     }
 
-    .form-header::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
-        animation: shimmer 3s infinite;
+    .form-section {
+        padding: 32px;
+        border-bottom: 1px solid var(--border-color);
     }
 
-    .form-header-icon {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
-    }
+    .form-section:last-child { border-bottom: none; }
 
-    .form-header h1 {
-        color: white;
-        font-size: 2rem;
+    .section-title {
+        font-size: 18px;
         font-weight: 700;
-        margin: 0;
-        letter-spacing: -0.5px;
+        color: var(--secondary);
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
     }
 
-    .form-header p {
-        color: rgba(255, 255, 255, 0.9);
-        margin: 0.5rem 0 0;
-        font-size: 1rem;
-    }
-
-    .form-body {
-        padding: 3rem 2.5rem;
+    .section-icon {
+        width: 32px;
+        height: 32px;
+        background: #eff6ff;
+        color: var(--primary);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .form-grid {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 2rem;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
     }
 
     .form-group {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .form-group.full-width {
-        grid-column: 1 / -1;
+        margin-bottom: 0;
     }
 
     .form-label {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 0.95rem;
+        display: block;
+        font-size: 14px;
         font-weight: 600;
-        color: var(--apple-dark);
-        margin-bottom: 0.75rem;
+        color: var(--secondary);
+        margin-bottom: 8px;
     }
 
-    .form-label .material-symbols-rounded {
-        font-size: 1.2rem;
-        color: var(--apple-blue);
-    }
-
-    .form-input-wrapper {
-        position: relative;
-    }
-
-    .form-input,
-    .form-select {
+    .form-control {
         width: 100%;
-        padding: 1rem 1rem 1rem 3rem;
-        font-size: 1rem;
-        border: 2px solid #e5e5e7;
-        border-radius: 12px;
+        padding: 10px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--text-main);
+        transition: all 0.2s;
+    }
+
+    .form-control:focus {
         outline: none;
-        transition: all 0.3s ease;
-        background: var(--apple-light-gray);
-        color: var(--apple-dark);
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-
-    .form-input:focus,
-    .form-select:focus {
-        border-color: var(--apple-blue);
-        background: white;
-        box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1);
-    }
-
-    .form-input.is-invalid,
-    .form-select.is-invalid {
-        border-color: #ff3b30;
-        background: #fff5f5;
-    }
-
-    .form-input.is-invalid:focus,
-    .form-select.is-invalid:focus {
-        box-shadow: 0 0 0 4px rgba(255, 59, 48, 0.1);
-    }
-
-    .form-icon {
-        position: absolute;
-        left: 1rem;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--apple-gray);
-        font-size: 1.3rem;
-        pointer-events: none;
-        transition: color 0.3s ease;
-    }
-
-    .form-input:focus ~ .form-icon,
-    .form-select:focus ~ .form-icon {
-        color: var(--apple-blue);
-    }
-
-    .form-error {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-top: 0.5rem;
-        color: #ff3b30;
-        font-size: 0.85rem;
-    }
-
-    .form-error .material-symbols-rounded {
-        font-size: 1rem;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(17, 109, 255, 0.1);
     }
 
     .form-actions {
+        padding: 24px 32px;
+        background: #f8fafc;
+        border-top: 1px solid var(--border-color);
         display: flex;
         justify-content: flex-end;
-        gap: 1rem;
-        margin-top: 3rem;
-        padding-top: 2rem;
-        border-top: 1px solid #e5e5e7;
+        gap: 12px;
     }
 
-    .btn-cancel,
-    .btn-submit {
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        text-decoration: none;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+    }
+    .btn-primary:hover { background: var(--primary-dark); }
+
+    .btn-secondary {
+        background: white;
+        border-color: var(--border-color);
+        color: var(--text-main);
+    }
+    .btn-secondary:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+    }
+
+    .error-message {
+        color: var(--danger);
+        font-size: 12px;
+        margin-top: 6px;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        padding: 1rem 2rem;
-        border-radius: 12px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: none;
-        text-decoration: none;
-    }
-
-    .btn-cancel {
-        background: var(--apple-light-gray);
-        color: var(--apple-dark);
-    }
-
-    .btn-cancel:hover {
-        background: #e0e0e2;
-        transform: translateY(-2px);
-    }
-
-    .btn-submit {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    }
-
-    .btn-submit:hover {
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
-        transform: translateY(-2px);
-    }
-
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    @keyframes shimmer {
-        0%, 100% { transform: translateX(-100%); }
-        50% { transform: translateX(100%); }
+        gap: 4px;
     }
 
     @media (max-width: 768px) {
-        .form-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .form-container {
-            padding: 1rem;
-        }
-
-        .form-body {
-            padding: 2rem 1.5rem;
-        }
-
-        .form-actions {
-            flex-direction: column;
-        }
-
-        .btn-cancel,
-        .btn-submit {
-            width: 100%;
-            justify-content: center;
-        }
+        .form-grid { grid-template-columns: 1fr; }
     }
 </style>
 
-<div class="form-container">
-    <div class="form-breadcrumb">
-        <a href="{{ route('admin.users.index') }}">Usuarios</a>
-        <span class="material-symbols-rounded" style="font-size: 1rem;">chevron_right</span>
-        <span>Crear nuevo usuario</span>
-    </div>
-
-    <div class="form-card">
-        <div class="form-header">
-            <span class="material-symbols-rounded form-header-icon">person_add</span>
+<div class="main-container">
+    <div class="page-header">
+        <div class="breadcrumb">
+            <a href="{{ route('dashboard') }}">Dashboard</a>
+            <span class="material-symbols-rounded" style="font-size: 16px;">chevron_right</span>
+            <a href="{{ route('admin.users.index') }}">Usuarios</a>
+            <span class="material-symbols-rounded" style="font-size: 16px;">chevron_right</span>
+            <span>Crear Usuario</span>
+        </div>
+        <div class="page-title">
             <h1>Crear Nuevo Usuario</h1>
-            <p>Completa los datos para agregar un nuevo usuario al sistema</p>
-        </div>
-
-        <div class="form-body">
-            <form action="{{ route('admin.users.store') }}" method="POST" id="createUserForm">
-                @csrf
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="name" class="form-label">
-                            <span class="material-symbols-rounded">badge</span>
-                            Nombre completo
-                        </label>
-                        <div class="form-input-wrapper">
-                            <input 
-                                type="text" 
-                                name="name" 
-                                id="name"
-                                class="form-input @error('name') is-invalid @enderror"
-                                value="{{ old('name') }}" 
-                                placeholder="Juan Pérez García"
-                                required
-                            >
-                            <span class="material-symbols-rounded form-icon">person</span>
-                        </div>
-                        @error('name')
-                            <div class="form-error">
-                                <span class="material-symbols-rounded">error</span>
-                                {{ $message }}
-                            </div>
-                        @enderror
-                    </div>
-
-                    <div class="form-group">
-                        <label for="email" class="form-label">
-                            <span class="material-symbols-rounded">alternate_email</span>
-                            Correo electrónico
-                        </label>
-                        <div class="form-input-wrapper">
-                            <input 
-                                type="email" 
-                                name="email" 
-                                id="email"
-                                class="form-input @error('email') is-invalid @enderror"
-                                value="{{ old('email') }}" 
-                                placeholder="ejemplo@correo.com"
-                                required
-                            >
-                            <span class="material-symbols-rounded form-icon">mail</span>
-                        </div>
-                        @error('email')
-                            <div class="form-error">
-                                <span class="material-symbols-rounded">error</span>
-                                {{ $message }}
-                            </div>
-                        @enderror
-                    </div>
-
-                    <div class="form-group">
-                        <label for="password" class="form-label">
-                            <span class="material-symbols-rounded">lock</span>
-                            Contraseña
-                        </label>
-                        <div class="form-input-wrapper">
-                            <input 
-                                type="password" 
-                                name="password" 
-                                id="password"
-                                class="form-input @error('password') is-invalid @enderror"
-                                placeholder="Mínimo 8 caracteres"
-                                required
-                            >
-                            <span class="material-symbols-rounded form-icon">key</span>
-                        </div>
-                        @error('password')
-                            <div class="form-error">
-                                <span class="material-symbols-rounded">error</span>
-                                {{ $message }}
-                            </div>
-                        @enderror
-                    </div>
-
-                    <div class="form-group">
-                        <label for="role_id" class="form-label">
-                            <span class="material-symbols-rounded">workspace_premium</span>
-                            Rol del usuario
-                        </label>
-                        <div class="form-input-wrapper">
-                            <select 
-                                name="role_id" 
-                                id="role_id"
-                                class="form-select @error('role_id') is-invalid @enderror"
-                                required
-                            >
-                                <option value="">Selecciona un rol</option>
-                                @foreach($roles as $role)
-                                    <option value="{{ $role->id }}" {{ old('role_id') == $role->id ? 'selected' : '' }}>
-                                        {{ ucfirst($role->name) }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            <span class="material-symbols-rounded form-icon">shield_person</span>
-                        </div>
-                        @error('role_id')
-                            <div class="form-error">
-                                <span class="material-symbols-rounded">error</span>
-                                {{ $message }}
-                            </div>
-                        @enderror
-                    </div>
-                </div>
-
-                <div class="form-actions">
-                    <a href="{{ route('admin.users.index') }}" class="btn-cancel">
-                        <span class="material-symbols-rounded">close</span>
-                        Cancelar
-                    </a>
-                    <button type="submit" class="btn-submit">
-                        <span class="material-symbols-rounded">save</span>
-                        Crear Usuario
-                    </button>
-                </div>
-            </form>
+            <p class="page-subtitle">Registra un nuevo usuario y asigna sus permisos</p>
         </div>
     </div>
+
+    <form action="{{ route('admin.users.store') }}" method="POST" class="form-card">
+        @csrf
+        
+        <!-- Datos Personales -->
+        <div class="form-section">
+            <div class="section-title">
+                <div class="section-icon">
+                    <span class="material-symbols-rounded" style="font-size: 20px;">person</span>
+                </div>
+                Datos Personales
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Nombre Completo</label>
+                    <input type="text" name="name" class="form-control" value="{{ old('name') }}" placeholder="Ej. Juan Pérez" required>
+                    @error('name')
+                        <div class="error-message">
+                            <span class="material-symbols-rounded" style="font-size: 14px;">error</span> {{ $message }}
+                        </div>
+                    @enderror
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Correo Electrónico</label>
+                    <input type="email" name="email" class="form-control" value="{{ old('email') }}" placeholder="ejemplo@correo.com" required>
+                    @error('email')
+                        <div class="error-message">
+                            <span class="material-symbols-rounded" style="font-size: 14px;">error</span> {{ $message }}
+                        </div>
+                    @enderror
+                </div>
+            </div>
+        </div>
+
+        <!-- Seguridad -->
+        <div class="form-section">
+            <div class="section-title">
+                <div class="section-icon">
+                    <span class="material-symbols-rounded" style="font-size: 20px;">security</span>
+                </div>
+                Seguridad y Acceso
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Contraseña</label>
+                    <input type="password" name="password" class="form-control" placeholder="Mínimo 8 caracteres" required>
+                    @error('password')
+                        <div class="error-message">
+                            <span class="material-symbols-rounded" style="font-size: 14px;">error</span> {{ $message }}
+                        </div>
+                    @enderror
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Rol del Usuario</label>
+                    <select name="role_id" class="form-control" required>
+                        <option value="">Seleccionar rol...</option>
+                        @foreach($roles as $role)
+                            <option value="{{ $role->id }}" {{ old('role_id') == $role->id ? 'selected' : '' }}>
+                                {{ ucfirst($role->name) }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('role_id')
+                        <div class="error-message">
+                            <span class="material-symbols-rounded" style="font-size: 14px;">error</span> {{ $message }}
+                        </div>
+                    @enderror
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <a href="{{ route('admin.users.index') }}" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">
+                <span class="material-symbols-rounded">save</span> Guardar Usuario
+            </button>
+        </div>
+    </form>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('createUserForm');
-    const inputs = form.querySelectorAll('.form-input, .form-select');
-
-    // Animación de entrada para los campos
-    inputs.forEach((input, index) => {
-        input.style.opacity = '0';
-        input.style.transform = 'translateY(20px)';
-        setTimeout(() => {
-            input.style.transition = 'all 0.4s ease';
-            input.style.opacity = '1';
-            input.style.transform = 'translateY(0)';
-        }, 100 * index);
-    });
-
-    // Validación en tiempo real
-    inputs.forEach(input => {
-        input.addEventListener('blur', function() {
-            if (this.hasAttribute('required') && !this.value.trim()) {
-                this.classList.add('is-invalid');
-            } else {
-                this.classList.remove('is-invalid');
-            }
-        });
-
-        input.addEventListener('input', function() {
-            if (this.classList.contains('is-invalid') && this.value.trim()) {
-                this.classList.remove('is-invalid');
-            }
-        });
-    });
-
-    // Validación del email
-    const emailInput = document.getElementById('email');
-    emailInput.addEventListener('blur', function() {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (this.value && !emailRegex.test(this.value)) {
-            this.classList.add('is-invalid');
-        }
-    });
-
-    // Validación de la contraseña
-    const passwordInput = document.getElementById('password');
-    passwordInput.addEventListener('input', function() {
-        if (this.value.length > 0 && this.value.length < 8) {
-            this.classList.add('is-invalid');
-        } else {
-            this.classList.remove('is-invalid');
-        }
-    });
-});
-</script>
 @endsection

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Role;
+use App\Models\Permission;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class RolController extends Controller
@@ -21,18 +23,7 @@ class RolController extends Controller
      */
     public function create()
     {
-        $availablePermissions = [
-            'create_cuenta_cobro',
-            'view_cuenta_cobro',
-            'edit_cuenta_cobro',
-            'approve_cuenta_cobro',
-            'upload_documents',
-            'view_documents',
-            'manage_contracts',
-            'authorize_payment',
-            'view_reports'
-        ];
-
+        $availablePermissions = Permission::all();
         return view('roles.create', compact('availablePermissions'));
     }
 
@@ -51,11 +42,18 @@ class RolController extends Controller
             'description' => $request->description ?? null,
         ]);
 
-        if ($request->permissions) {
-            $role->permissions()->sync($request->permissions);
+        // Asignar permisos: convertir nombres a IDs
+        if ($request->has('permissions')) {
+            // Accept both numeric IDs and permission names
+            $permissionValues = $request->permissions ?? [];
+            $permissionIds = Permission::whereIn('id', $permissionValues)
+                ->orWhereIn('name', $permissionValues)
+                ->pluck('id')
+                ->toArray();
+            $role->permissions()->sync($permissionIds);
         }
 
-        return redirect()->route('admin.roles.index')->with('success', 'Rol creado correctamente.');
+        return redirect()->route('admin.roles.index')->with('success', 'Rol creado correctamente con sus permisos.');
     }
 
     /**
@@ -63,18 +61,7 @@ class RolController extends Controller
      */
     public function edit(Role $role)
     {
-        $availablePermissions = [
-            'create_cuenta_cobro',
-            'view_cuenta_cobro',
-            'edit_cuenta_cobro',
-            'approve_cuenta_cobro',
-            'upload_documents',
-            'view_documents',
-            'manage_contracts',
-            'authorize_payment',
-            'view_reports'
-        ];
-
+        $availablePermissions = Permission::all();
         return view('roles.edit', compact('role', 'availablePermissions'));
     }
 
@@ -93,13 +80,20 @@ class RolController extends Controller
             'description' => $request->description ?? null,
         ]);
 
-        if ($request->permissions) {
-            $role->permissions()->sync($request->permissions);
+        // Sincronizar permisos: esto actualiza correctamente la tabla pivot
+        if ($request->has('permissions')) {
+            $permissionValues = $request->permissions ?? [];
+            $permissionIds = Permission::whereIn('id', $permissionValues)
+                ->orWhereIn('name', $permissionValues)
+                ->pluck('id')
+                ->toArray();
+            $role->permissions()->sync($permissionIds);
         } else {
-            $role->permissions()->detach(); // Remover todos los permisos si no hay ninguno seleccionado
+            // Si no hay permisos seleccionados, remover todos
+            $role->permissions()->sync([]);
         }
 
-        return redirect()->route('admin.roles.index')->with('success', 'Rol actualizado correctamente.');
+        return redirect()->route('admin.roles.index')->with('success', 'Rol y permisos actualizados correctamente.');
     }
 
     /**
@@ -116,7 +110,8 @@ class RolController extends Controller
      */
     public function show(Role $role)
     {
-        return view('roles.show', compact('role'));
+        $users = $role->users()->paginate(10);
+        return view('roles.show', compact('role', 'users'));
     }
 
     /**

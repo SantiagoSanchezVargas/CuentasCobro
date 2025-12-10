@@ -17,6 +17,8 @@ class ItemCuentaCobro extends Model
         'detalle',
         'cantidad',
         'precio_unitario',
+        'iva',
+        'retefuente',
     ];
 
     protected $appends = ['subtotal'];

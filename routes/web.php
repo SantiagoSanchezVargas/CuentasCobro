@@ -16,6 +16,7 @@ use App\Http\Controllers\ReportesController;
 use App\Http\Controllers\DocumentoController;
 use App\Http\Controllers\AprobacionController;
 use App\Http\Controllers\PermisoController;
+use App\Http\Controllers\TerceroController;
 
 // ========================================
 // RUTA PRINCIPAL
@@ -57,6 +58,8 @@ Route::middleware(['auth'])->group(function () {
 
     // DASHBOARD
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/dashboard/sugerencia', [DashboardController::class, 'enviarSugerencia'])->name('dashboard.sugerencia');
+    Route::post('/dashboard/tesoreria/enviar/{id}', [DashboardController::class, 'enviarCuentaCliente'])->name('tesoreria.enviar');
 
     // NOTIFICACIONES
     Route::get('/notificaciones', [NotificacionController::class, 'index'])->name('notificaciones.index');
@@ -83,7 +86,9 @@ Route::middleware(['auth'])->group(function () {
     // ========================================
     // APROBACIONES MEJORADAS
     // ========================================
-    Route::prefix('aprobaciones')->name('aprobaciones.')->group(function () {
+    // Allow access by role OR by permission (approve/reject)
+    Route::middleware([\App\Http\Middleware\CheckRoleOrPermission::class . ':administrador,tesoreria,admin_programa,approve_cuenta_cobro,aprobar,reject_cuenta_cobro,rechazar'])
+        ->prefix('aprobaciones')->name('aprobaciones.')->group(function () {
         Route::post('{cuentaId}/modal', [AprobacionController::class, 'mostrarModalAprobacion'])->name('modal');
         Route::post('{cuentaId}/enviar-siguiente', [AprobacionController::class, 'enviarAlSiguiente'])->name('enviarSiguiente');
         Route::post('{cuentaId}/rechazar', [AprobacionController::class, 'rechazar'])->name('rechazar');
@@ -94,22 +99,32 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // ========================================
+    // TERCEROS (AJAX)
+    // ========================================
+    Route::get('/terceros/search', [TerceroController::class, 'search'])->name('terceros.search');
+    Route::post('/terceros/store', [TerceroController::class, 'store'])->name('terceros.store');
+
+    // ========================================
     // ADMIN DEL PROGRAMA
     // ========================================
     Route::middleware(['check.role:admin_programa'])
         ->prefix('admin')->name('admin.')->group(function () {
 
-        Route::view('/dashboard', 'dashboard.admin_programa')->name('dashboard');
+        Route::get('/dashboard', [DashboardController::class, 'adminPrograma'])->name('dashboard');
+
+        // CONSECUTIVOS
+        Route::resource('consecutivos', \App\Http\Controllers\ConsecutivoController::class);
 
         Route::resource('users', UserController::class)->except(['show']);
         Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
+        Route::get('diagnostics/user-permissions/{user}', [\App\Http\Controllers\Admin\DiagnosticsController::class, 'userPermissions'])->name('diagnostics.user_permissions');
+        Route::get('roles/users-without-role', [RolController::class, 'getUsersWithoutRole'])->name('roles.users.without');
         Route::resource('roles', RolController::class)->except(['show']);
         Route::get('roles/{role}', [RolController::class, 'show'])->name('roles.show');
 
         // Asignar / remover roles
         Route::post('roles/assign-role', [RolController::class, 'assignRole'])->name('roles.assign');
         Route::post('roles/remove-role', [RolController::class, 'removeRole'])->name('roles.remove');
-        Route::get('roles/users-without-role', [RolController::class, 'getUsersWithoutRole'])->name('roles.users.without');
 
         // Configuración y reportes
         Route::view('settings', 'admin.settings')->name('settings');
@@ -143,7 +158,7 @@ Route::middleware(['auth'])->group(function () {
     // ========================================
     Route::middleware(['check.role:administrador'])
         ->prefix('administrador')->name('administrador.')->group(function () {
-        Route::view('/dashboard', 'dashboard.administrador')->name('dashboard');
+        Route::get('/dashboard', [DashboardController::class, 'administrador'])->name('dashboard');
     });
 
     // ========================================
@@ -151,13 +166,13 @@ Route::middleware(['auth'])->group(function () {
     // ========================================
     Route::middleware(['check.role:tesoreria'])
         ->prefix('tesoreria')->name('tesoreria.')->group(function () {
-        Route::view('/dashboard', 'dashboard.tesoreria')->name('dashboard');
+        Route::get('/dashboard', [DashboardController::class, 'tesoreria'])->name('dashboard');
     });
 
     // ========================================
     // CONTRATOS (Administrador, Admin Programa)
-    // ========================================
-    Route::middleware(['check.role:administrador,admin_programa'])
+    // Allow access by role OR by permission 'manage_contracts'
+    Route::middleware([\App\Http\Middleware\CheckRoleOrPermission::class . ':administrador,admin_programa,manage_contracts,gestionar_contratos'])
         ->prefix('contratacion')->name('contratacion.')->group(function () {
         Route::resource('contratos', ContratoController::class);
     });
@@ -165,12 +180,17 @@ Route::middleware(['auth'])->group(function () {
     // ========================================
     // CUENTAS DE COBRO (todos los roles del flujo)
     // ========================================
-    Route::middleware(['check.role:auxiliar,administrador,tesoreria,admin_programa'])
+    // Allow access if user has any of these roles OR has permission 'view_cuenta_cobro'
+    Route::middleware([\App\Http\Middleware\CheckRoleOrPermission::class . ':auxiliar,administrador,tesoreria,admin_programa,view_cuenta_cobro'])
         ->group(function () {
         
         // Ruta de pagos (acceso también para Tesorería)
         Route::get('cuentas_cobro/pagos', [CuentaCobroController::class, 'pagos'])
             ->name('cuentas_cobro.pagos');
+
+        // Seguimiento de Aprobación
+        Route::get('cuentas_cobro/{id}/seguimiento', [CuentaCobroController::class, 'seguimiento'])
+            ->name('cuentas_cobro.seguimiento');
 
         // Exportar pagos
         Route::get('cuentas_cobro/exportar-pagos', [CuentaCobroController::class, 'exportarPagos'])
@@ -185,8 +205,8 @@ Route::middleware(['auth'])->group(function () {
 
     // ========================================
     // REPORTES (Administrador, Admin Programa, Tesorería)
-    // ========================================
-    Route::middleware(['check.role:administrador,admin_programa,tesoreria'])
+    // Allow access by role OR by 'view_reports' permission
+    Route::middleware([\App\Http\Middleware\CheckRoleOrPermission::class . ':administrador,admin_programa,tesoreria,view_reports,ver_reportes'])
         ->prefix('reportes')->name('reportes.')->group(function () {
         Route::get('/', [ReportesController::class, 'index'])->name('index');
         Route::get('/departamento/{nombre}', [ReportesController::class, 'departamento'])->name('departamento');
@@ -220,7 +240,10 @@ Route::middleware(['auth'])->group(function () {
     // ========================================
     // APROBACIONES (Administrador, Tesorería, Admin Programa)
     // ========================================
-    Route::middleware(['check.role:administrador,tesoreria,admin_programa'])->group(function () {
+    // ========================================
+    // APROBACIONES (Administrador, Tesorería, Admin Programa)
+    // Allow access by role OR by permission for approve/reject actions
+    Route::middleware([\App\Http\Middleware\CheckRoleOrPermission::class . ':administrador,tesoreria,admin_programa,approve_cuenta_cobro,aprobar,reject_cuenta_cobro,rechazar'])->group(function () {
         Route::get('/aprobaciones', [CuentaCobroController::class, 'misAprobaciones'])->name('aprobaciones.index');
         Route::post('/cuentas_cobro/{id}/aprobar', [CuentaCobroController::class, 'aprobar'])->name('cuentas_cobro.aprobar');
         Route::post('/cuentas_cobro/{id}/rechazar', [CuentaCobroController::class, 'rechazar'])->name('cuentas_cobro.rechazar');
@@ -235,3 +258,4 @@ Route::middleware(['auth'])->group(function () {
     // Reenviar (Auxiliar)
     Route::post('/cuentas_cobro/{id}/reenviar', [CuentaCobroController::class, 'reenviar'])->middleware('check.role:auxiliar')->name('cuentas_cobro.reenviar');
 });
+

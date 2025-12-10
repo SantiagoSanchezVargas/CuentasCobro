@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dewey Accounts')</title>
     
     <!-- Fonts - SF Pro Display (Apple) -->
@@ -26,80 +27,7 @@
     
         @stack('styles')
     @auth
-        @if(auth()->user()->role && auth()->user()->role->name === 'auxiliar')
-        <style>
-            :root {
-                --apple-blue: #116dff;
-                --apple-dark: #20303c;
-                --apple-gray: #f4f4f4;
-                --apple-border: #e1e4e8;
-                --apple-text: #20303c;
-                --apple-text-muted: #6b7c93;
-                --apple-card-bg: #ffffff;
-                --apple-hover: #f0f7ff;
-                --apple-danger: #ff3b30;
-                --apple-success: #34c759;
-                --apple-warning: #ffcc00;
-                --apple-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-                --apple-radius: 12px;
-                --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            }
-            body {
-                background-color: #f0f2f5;
-            }
-            .navbar {
-                background: #ffffff;
-                border-bottom: 1px solid #e1e4e8;
-            }
-            .sidebar {
-                display: none !important;
-            }
-            .app-layout {
-                grid-template-columns: 1fr !important;
-            }
-            .btn-apple {
-                border-radius: 8px;
-                font-weight: 600;
-            }
-            .card {
-                border: 1px solid #e1e4e8;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            }
-            /* Navbar Dropdown Styles */
-            .nav-dropdown {
-                position: relative;
-            }
-            .nav-dropdown-content {
-                display: none;
-                position: absolute;
-                top: 100%;
-                right: 0;
-                background: white;
-                border: 1px solid #e1e4e8;
-                border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-                min-width: 200px;
-                z-index: 1000;
-                padding: 8px 0;
-            }
-            .nav-dropdown:hover .nav-dropdown-content {
-                display: block;
-            }
-            .nav-dropdown-item {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                padding: 10px 16px;
-                color: var(--apple-text);
-                text-decoration: none;
-                font-size: 14px;
-            }
-            .nav-dropdown-item:hover {
-                background: #f0f7ff;
-                color: var(--apple-blue);
-            }
-        </style>
-        @endif
+        {{-- Role specific styles removed to maintain consistent design --}}
     @endauth
         <style>
             /* Sidebar Dropdown Styles */
@@ -409,5 +337,154 @@
 
     @include('components.flash-modal')
     @stack('scripts')
+    <!-- Support Widget -->
+    <div class="support-widget">
+        <button onclick="openSupportModal()" class="support-btn" title="Sugerencias y Soporte">
+            <span class="material-symbols-rounded">help</span>
+        </button>
+    </div>
+
+    <!-- Support Modal -->
+    <div id="supportModal" class="custom-modal">
+        <div class="custom-modal-content">
+            <div class="custom-modal-header">
+                <h2>Soporte y Sugerencias</h2>
+                <span class="custom-close" onclick="closeSupportModal()">&times;</span>
+            </div>
+            <form action="{{ route('dashboard.sugerencia') }}" method="POST">
+                @csrf
+                <div class="custom-modal-body">
+                    <p class="text-sm text-gray-600 mb-4">Envía tus sugerencias, reportes de error o solicitudes al administrador del sistema.</p>
+                    <div class="form-group">
+                        <label for="mensaje" style="display:block; margin-bottom:8px; font-weight:500;">Mensaje</label>
+                        <textarea name="mensaje" id="mensaje" rows="4" class="form-control" required placeholder="Describe tu solicitud..." style="width:100%; padding:12px; border-radius:8px; border:1px solid #e2e8f0; resize:vertical;"></textarea>
+                    </div>
+                </div>
+                <div class="custom-modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeSupportModal()" style="background:#f1f5f9; color:#475569; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:600;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="background:var(--apple-blue, #0f172a); color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:600;">Enviar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        .support-widget {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+        }
+        .support-btn {
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 50%;
+            background: var(--apple-blue, #0f172a);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+        .support-btn:hover {
+            transform: scale(1.1);
+        }
+        .support-btn span {
+            font-size: 1.5rem;
+        }
+
+        /* Custom Modal Styles */
+        .custom-modal {
+            display: none; 
+            position: fixed; 
+            z-index: 2000; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.5); 
+            backdrop-filter: blur(4px);
+        }
+
+        .custom-modal-content {
+            background-color: #fefefe;
+            margin: 10% auto; 
+            padding: 0;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .custom-modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .custom-modal-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .custom-close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .custom-close:hover,
+        .custom-close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .custom-modal-body {
+            padding: 24px;
+        }
+
+        .custom-modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            background-color: #f8fafc;
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
+        }
+    </style>
+
+    <script>
+        function openSupportModal() {
+            document.getElementById('supportModal').style.display = 'block';
+        }
+        function closeSupportModal() {
+            document.getElementById('supportModal').style.display = 'none';
+        }
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('supportModal')) {
+                closeSupportModal();
+            }
+        }
+    </script>
 </body>
 </html>

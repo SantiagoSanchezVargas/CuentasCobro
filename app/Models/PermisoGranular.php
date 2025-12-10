@@ -125,6 +125,10 @@ class PermisoGranular extends Model
     {
         $atributo = 'puede_' . $nombrePermiso;
 
+        // Resolve possible alias -> canonical action keys for granular permissions
+        $canonical = config('granular_action_aliases.' . $nombrePermiso, $nombrePermiso);
+        $atributo = 'puede_' . $canonical;
+
         return isset($this->$atributo) && $this->$atributo;
     }
 

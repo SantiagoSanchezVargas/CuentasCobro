@@ -452,6 +452,9 @@
                 @csrf
                 @method('PUT')
 
+                <!-- Ensure name is sent even if the input is disabled -->
+                <input type="hidden" name="name" value="{{ $role->name }}">
+
                 @if($role->users()->count() > 0)
                     <div class="info-box">
                         <span class="material-symbols-rounded">info</span>
@@ -472,6 +475,11 @@
 
                 <div class="permissions-section">
                     @php
+                        // Convertir colección de permisos a array de nombres para validación
+                        $availablePermissionNames = $availablePermissions instanceof \Illuminate\Support\Collection 
+                            ? $availablePermissions->pluck('name')->toArray() 
+                            : collect($availablePermissions)->pluck('name')->toArray();
+
                         $permissionCategories = [
                             'Cuentas de Cobro' => ['create_cuenta_cobro', 'view_cuenta_cobro', 'view_own_cuenta_cobro', 'view_all_cuenta_cobro', 'edit_own_cuenta_cobro', 'review_cuenta_cobro', 'approve_cuenta_cobro', 'reject_cuenta_cobro', 'final_approval'],
                             'Documentos' => ['upload_documents', 'view_documents'],
@@ -518,11 +526,15 @@
                             </div>
 
                             @foreach($categoryPerms as $permission)
-                                @if(in_array($permission, $availablePermissions ?? []))
+                                @php
+                                    // Get the corresponding Permission model by name
+                                    $permModel = $availablePermissions->where('name', $permission)->first();
+                                @endphp
+                                @if($permModel)
                                     <div class="permission-item">
-                                        <input type="checkbox" class="permission-checkbox category-{{ strtolower(str_replace(' ', '_', $category)) }}" 
-                                               name="permissions[]" value="{{ $permission }}"
-                                               {{ in_array($permission, $role->permissions->pluck('name')->toArray() ?? []) ? 'checked' : '' }}
+                                        <input type="checkbox" class="permission-checkbox category-{{ strtolower(str_replace(' ', '_', $category)) }}"
+                                               name="permissions[]" value="{{ $permModel->id }}"
+                                               {{ in_array($permModel->id, $role->permissions->pluck('id')->toArray() ?? []) ? 'checked' : '' }}
                                                id="perm_{{ $permission }}">
                                         <label class="permission-label" for="perm_{{ $permission }}">
                                             {{ ucfirst(str_replace('_', ' ', $permission)) }}

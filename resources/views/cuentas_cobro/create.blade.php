@@ -129,10 +129,10 @@
         </div>
     </div>
 
-    <div class="wix-card">
+        <div class="wix-card">
         <form action="{{ route('cuentas_cobro.store') }}" method="POST" id="cuentaCobroForm" enctype="multipart/form-data">
             @csrf
-            @include('cuentas_cobro.partials.form', ['btnText' => 'Crear Cuenta', 'cuenta' => null])
+            @include('cuentas_cobro.partials.form_improved', ['btnText' => 'Crear Cuenta', 'cuenta' => null])
         </form>
     </div>
 </div>

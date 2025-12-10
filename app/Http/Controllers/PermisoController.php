@@ -14,8 +14,8 @@ class PermisoController extends Controller
      */
     public function index()
     {
-        // Solo Super Admin puede gestionar permisos
-        if (!Auth::user()->hasRole('super_admin')) {
+        // Solo Super Admin o Admin Programa puede gestionar permisos
+        if (!Auth::user()->hasAnyRole(['super_admin', 'admin_programa'])) {
             abort(403, 'Solo Super Admin puede acceder a la gestión de permisos');
         }
 
@@ -38,7 +38,7 @@ class PermisoController extends Controller
      */
     public function create()
     {
-        if (!Auth::user()->hasRole('super_admin')) {
+        if (!Auth::user()->hasAnyRole(['super_admin', 'admin_programa'])) {
             abort(403);
         }
 
@@ -54,7 +54,7 @@ class PermisoController extends Controller
      */
     public function store(Request $request)
     {
-        if (!Auth::user()->hasRole('super_admin')) {
+        if (!Auth::user()->hasAnyRole(['super_admin', 'admin_programa'])) {
             abort(403);
         }
 
@@ -117,7 +117,7 @@ class PermisoController extends Controller
      */
     public function edit($id)
     {
-        if (!Auth::user()->hasRole('super_admin')) {
+        if (!Auth::user()->hasAnyRole(['super_admin', 'admin_programa'])) {
             abort(403);
         }
 
@@ -133,7 +133,7 @@ class PermisoController extends Controller
      */
     public function update(Request $request, $id)
     {
-        if (!Auth::user()->hasRole('super_admin')) {
+        if (!Auth::user()->hasAnyRole(['super_admin', 'admin_programa'])) {
             abort(403);
         }
 
@@ -190,7 +190,7 @@ class PermisoController extends Controller
      */
     public function destroy($id)
     {
-        if (!Auth::user()->hasRole('super_admin')) {
+        if (!Auth::user()->hasAnyRole(['super_admin', 'admin_programa'])) {
             abort(403);
         }
 
@@ -206,10 +206,8 @@ class PermisoController extends Controller
      */
     public function matrizJson()
     {
-        if (!Auth::user()->hasRole('super_admin')) {
-            return response()->json(['error' => 'No autorizado'], 403);
-        }
-
+        // El middleware ya se encarga de la autorización
+        
         $roles = Role::all();
         $matriz = [];
 
@@ -231,7 +229,7 @@ class PermisoController extends Controller
      */
     public function aplicarPlantilla(Request $request, $roleId)
     {
-        if (!Auth::user()->hasRole('super_admin')) {
+        if (!Auth::user()->hasAnyRole(['super_admin', 'admin_programa'])) {
             abort(403);
         }
 

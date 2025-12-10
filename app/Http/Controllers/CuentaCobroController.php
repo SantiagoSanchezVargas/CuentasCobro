@@ -36,30 +36,41 @@ class CuentaCobroController extends Controller
     /**
      * Mostrar formulario de creación.
      */
-   public function create()
-{
-    // Solo auxiliar puede crear
-    if ((Auth::user()?->role?->name) !== 'auxiliar') {
-        return redirect()->route('cuentas_cobro.index')->with('error', 'Solo el auxiliar puede crear cuentas de cobro.');
+    public function create()
+    {
+        // Solo auxiliar puede crear
+        if ((Auth::user()?->role?->name) !== 'auxiliar') {
+            return redirect()->route('cuentas_cobro.index')->with('error', 'Solo el auxiliar puede crear cuentas de cobro.');
+        }
+        $contratos = Contrato::all();
+
+        $departamentos = \App\Models\Departamento::with('municipios')->get();
+
+        // Formatear datos para el formulario
+        $departamentosFormateados = [];
+        foreach ($departamentos as $dep) {
+            $departamentosFormateados[$dep->nombre] = $dep->municipios->pluck('nombre')->toArray();
+        }
+        ksort($departamentosFormateados);
+        
+        // Obtener consecutivo activo
+        $consecutivo = \App\Models\Consecutivo::where('tipo_documento', 'Cuenta de Cobro')
+            ->where('activo', true)
+            ->first();
+            
+        $siguienteNumero = $consecutivo ? $consecutivo->siguiente_numero : 'CC-' . (CuentaCobro::count() + 1);
+
+        return view('cuentas_cobro.create', [
+            'contratos' => $contratos,
+            'departamentos' => $departamentosFormateados,
+            'siguienteNumero' => $siguienteNumero
+        ]);
     }
-    $contratos = Contrato::all();
-
-    $departamentos = \App\Models\Departamento::with('municipios')->get();
-
-    // Formatear datos para el formulario
-    $departamentosFormateados = [];
-    foreach ($departamentos as $dep) {
-        $departamentosFormateados[$dep->nombre] = $dep->municipios->pluck('nombre')->toArray();
+    public function seguimiento($id)
+    {
+        $cuenta = CuentaCobro::with(['user.role', 'items'])->findOrFail($id);
+        return view('cuentas_cobro.seguimiento', compact('cuenta'));
     }
-    ksort($departamentosFormateados);
-    ksort($departamentosFormateados);
-
-    return view('cuentas_cobro.create', [
-        'contratos' => $contratos,
-        'departamentos' => $departamentosFormateados
-    ]);
-}
-
 
     /**
      * Guardar una nueva cuenta de cobro.
@@ -67,7 +78,7 @@ class CuentaCobroController extends Controller
  public function store(Request $request)
 {
     $request->validate([
-        'numero' => 'required|unique:cuentas_cobro',
+        // 'numero' => 'required|unique:cuentas_cobro', // Automático
         'fecha_emision' => 'required|date',
         'departamento' => 'required',
         'municipio' => 'required',
@@ -144,6 +155,17 @@ class CuentaCobroController extends Controller
     // Calcular total neto
     $valorTotal = round($subtotal + $iva - $retFuente - $retIca - $retIva, 2);
 
+    // Actualizar consecutivo si existe
+    $consecutivo = \App\Models\Consecutivo::where('tipo_documento', 'Cuenta de Cobro')
+        ->where('activo', true)
+        ->first();
+    
+    $numeroCuenta = $request->numero;
+    if ($consecutivo) {
+        $numeroCuenta = $consecutivo->siguiente_numero;
+        $consecutivo->increment('numero_actual');
+    }
+
     // Preparar contrato_id: solo si es numérico y existe, sino null
     $contratoId = null;
     if ($request->filled('contrato_id') && is_numeric($request->contrato_id)) {
@@ -200,10 +222,29 @@ class CuentaCobroController extends Controller
         $legalData['email_acreedor'] = auth()->user()?->email;
     }
 
-    [$prefijo, $serie, $consecutivo] = $this->splitNumeroCuenta($request->numero);
-    $legalData['prefijo_cuenta'] = $legalData['prefijo_cuenta'] ?? $prefijo;
-    $legalData['serie_cuenta'] = $legalData['serie_cuenta'] ?? $serie;
-    $legalData['consecutivo_cuenta'] = $legalData['consecutivo_cuenta'] ?? $consecutivo;
+    // Lógica de Consecutivos
+    if (isset($numeroCuenta) && $numeroCuenta) {
+        $numeroConsecutivo = $numeroCuenta;
+        $nextConsecutive = (int) preg_replace('/[^0-9]/', '', $numeroCuenta); // Extraer solo números para el campo entero
+    } else {
+        // Generar consecutivo automático: YYYYMMSequence (e.g. 2025121)
+        $now = \Carbon\Carbon::now();
+        $year = $now->year;
+        $month = $now->format('m');
+
+        // Reset consecutive every month
+        $lastConsecutive = CuentaCobro::whereYear('created_at', $year)
+            ->whereMonth('created_at', $now->month)
+            ->max('consecutivo_cuenta');
+
+        $nextConsecutive = $lastConsecutive ? $lastConsecutive + 1 : 1;
+        $numeroConsecutivo = $year . $month . $nextConsecutive;
+    }
+
+    // Manually set parts
+    $legalData['prefijo_cuenta'] = null;
+    $legalData['serie_cuenta'] = now()->format('Ym');
+    $legalData['consecutivo_cuenta'] = $nextConsecutive;
     $legalData['subtotal'] = $subtotal;
     $legalData['iva_valor'] = $iva;
     $legalData['retencion_fuente_valor'] = $retFuente;
@@ -212,7 +253,7 @@ class CuentaCobroController extends Controller
     $legalData['valor_pendiente_pago'] = $valorTotal;
 
     $baseData = [
-        'numero' => $request->numero,
+        'numero' => $numeroConsecutivo,
         'fecha_emision' => $request->fecha_emision,
         'valor_total' => $valorTotal,
         'departamento' => $request->departamento,
@@ -242,6 +283,8 @@ class CuentaCobroController extends Controller
             'detalle' => $item['detalle'] ?? null,
             'cantidad' => $item['cantidad'],
             'precio_unitario' => $item['precio_unitario'],
+            'iva' => $item['iva'] ?? 0,
+            'retefuente' => $item['retefuente'] ?? 0,
         ]);
     }
 
@@ -259,7 +302,7 @@ class CuentaCobroController extends Controller
         ];
 
         $pdf = Pdf::loadView('cuentas_cobro.pdf', $data)->setPaper('letter');
-        $fileName = 'CuentaCobro_' . ($cuenta->numero ?? $cuenta->id) . '.pdf';
+        $fileName = 'CuentaCobro_' . ($cuenta->numero ?? $cuenta->id) . '_' . \Carbon\Carbon::now()->format('Y-m-d') . '.pdf';
         // Asegurar carpeta
         Storage::disk('public')->makeDirectory('cuentas_cobro');
         Storage::disk('public')->put('cuentas_cobro/' . $fileName, $pdf->output());
@@ -357,17 +400,21 @@ class CuentaCobroController extends Controller
     public function aprobar(Request $request, $id)
     {
         $cuenta = CuentaCobro::findOrFail($id);
-        $role = Auth::user()?->role?->name;
+        $user = Auth::user();
 
         if ($cuenta->estado_aprobacion !== 'en_revision') {
             return back()->with('error', 'La cuenta no está en revisión.');
+        }
+
+        if (!$user->puedeRealizarAccion('aprobar', $cuenta->etapa_aprobacion, $cuenta->estado_aprobacion)) {
+            return back()->with('error', 'No tienes permisos para aprobar esta etapa.');
         }
 
         $comentario = $request->input('comentario');
         $estadoAnterior = $cuenta->estado_aprobacion;
 
         // 1) Administrador -> Tesorería
-        if ($cuenta->etapa_aprobacion === 'administrador' && in_array($role, ['administrador', 'admin_programa'])) {
+        if ($cuenta->etapa_aprobacion === 'administrador') {
             $cuenta->etapa_aprobacion = 'tesoreria';
             $cuenta->save();
             $cuenta->registrarHistorial(Auth::id(), 'revisado', $estadoAnterior, 'en_revision', $comentario ?: 'Administrador aprobó y envió a Tesorería.');
@@ -376,7 +423,7 @@ class CuentaCobroController extends Controller
         }
 
         // 2) Tesorería -> Aprobado (Listo para pago)
-        if ($cuenta->etapa_aprobacion === 'tesoreria' && in_array($role, ['tesoreria', 'admin_programa'])) {
+        if ($cuenta->etapa_aprobacion === 'tesoreria') {
             $cuenta->estado_aprobacion = 'aprobado';
             // Se mantiene en etapa tesoreria para que puedan registrar el pago
             $cuenta->aprobado_por_id = Auth::id();
@@ -396,7 +443,7 @@ class CuentaCobroController extends Controller
             return back()->with('success', 'Cuenta aprobada. Lista para registrar pago.');
         }
 
-        return back()->with('error', 'No tienes permisos para aprobar esta etapa.');
+        return back()->with('error', 'No se pudo determinar la siguiente etapa.');
     }
 
     /**
@@ -406,9 +453,16 @@ class CuentaCobroController extends Controller
     {
         $request->validate(['motivo_rechazo' => 'required|string|min:5']);
         $cuenta = CuentaCobro::findOrFail($id);
+        $user = Auth::user();
+
         if (!in_array($cuenta->estado_aprobacion, ['en_revision'])) {
             return back()->with('error', 'La cuenta no está en estado válido para rechazo.');
         }
+
+        if (!$user->puedeRealizarAccion('rechazar', $cuenta->etapa_aprobacion, $cuenta->estado_aprobacion)) {
+            return back()->with('error', 'No tienes permisos para rechazar esta cuenta.');
+        }
+
         $estadoAnterior = $cuenta->estado_aprobacion;
         $cuenta->update([
             'estado_aprobacion' => 'rechazado',
@@ -594,11 +648,14 @@ class CuentaCobroController extends Controller
  public function update(Request $request, $id)
 {
     $cuenta = CuentaCobro::findOrFail($id);
-    $role = Auth::user()?->role?->name;
-    if ($role === 'auxiliar') {
-        if ($cuenta->user_id !== Auth::id() || $cuenta->estado_aprobacion !== 'en_correccion') {
-            return redirect()->route('cuentas_cobro.show', $cuenta->id)->with('error', 'Solo puedes actualizar cuentas devueltas para corrección.');
-        }
+    $user = Auth::user();
+
+    // Check permissions: Owner in correction OR User with 'editar' permission
+    $isOwnerInCorrection = ($cuenta->user_id === $user->id && $cuenta->estado_aprobacion === 'en_correccion');
+    $hasEditPermission = $user->puedeRealizarAccion('editar', $cuenta->etapa_aprobacion, $cuenta->estado_aprobacion);
+
+    if (!$isOwnerInCorrection && !$hasEditPermission) {
+        return redirect()->route('cuentas_cobro.show', $cuenta->id)->with('error', 'No tienes permisos para editar esta cuenta.');
     }
 
     $request->validate([
@@ -715,6 +772,8 @@ class CuentaCobroController extends Controller
             'detalle' => $item['detalle'] ?? null,
             'cantidad' => $item['cantidad'],
             'precio_unitario' => $item['precio_unitario'],
+            'iva' => $item['iva'] ?? 0,
+            'retefuente' => $item['retefuente'] ?? 0,
         ]);
     }
 
@@ -732,7 +791,7 @@ class CuentaCobroController extends Controller
         ];
 
         $pdf = Pdf::loadView('cuentas_cobro.pdf', $data)->setPaper('letter');
-        $fileName = 'CuentaCobro_' . ($cuenta->numero ?? $cuenta->id) . '.pdf';
+        $fileName = 'CuentaCobro_' . ($cuenta->numero ?? $cuenta->id) . '_' . \Carbon\Carbon::now()->format('Y-m-d') . '.pdf';
         Storage::disk('public')->makeDirectory('cuentas_cobro');
         Storage::disk('public')->put('cuentas_cobro/' . $fileName, $pdf->output());
     } catch (\Exception $e) {
@@ -811,12 +870,66 @@ class CuentaCobroController extends Controller
     /**
      * Exportar pagos a CSV.
      */
-    public function exportarPagos()
+    public function exportarPagos(Request $request)
     {
+        $format = $request->query('format', 'csv');
+
         $cuentas = CuentaCobro::with(['user', 'items', 'contrato'])
             ->whereNull('archived_at')
             ->latest()
             ->get();
+
+        if ($format === 'excel') {
+            $filename = "pagos_" . date('Y-m-d_H-i-s') . ".xls";
+            
+            $headers = [
+                'Content-Type' => 'application/vnd.ms-excel',
+                'Content-Disposition' => "attachment; filename=\"$filename\"",
+                'Pragma' => 'no-cache',
+                'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+                'Expires' => '0',
+            ];
+
+            $callback = function() use ($cuentas) {
+                echo "<html>";
+                echo "<head><meta charset='UTF-8'></head>";
+                echo "<body>";
+                echo "<table border='1'>";
+                echo "<thead><tr>
+                        <th>ID</th>
+                        <th>Número</th>
+                        <th>Beneficiario</th>
+                        <th>Identificación</th>
+                        <th>Valor Total</th>
+                        <th>Fecha Emisión</th>
+                        <th>Estado Aprobación</th>
+                        <th>Estado Pago</th>
+                        <th>Fecha Pago</th>
+                        <th>Observaciones / Detalles Pago</th>
+                      </tr></thead>";
+                echo "<tbody>";
+                foreach ($cuentas as $cuenta) {
+                    echo "<tr>";
+                    echo "<td>" . $cuenta->id . "</td>";
+                    echo "<td>" . $cuenta->numero . "</td>";
+                    echo "<td>" . $cuenta->nombre_beneficiario . "</td>";
+                    echo "<td>" . $cuenta->identificacion . "</td>";
+                    echo "<td>" . number_format($cuenta->valor_total, 2, '.', '') . "</td>";
+                    echo "<td>" . $cuenta->fecha_emision . "</td>";
+                    echo "<td>" . ucfirst(str_replace('_', ' ', $cuenta->estado_aprobacion)) . "</td>";
+                    echo "<td>" . ucfirst($cuenta->estado_pago) . "</td>";
+                    echo "<td>" . $cuenta->fecha_pago . "</td>";
+                    echo "<td>" . $cuenta->observaciones . "</td>";
+                    echo "</tr>";
+                }
+                echo "</tbody>";
+                echo "</table>";
+                echo "</body>";
+                echo "</html>";
+            };
+
+            return response()->stream($callback, 200, $headers);
+        }
 
         $filename = "pagos_" . date('Y-m-d_H-i-s') . ".csv";
         $handle = fopen('php://memory', 'w');
@@ -911,6 +1024,10 @@ class CuentaCobroController extends Controller
         $data = [
             'cuenta' => $cuenta,
             'subtotal' => $subtotal,
+            'iva' => $cuenta->iva_valor ?? 0,
+            'retFuente' => $cuenta->retencion_fuente_valor ?? 0,
+            'retIca' => $cuenta->retencion_ica_valor ?? 0,
+            'retIva' => $cuenta->retencion_iva_valor ?? 0,
             'total' => $total,
             'appName' => config('app.name'),
         ];
@@ -951,6 +1068,10 @@ class CuentaCobroController extends Controller
             $data = [
                 'cuenta' => $cuenta,
                 'subtotal' => $subtotal,
+                'iva' => $cuenta->iva_valor ?? 0,
+                'retFuente' => $cuenta->retencion_fuente_valor ?? 0,
+                'retIca' => $cuenta->retencion_ica_valor ?? 0,
+                'retIva' => $cuenta->retencion_iva_valor ?? 0,
                 'total' => $total,
                 'appName' => config('app.name'),
             ];

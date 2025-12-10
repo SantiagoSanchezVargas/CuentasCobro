@@ -4,25 +4,57 @@
 
 @section('content')
 <style>
-    .form-header {
-        background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+    :root {
+        --slate-50: #f8fafc;
+        --slate-100: #f1f5f9;
+        --slate-200: #e2e8f0;
+        --slate-300: #cbd5e1;
+        --slate-400: #94a3b8;
+        --slate-500: #64748b;
+        --slate-600: #475569;
+        --slate-700: #334155;
+        --slate-800: #1e293b;
+        --slate-900: #0f172a;
+        --primary-blue: #116dff;
+        --primary-hover: #0056d6;
+        --purple-gradient: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+    }
+
+    .role-header {
+        background: var(--purple-gradient);
         border-radius: 24px;
         padding: 40px 32px;
         color: white;
         margin-bottom: 32px;
         display: flex;
         align-items: center;
-        gap: 16px;
-        box-shadow: 0 10px 40px rgba(124, 58, 237, 0.15);
+        gap: 24px;
+        box-shadow: 0 10px 40px rgba(99, 102, 241, 0.2);
     }
 
-    .form-header .material-symbols-rounded {
+    .role-icon-large {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
         font-size: 40px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        flex-shrink: 0;
+        backdrop-filter: blur(8px);
     }
 
-    .form-header h1 {
-        font-size: 28px;
+    .role-header-content h1 {
+        font-size: 32px;
         font-weight: 700;
+        margin: 0 0 8px 0;
+    }
+
+    .role-header-content p {
+        font-size: 16px;
+        opacity: 0.95;
         margin: 0;
     }
 
@@ -30,7 +62,7 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        color: var(--apple-blue);
+        color: var(--primary-blue);
         text-decoration: none;
         font-weight: 500;
         margin-bottom: 24px;
@@ -39,358 +71,318 @@
 
     .back-link:hover {
         gap: 12px;
+        opacity: 0.8;
     }
 
-    .form-container {
+    .card {
         background: white;
         border-radius: 18px;
         padding: 32px;
-        box-shadow: var(--shadow-sm);
-        max-width: 700px;
-    }
-
-    .form-section {
-        margin-bottom: 32px;
-    }
-
-    .form-section:last-child {
-        margin-bottom: 0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        border: 1px solid var(--slate-200);
+        margin-bottom: 24px;
     }
 
     .section-title {
-        font-size: 16px;
+        font-size: 18px;
         font-weight: 600;
-        color: var(--apple-dark);
-        margin-bottom: 16px;
-        padding-bottom: 12px;
-        border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+        color: var(--slate-800);
+        margin-bottom: 24px;
         display: flex;
         align-items: center;
         gap: 12px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--slate-100);
     }
 
     .section-title .material-symbols-rounded {
-        color: var(--apple-blue);
-        font-size: 22px;
+        color: var(--primary-blue);
     }
 
     .form-group {
-        margin-bottom: 20px;
-    }
-
-    .form-group:last-child {
-        margin-bottom: 0;
+        margin-bottom: 24px;
     }
 
     .form-label {
+        display: block;
         font-size: 14px;
         font-weight: 600;
-        color: var(--apple-dark);
+        color: var(--slate-700);
         margin-bottom: 8px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .form-label .required {
-        color: var(--apple-red);
     }
 
     .form-input {
         width: 100%;
         padding: 12px 16px;
-        border: 1.5px solid rgba(0, 0, 0, 0.15);
         border-radius: 12px;
+        border: 1px solid var(--slate-200);
         font-size: 15px;
-        font-family: inherit;
+        color: var(--slate-800);
         transition: all 0.2s;
-        box-sizing: border-box;
+        background: var(--slate-50);
     }
 
     .form-input:focus {
         outline: none;
-        border-color: var(--apple-blue);
-        box-shadow: 0 0 0 4px var(--apple-blue-light);
-        background: #f9f9ff;
-    }
-
-    .form-input.error {
-        border-color: var(--apple-red);
-        background: rgba(255, 59, 48, 0.05);
-    }
-
-    .form-input.error:focus {
-        box-shadow: 0 0 0 4px rgba(255, 59, 48, 0.1);
-    }
-
-    .error-message {
-        color: var(--apple-red);
-        font-size: 13px;
-        margin-top: 6px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
+        border-color: var(--primary-blue);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(17, 109, 255, 0.1);
     }
 
     .permissions-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-        gap: 12px;
-        margin-top: 12px;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 16px;
     }
 
-    .permission-chip {
-        padding: 12px 16px;
-        border: 2px solid rgba(0, 0, 0, 0.1);
+    .permission-card {
+        background: var(--slate-50);
+        border: 1px solid var(--slate-200);
         border-radius: 12px;
-        background: white;
+        padding: 16px;
         cursor: pointer;
         transition: all 0.2s;
-        font-size: 13px;
-        font-weight: 500;
-        text-align: center;
-        color: var(--apple-gray);
         display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
+        align-items: flex-start;
+        gap: 12px;
     }
 
-    .permission-chip:hover {
-        border-color: var(--apple-blue);
-        color: var(--apple-blue);
+    .permission-card:hover {
+        border-color: var(--primary-blue);
+        background: white;
     }
 
-    .permission-chip.active {
-        background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+    .permission-checkbox {
+        width: 20px;
+        height: 20px;
+        border-radius: 6px;
+        border: 2px solid var(--slate-300);
+        appearance: none;
+        cursor: pointer;
+        position: relative;
+        flex-shrink: 0;
+        margin-top: 2px;
+        transition: all 0.2s;
+    }
+
+    .permission-checkbox:checked {
+        background: var(--primary-blue);
+        border-color: var(--primary-blue);
+    }
+
+    .permission-checkbox:checked::after {
+        content: 'check';
+        font-family: 'Material Symbols Rounded';
         color: white;
-        border-color: transparent;
-        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+        font-size: 16px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-weight: bold;
     }
 
-    .permissions-info {
-        font-size: 13px;
-        color: var(--apple-gray);
-        margin-top: 12px;
+    .permission-label {
+        font-size: 14px;
+        color: var(--slate-700);
+        font-weight: 500;
+        cursor: pointer;
+        line-height: 1.4;
+    }
+
+    .category-header {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--slate-800);
+        margin: 32px 0 16px 0;
         display: flex;
         align-items: center;
         gap: 8px;
     }
 
-    .permissions-info .material-symbols-rounded {
-        font-size: 18px;
-        color: var(--apple-blue);
+    .category-header:first-of-type {
+        margin-top: 0;
     }
 
-    .form-actions {
-        display: flex;
-        gap: 12px;
-        margin-top: 32px;
-        padding-top: 24px;
-        border-top: 2px solid rgba(0, 0, 0, 0.05);
+    .category-header .material-symbols-rounded {
+        color: var(--primary-blue);
+        font-size: 20px;
     }
 
     .btn-submit {
-        padding: 12px 28px;
+        background: var(--primary-blue);
+        color: white;
         border: none;
+        padding: 14px 32px;
         border-radius: 12px;
         font-weight: 600;
-        font-size: 14px;
+        font-size: 16px;
         cursor: pointer;
         transition: all 0.2s;
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        text-decoration: none;
     }
 
-    .btn-primary-submit {
-        background: linear-gradient(135deg, #0071e3 0%, #0056b3 100%);
-        color: white;
-    }
-
-    .btn-primary-submit:hover {
+    .btn-submit:hover {
+        background: var(--primary-hover);
         transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(0, 113, 227, 0.3);
+        box-shadow: 0 4px 12px rgba(17, 109, 255, 0.2);
     }
 
     .btn-cancel {
-        background: rgba(0, 0, 0, 0.05);
-        color: var(--apple-dark);
-        flex: 1;
+        background: white;
+        color: var(--slate-600);
+        border: 1px solid var(--slate-200);
+        padding: 14px 32px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
         justify-content: center;
     }
 
     .btn-cancel:hover {
-        background: rgba(0, 0, 0, 0.1);
+        background: var(--slate-50);
+        color: var(--slate-800);
     }
 
-    .info-box {
-        background: linear-gradient(135deg, rgba(0, 113, 227, 0.05), rgba(0, 198, 255, 0.05));
-        border-left: 4px solid var(--apple-blue);
-        padding: 12px 16px;
-        border-radius: 8px;
-        font-size: 13px;
-        color: var(--apple-blue);
-        margin-top: 12px;
+    .actions-footer {
         display: flex;
-        align-items: flex-start;
-        gap: 8px;
-    }
-
-    .info-box .material-symbols-rounded {
-        font-size: 20px;
-        flex-shrink: 0;
-        margin-top: -2px;
-    }
-
-    @media (max-width: 768px) {
-        .form-header {
-            flex-direction: column;
-            text-align: center;
-            padding: 32px 24px;
-        }
-
-        .form-container {
-            padding: 24px;
-        }
-
-        .permissions-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        .form-actions {
-            flex-direction: column;
-        }
-
-        .btn-cancel {
-            order: 2;
-        }
-
-        .btn-primary-submit {
-            order: 1;
-        }
+        gap: 16px;
+        margin-top: 32px;
+        padding-top: 32px;
+        border-top: 1px solid var(--slate-200);
     }
 </style>
 
-<a href="{{ route('admin.roles.index') }}" class="back-link">
-    <span class="material-symbols-rounded" style="font-size: 20px;">arrow_back</span>
-    Volver a roles
-</a>
+<div class="container">
+    <a href="{{ route('admin.roles.index') }}" class="back-link">
+        <span class="material-symbols-rounded">arrow_back</span>
+        Volver a roles
+    </a>
 
-<!-- Form Header -->
-<div class="form-header">
-    <span class="material-symbols-rounded">add_circle</span>
-    <h1>Crear Nuevo Rol</h1>
-</div>
+    <div class="role-header">
+        <div class="role-icon-large">
+            <span class="material-symbols-rounded">add_moderator</span>
+        </div>
+        <div class="role-header-content">
+            <h1>Crear Nuevo Rol</h1>
+            <p>Define un nuevo perfil de acceso y sus permisos asociados</p>
+        </div>
+    </div>
 
-<!-- Form Container -->
-<div class="form-container">
-    <form action="{{ route('admin.roles.store') }}" method="POST" id="roleForm">
+    <form action="{{ route('admin.roles.store') }}" method="POST">
         @csrf
-
-        <!-- Role Information Section -->
-        <div class="form-section">
+        
+        <div class="card">
             <div class="section-title">
                 <span class="material-symbols-rounded">info</span>
-                Información del Rol
+                Información Básica
             </div>
 
             <div class="form-group">
-                <label class="form-label" for="name">
-                    Nombre del Rol
-                    <span class="required">*</span>
-                </label>
-                <input type="text" id="name" name="name" class="form-input @error('name') error @enderror"
-                       value="{{ old('name') }}" placeholder="Ej: Supervisor, Contratista" required>
+                <label class="form-label">Nombre del Rol</label>
+                <input type="text" name="name" class="form-input" placeholder="Ej: Supervisor de Contratos" required value="{{ old('name') }}">
                 @error('name')
-                    <div class="error-message">
-                        <span class="material-symbols-rounded" style="font-size: 16px;">error</span>
-                        {{ $message }}
-                    </div>
+                    <span style="color: #ef4444; font-size: 13px; margin-top: 4px; display: block;">{{ $message }}</span>
                 @enderror
             </div>
 
-            <div class="info-box">
-                <span class="material-symbols-rounded">info</span>
-                <span>El nombre del rol debe ser único y descriptivo</span>
+            <div class="form-group">
+                <label class="form-label">Descripción</label>
+                <textarea name="description" class="form-input" rows="3" placeholder="Describe brevemente las responsabilidades de este rol...">{{ old('description') }}</textarea>
             </div>
         </div>
 
-        <!-- Permissions Section -->
-        <div class="form-section">
+        <div class="card">
             <div class="section-title">
                 <span class="material-symbols-rounded">security</span>
                 Asignar Permisos
             </div>
 
-            @if($availablePermissions && count($availablePermissions) > 0)
+            @php
+                $permissionCategories = [
+                    'Cuentas de Cobro' => ['create_cuenta_cobro', 'view_cuenta_cobro', 'view_own_cuenta_cobro', 'view_all_cuenta_cobro', 'edit_own_cuenta_cobro', 'review_cuenta_cobro', 'approve_cuenta_cobro', 'reject_cuenta_cobro', 'final_approval'],
+                    'Documentos' => ['upload_documents', 'view_documents'],
+                    'Contratos' => ['view_contract_info', 'manage_contracts', 'contract_validation'],
+                    'Pagos' => ['authorize_payment', 'process_payment', 'generate_checks', 'bank_transfers', 'payment_confirmation', 'generate_payment_orders'],
+                    'Presupuesto' => ['view_budget', 'manage_budget'],
+                    'Reportes' => ['view_reports', 'financial_reports', 'view_financial_reports', 'contract_reports'],
+                    'Administración' => ['manage_users', 'manage_contractors', 'contractor_registration', 'system_admin'],
+                    'Otros' => ['add_comments', 'request_corrections', 'override_decisions']
+                ];
+
+                // Flatten categories to check for uncategorized permissions
+                $categorizedPermissions = [];
+                foreach ($permissionCategories as $perms) {
+                    $categorizedPermissions = array_merge($categorizedPermissions, $perms);
+                }
+            @endphp
+
+            @foreach($permissionCategories as $category => $perms)
+                @php
+                    // Filter available permissions that belong to this category
+                    $categoryPermissions = $availablePermissions->whereIn('name', $perms);
+                @endphp
+
+                @if($categoryPermissions->count() > 0)
+                    <div class="category-header">
+                        @switch($category)
+                            @case('Cuentas de Cobro') <span class="material-symbols-rounded">receipt_long</span> @break
+                            @case('Documentos') <span class="material-symbols-rounded">description</span> @break
+                            @case('Contratos') <span class="material-symbols-rounded">handshake</span> @break
+                            @case('Pagos') <span class="material-symbols-rounded">payment</span> @break
+                            @case('Presupuesto') <span class="material-symbols-rounded">trending_up</span> @break
+                            @case('Reportes') <span class="material-symbols-rounded">bar_chart</span> @break
+                            @case('Administración') <span class="material-symbols-rounded">admin_panel_settings</span> @break
+                            @default <span class="material-symbols-rounded">more_horiz</span>
+                        @endswitch
+                        {{ $category }}
+                    </div>
+                    <div class="permissions-grid">
+                        @foreach($categoryPermissions as $permission)
+                            <label class="permission-card">
+                                <input type="checkbox" name="permissions[]" value="{{ $permission->id }}" class="permission-checkbox">
+                                <span class="permission-label">{{ ucfirst(str_replace('_', ' ', $permission->name)) }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+                @endif
+            @endforeach
+
+            {{-- Handle uncategorized permissions --}}
+            @php
+                $uncategorized = $availablePermissions->whereNotIn('name', $categorizedPermissions);
+            @endphp
+
+            @if($uncategorized->count() > 0)
+                <div class="category-header">
+                    <span class="material-symbols-rounded">extension</span>
+                    Otros Permisos
+                </div>
                 <div class="permissions-grid">
-                    @foreach($availablePermissions as $permission)
-                        <button type="button" 
-                                class="permission-chip @if(collect(old('permissions'))->contains($permission)) active @endif"
-                                data-value="{{ $permission }}"
-                                onclick="togglePermission(this)">
-                            <span class="material-symbols-rounded" style="font-size: 18px;">check_circle</span>
-                            {{ ucfirst(str_replace('_', ' ', $permission)) }}
-                        </button>
+                    @foreach($uncategorized as $permission)
+                        <label class="permission-card">
+                            <input type="checkbox" name="permissions[]" value="{{ $permission->id }}" class="permission-checkbox">
+                            <span class="permission-label">{{ ucfirst(str_replace('_', ' ', $permission->name)) }}</span>
+                        </label>
                     @endforeach
                 </div>
-                <input type="hidden" name="permissions" id="permissionsInput" value="{{ old('permissions') ? implode(',', old('permissions')) : '' }}">
-                
-                <div class="permissions-info">
-                    <span class="material-symbols-rounded">touch_app</span>
-                    <span>Haz clic en los permisos para seleccionarlos o deseleccionarlos</span>
-                </div>
-            @else
-                <div class="info-box">
-                    <span class="material-symbols-rounded">warning</span>
-                    <span>No hay permisos disponibles. Por favor, crea algunos permisos primero.</span>
-                </div>
             @endif
-        </div>
 
-        <!-- Form Actions -->
-        <div class="form-actions">
-            <a href="{{ route('admin.roles.index') }}" class="btn-submit btn-cancel">
-                <span class="material-symbols-rounded" style="font-size: 20px;">close</span>
-                Cancelar
-            </a>
-            <button type="submit" class="btn-submit btn-primary-submit">
-                <span class="material-symbols-rounded" style="font-size: 20px;">save</span>
-                Crear Rol
-            </button>
+            <div class="actions-footer">
+                <button type="submit" class="btn-submit">
+                    <span class="material-symbols-rounded">save</span>
+                    Guardar Rol
+                </button>
+                <a href="{{ route('admin.roles.index') }}" class="btn-cancel">Cancelar</a>
+            </div>
         </div>
     </form>
 </div>
-
-<script>
-function togglePermission(chip) {
-    chip.classList.toggle('active');
-    updatePermissionsInput();
-}
-
-function updatePermissionsInput() {
-    const chips = document.querySelectorAll('.permission-chip.active');
-    const permissions = Array.from(chips).map(chip => chip.getAttribute('data-value'));
-    document.getElementById('permissionsInput').value = permissions.join(',');
-}
-
-// Validación del formulario
-document.getElementById('roleForm').addEventListener('submit', function(e) {
-    const nameInput = document.getElementById('name');
-    
-    if (!nameInput.value.trim()) {
-        e.preventDefault();
-        nameInput.classList.add('error');
-        nameInput.focus();
-    }
-});
-
-// Remover error cuando el usuario escriba
-document.getElementById('name').addEventListener('input', function() {
-    this.classList.remove('error');
-});
-</script>
-
 @endsection
