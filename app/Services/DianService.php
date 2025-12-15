@@ -25,8 +25,8 @@ class DianService
      */
     public function __construct(string $environment = 'set', array $config = [])
     {
-        $this->environment = $environment;
         $this->driver = $this->createDriver($environment, $config);
+        $this->environment = $this->driver->getEnvironment();
     }
 
     /**
@@ -38,7 +38,7 @@ class DianService
      */
     private function createDriver(string $environment, array $config): DianDriverInterface
     {
-        return match ($environment) {
+        return match (strtolower($environment)) {
             'production' => new ProductionDriver($config),
             'set' => new SetDriver($config),
             default => new SetDriver($config),
@@ -84,7 +84,7 @@ class DianService
      */
     public function getEnvironment(): string
     {
-        return $this->driver->getEnvironment();
+        return $this->environment;
     }
 
     /**

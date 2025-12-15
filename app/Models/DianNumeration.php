@@ -38,6 +38,14 @@ class DianNumeration extends Model
     public function getSiguienteNumeroAttribute(): string
     {
         $nextNumber = $this->numero_actual + 1;
+        
+        if ($nextNumber > $this->numero_final) {
+            throw new \RuntimeException(
+                "No hay más números disponibles en este rango. " .
+                "Número actual: {$this->numero_actual}, Número final: {$this->numero_final}"
+            );
+        }
+        
         return $this->prefijo ? $this->prefijo . '-' . $nextNumber : (string) $nextNumber;
     }
 

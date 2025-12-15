@@ -22,6 +22,8 @@ class DianConfiguration extends Model
 
     protected $casts = [
         'activo' => 'boolean',
+        'certificate_password' => 'encrypted',
+        'pin' => 'encrypted',
     ];
 
     protected $hidden = [
