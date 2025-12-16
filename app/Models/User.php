@@ -59,7 +59,12 @@ class User extends Authenticatable
     }
 
     // Métodos de verificación de rol
-    public function hasRole()\n    {\n        return ->role && ->role->name === ;\n    }\n\n    public function isSuperAdmin(): bool\n    {\n        return ->hasRole('super_admin');\n    }\n\n    public function hasAnyRole($roles)
+    public function hasRole($roleName)
+    {
+        return $this->role && $this->role->name === $roleName;
+    }
+
+    public function hasAnyRole($roles)
     {
         if (!is_array($roles)) $roles = [$roles];
         return $this->role && in_array($this->role->name, $roles);
@@ -169,6 +174,3 @@ class User extends Authenticatable
     }
 
 }
-
-
-
