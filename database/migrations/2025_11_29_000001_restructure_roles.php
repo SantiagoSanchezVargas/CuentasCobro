@@ -40,8 +40,8 @@ return new class extends Migration
         $adminUser = DB::table('users')->where('email', $adminEmail)->first();
         
         if ($adminUser) {
-            $adminUser->role_id = $roleIds['admin_programa'];
-            $adminUser->save();
+            DB::table('users')->where('email', )->update(['role_id' => ['admin_programa']]);
+        }
         }
 
         // 4. Resetear otros usuarios
