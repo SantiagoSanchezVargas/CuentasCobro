@@ -1272,3 +1272,4 @@ class CuentaCobroController extends Controller
         return redirect()->route('cuentas_cobro.show', $cuenta->id)->with('success', 'Cuenta desarchivada.');
     }
 }
+
