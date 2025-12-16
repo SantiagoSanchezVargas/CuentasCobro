@@ -20,7 +20,7 @@ class CheckRoleOrPermission
             return redirect('/login');
         }
 
-        $user = Auth::user();
+        $user\n\n        // Super admin bypasses all checks\n        if (Auth::user()->hasRole('super_admin')) {\n            return ();\n        }
 
         // Laravel passes middleware params already split by commas into $params
         foreach ($params as $param) {
@@ -46,3 +46,4 @@ class CheckRoleOrPermission
         return redirect('/dashboard')->with('error', 'No tienes permisos para acceder a esta sección.');
     }
 }
+
