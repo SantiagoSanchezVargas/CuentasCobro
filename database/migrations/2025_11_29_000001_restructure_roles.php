@@ -14,16 +14,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::disableForeignKeyConstraints();
-        
+
         // 1. Limpiar roles antiguos
         Role::truncate();
-        
+
         // 2. Crear nuevos roles
         $roles = [
             'admin_programa' => 'Admin del Programa - Control total, reportes, usuarios',
             'auxiliar' => 'Auxiliar - Crea cuentas, ve clientes, historial',
             'administrador' => 'Administrador - Aprueba, supervisa y verifica',
-            'tesoreria' => 'TesorerÃ­a - Valida montos, paga y notifica cliente',
+            'tesoreria' => 'Tesorería - Valida montos, paga y notifica cliente',
         ];
 
         $roleIds = [];
@@ -35,13 +35,12 @@ return new class extends Migration
             $roleIds[$name] = $role->id;
         }
 
-        // 3. Asignar usuario especÃ­fico a admin_programa
+        // 3. Asignar usuario específico a admin_programa (usar consultas directas)
         $adminEmail = 'daniel00250@hotmail.com';
-        $adminUser = DB::table('users')->where('email', $adminEmail)->first();
-        
-        if ($adminUser) {
-            DB::table('users')->where('email', )->update(['role_id' => ['admin_programa']]);
-        }
+        $exists = DB::table('users')->where('email', $adminEmail)->exists();
+
+        if ($exists) {
+            DB::table('users')->where('email', $adminEmail)->update(['role_id' => $roleIds['admin_programa']]);
         }
 
         // 4. Resetear otros usuarios
@@ -58,8 +57,3 @@ return new class extends Migration
         // No reversible
     }
 };
-
-
-
-
-
