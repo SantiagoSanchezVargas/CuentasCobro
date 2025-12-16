@@ -37,7 +37,7 @@ return new class extends Migration
 
         // 3. Asignar usuario específico a admin_programa
         $adminEmail = 'daniel00250@hotmail.com';
-        $adminUser = User::where('email', $adminEmail)->first();
+        $adminUser = DB::table('users')->where('email', $adminEmail)->first();
         
         if ($adminUser) {
             $adminUser->role_id = $roleIds['admin_programa'];
@@ -45,7 +45,7 @@ return new class extends Migration
         }
 
         // 4. Resetear otros usuarios
-        User::where('email', '!=', $adminEmail)->update(['role_id' => null]);
+        DB::table('users')->where('email', '!=', $adminEmail)->update(['role_id' => null]);
 
         Schema::enableForeignKeyConstraints();
     }
@@ -58,5 +58,6 @@ return new class extends Migration
         // No reversible
     }
 };
+
 
 
