@@ -63,6 +63,7 @@ class User extends Authenticatable
     {
         return $this->role && $this->role->name === $roleName;
     }
+\n    public function isSuperAdmin(): bool\n    {\n        return \->hasRole('super_admin');\n    }\n
 
     public function hasAnyRole($roles)
     {
