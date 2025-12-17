@@ -22,6 +22,11 @@ class CheckRoleOrPermission
 
         $user = Auth::user();
 
+        // Super admin bypasses all checks
+        if ($user && $user->hasRole('super_admin')) {
+            return $next($request);
+        }
+
         // Laravel passes middleware params already split by commas into $params
         foreach ($params as $param) {
             // Skip empty
@@ -46,3 +51,4 @@ class CheckRoleOrPermission
         return redirect('/dashboard')->with('error', 'No tienes permisos para acceder a esta sección.');
     }
 }
+

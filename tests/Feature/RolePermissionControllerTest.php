@@ -12,6 +12,15 @@ class RolePermissionControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        if (!class_exists(\App\Models\User::class)) {
+            $this->markTestSkipped('App\\Models\\User not available in this environment. Run `composer install` and `composer dump-autoload`.');
+        }
+    }
+
     public function test_store_accepts_ids_and_names_and_syncs_permissions()
     {
         // Create permissions
@@ -74,6 +83,21 @@ class RolePermissionControllerTest extends TestCase
         $this->actingAs($user);
 
         $response = $this->get(route('cuentas_cobro.index'));
+        $response->assertStatus(200);
+    }
+
+    public function test_cuenta_cobro_create_allows_any_role_with_permission()
+    {
+        $createPerm = Permission::create(['name' => 'create_cuenta_cobro']);
+        $viewPerm = Permission::create(['name' => 'view_cuenta_cobro']);
+
+        $role = Role::create(['name' => 'rol_test_creator']);
+        $role->permissions()->sync([$createPerm->id, $viewPerm->id]);
+
+        $user = User::factory()->create(['role_id' => $role->id]);
+        $this->actingAs($user);
+
+        $response = $this->get(route('cuentas_cobro.create'));
         $response->assertStatus(200);
     }
 }

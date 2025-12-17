@@ -864,12 +864,16 @@ class CuentaCobro extends Model
      */
     public function generarTextoLegal(): string
     {
-        $texto = "CUENTA DE COBRO {$this->generarNumeroCompleto()}\n\n";
+        $texto = "CUENTA DE COBRO {$this->generarNumeroCompleto()}
+
+";
         
         if ($this->ciudad_expedicion_cuenta) {
             $texto .= "{$this->ciudad_expedicion_cuenta}, ";
         }
-        $texto .= \Carbon\Carbon::parse($this->fecha_emision)->format('d \d\e F \d\e Y') . "\n\n";
+        $texto .= \Carbon\Carbon::parse($this->fecha_emision)->format('d \d\e F \d\e Y') . "
+
+";
         
         // Párrafo principal
         $texto .= "El(la) señor(a) {$this->nombre_acreedor}, identificado(a) con {$this->tipo_documento_acreedor} ";
@@ -890,7 +894,9 @@ class CuentaCobro extends Model
             $texto .= ", servicio prestado el " . \Carbon\Carbon::parse($this->fecha_prestacion_servicio)->format('d/m/Y');
         }
         
-        $texto .= ".\n\n";
+        $texto .= ".
+
+";
         
         // Información adicional
         if ($this->numero_contrato_referencia) {
@@ -898,21 +904,32 @@ class CuentaCobro extends Model
             if ($this->fecha_contrato) {
                 $texto .= " de fecha " . \Carbon\Carbon::parse($this->fecha_contrato)->format('d/m/Y');
             }
-            $texto .= "\n";
+            $texto .= "
+";
         }
         
         if ($this->descripcion_servicio) {
-            $texto .= "\nDescripción del servicio:\n{$this->descripcion_servicio}\n";
+            $texto .= "
+Descripción del servicio:
+{$this->descripcion_servicio}
+";
         }
         
         // Firma
-        $texto .= "\n\n______________________________\n";
-        $texto .= "Firma del Acreedor\n";
-        $texto .= $this->nombre_acreedor . "\n";
-        $texto .= "{$this->tipo_documento_acreedor} {$this->numero_documento_acreedor}\n";
+        $texto .= "
+
+______________________________
+";
+        $texto .= "Firma del Acreedor
+";
+        $texto .= $this->nombre_acreedor . "
+";
+        $texto .= "{$this->tipo_documento_acreedor} {$this->numero_documento_acreedor}
+";
         
         if ($this->telefono_acreedor) {
-            $texto .= "Tel: {$this->telefono_acreedor}\n";
+            $texto .= "Tel: {$this->telefono_acreedor}
+";
         }
         
         return $texto;

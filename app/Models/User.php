@@ -139,6 +139,14 @@ class User extends Authenticatable
             return true; // Admin programa puede todo
         }
 
+        // Administrador (role 'administrador') puede realizar ciertos actos de control
+        // sin requerir permisos granulares explícitos (p.ej. rechazar)
+        if ($this->hasRole('administrador')) {
+            if (in_array($accion, ['rechazar'])) {
+                return true;
+            }
+        }
+
         $permisos = PermisoGranular::byRol($this->role)
             ->byEtapa($etapa)
             ->activos()
@@ -174,3 +182,4 @@ class User extends Authenticatable
     }
 
 }
+

@@ -27,9 +27,24 @@ class Consecutivo extends Model
         'activo' => 'boolean',
     ];
 
-    // Helper para obtener el siguiente número formateado
+    // Helper para obtener el siguiente número formateado con padding según el rango configurado.
     public function getSiguienteNumeroAttribute()
     {
-        return $this->prefijo . '-' . ($this->numero_actual + 1);
+        $current = $this->numero_actual;
+        if ($current === null) {
+            // Si no hay valor actual, partimos del inicio - 1 (o cero por defecto) para que el +1 arranque correcto.
+            $start = $this->numero_inicial ?: 0;
+            $current = $start - 1;
+        }
+
+        $next = $current + 1;
+        $maxLen = max(strlen((string) $this->numero_final), strlen((string) $this->numero_inicial));
+        $numeroPadded = $maxLen > 0
+            ? str_pad((string) $next, $maxLen, '0', STR_PAD_LEFT)
+            : (string) $next;
+
+        return $this->prefijo
+            ? $this->prefijo . '-' . $numeroPadded
+            : $numeroPadded;
     }
 }

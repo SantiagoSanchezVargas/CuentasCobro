@@ -22,31 +22,55 @@ class AdminUserSeeder extends Seeder
             return;
         }
 
-        // Crear usuario administrador
-        $admin = User::firstOrCreate(
-            ['email' => 'daniel00250@hotmail.com'],
-            [
-                'name' => 'Daniel Ramirez',
-                'email' => 'daniel00250@hotmail.com',
-                'password' => Hash::make('cosita1225*'),
-                'role_id' => $adminRole->id,
-                'email_verified_at' => now(),
-            ]
-        );
+        // Crear usuario administrador (usar Eloquent si está disponible, si no usar DB como fallback)
+        if (class_exists('\App\\Models\\User')) {
+            $admin = User::firstOrCreate(
+                ['email' => 'daniel00250@hotmail.com'],
+                [
+                    'name' => 'Daniel Ramirez',
+                    'email' => 'daniel00250@hotmail.com',
+                    'password' => Hash::make('cosita1225*'),
+                    'role_id' => $adminRole->id,
+                    'email_verified_at' => now(),
+                ]
+            );
 
-        if ($admin->wasRecentlyCreated) {
-            $this->command->info('✅ Usuario creado exitosamente como Admin del Programa:');
-            $this->command->info('   👤 Nombre: Daniel Ramirez');
-            $this->command->info('   📧 Email: daniel00250@hotmail.com');
-            $this->command->info('   🔑 Contraseña: cosita1225*');
-            $this->command->info('   👑 Rol: Admin del Programa');
+            if ($admin->wasRecentlyCreated) {
+                $this->command->info('✅ Usuario creado exitosamente como Admin del Programa:');
+                $this->command->info('   👤 Nombre: Daniel Ramirez');
+                $this->command->info('   📧 Email: daniel00250@hotmail.com');
+                $this->command->info('   🔑 Contraseña: cosita1225*');
+                $this->command->info('   👑 Rol: Admin del Programa');
+            } else {
+                $this->command->info('ℹ️  El usuario ya existe.');
+
+                // Actualizar el rol si es necesario
+                if ($admin->role_id !== $adminRole->id) {
+                    $admin->update(['role_id' => $adminRole->id]);
+                    $this->command->info('✅ Rol actualizado a Admin del Programa.');
+                }
+            }
         } else {
-            $this->command->info('ℹ️  El usuario ya existe.');
-
-            // Actualizar el rol si es necesario
-            if ($admin->role_id !== $adminRole->id) {
-                $admin->update(['role_id' => $adminRole->id]);
-                $this->command->info('✅ Rol actualizado a Admin del Programa.');
+            // Fallback: usar DB
+            $existing = \Illuminate\Support\Facades\DB::table('users')->where('email', 'daniel00250@hotmail.com')->first();
+            if ($existing) {
+                \Illuminate\Support\Facades\DB::table('users')->where('email', 'daniel00250@hotmail.com')->update([
+                    'name' => 'Daniel Ramirez',
+                    'role_id' => $adminRole->id,
+                    'email_verified_at' => now(),
+                ]);
+                $this->command->info('ℹ️  El usuario ya existe (actualizado via DB).');
+            } else {
+                \Illuminate\Support\Facades\DB::table('users')->insert([
+                    'name' => 'Daniel Ramirez',
+                    'email' => 'daniel00250@hotmail.com',
+                    'password' => Hash::make('cosita1225*'),
+                    'role_id' => $adminRole->id,
+                    'email_verified_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                $this->command->info('✅ Usuario creado exitosamente como Admin del Programa (via DB).');
             }
         }
     }

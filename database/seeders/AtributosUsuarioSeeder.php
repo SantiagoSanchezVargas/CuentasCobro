@@ -13,8 +13,15 @@ class AtributosUsuarioSeeder extends Seeder
      */
     public function run(): void
     {
-        // Obtener usuarios
-        $usuarios = User::with('role')->get();
+        // Obtener usuarios (usar Eloquent si está disponible, si no usar DB)
+        if (class_exists('\App\\Models\\User')) {
+            $usuarios = User::with('role')->get();
+        } else {
+            $usuarios = \Illuminate\Support\Facades\DB::table('users')
+                ->leftJoin('roles', 'users.role_id', '=', 'roles.id')
+                ->select('users.id', 'users.name', 'roles.name as role_name')
+                ->get();
+        }
 
         foreach ($usuarios as $usuario) {
             // Verificar si ya existe registro de atributos

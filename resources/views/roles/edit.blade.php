@@ -402,13 +402,23 @@
             @if($isSystemRole)
                 <div class="alert-warning-custom">
                     <span class="material-symbols-rounded">lock</span>
-                    <span>Este es un rol del sistema. Solo pueden editarse los permisos.</span>
+                    <span>Este es un rol del sistema. Editar su información puede afectar el flujo y a los usuarios asignados.</span>
                 </div>
             @endif
 
             <div class="form-group">
                 <label class="form-label">Nombre del Rol</label>
-                <input type="text" class="form-input" value="{{ $role->name }}" disabled>
+                <input id="roleNameInput" name="role_name_ui" type="text" class="form-input" value="{{ old('name', $role->name) }}">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Descripción</label>
+                <textarea id="roleDescriptionInput" name="role_description_ui" class="form-input" rows="3" placeholder="Describe brevemente las responsabilidades de este rol...">{{ old('description', $role->description) }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Acción de cumplimiento (qué ejecuta este rol/usuario)</label>
+                <input id="roleAccionInput" name="role_accion_ui" type="text" class="form-input" value="{{ old('accion_cumplimiento', $role->accion_cumplimiento) }}" placeholder="Ej: Aprobar pagos, Validar documentos, Enviar a DIAN">
             </div>
 
             <div class="stat-row">
@@ -452,8 +462,10 @@
                 @csrf
                 @method('PUT')
 
-                <!-- Ensure name is sent even if the input is disabled -->
-                <input type="hidden" name="name" value="{{ $role->name }}">
+                <!-- Hidden inputs synced from the left card UI fields -->
+                <input type="hidden" id="roleNameHidden" name="name" value="{{ old('name', $role->name) }}">
+                <input type="hidden" id="roleDescriptionHidden" name="description" value="{{ old('description', $role->description) }}">
+                <input type="hidden" id="roleAccionHidden" name="accion_cumplimiento" value="{{ old('accion_cumplimiento', $role->accion_cumplimiento) }}">
 
                 @if($role->users()->count() > 0)
                     <div class="info-box">
@@ -472,6 +484,30 @@
                         Limpiar Todo
                     </button>
                 </div>
+
+                <script>
+                    (function () {
+                        var form = document.getElementById('editRoleForm');
+                        var nameInput = document.getElementById('roleNameInput');
+                        var descInput = document.getElementById('roleDescriptionInput');
+                        var nameHidden = document.getElementById('roleNameHidden');
+                        var descHidden = document.getElementById('roleDescriptionHidden');
+                        var accionInput = document.getElementById('roleAccionInput');
+                        var accionHidden = document.getElementById('roleAccionHidden');
+
+                        if (!form || !nameInput || !nameHidden) return;
+
+                        form.addEventListener('submit', function () {
+                            nameHidden.value = nameInput.value;
+                            if (descInput && descHidden) {
+                                descHidden.value = descInput.value;
+                            }
+                            if (accionInput && accionHidden) {
+                                accionHidden.value = accionInput.value;
+                            }
+                        });
+                    })();
+                </script>
 
                 <div class="permissions-section">
                     @php

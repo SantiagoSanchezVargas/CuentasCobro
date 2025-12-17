@@ -23,6 +23,11 @@ class CheckRole
 
         $user = Auth::user();
 
+        // Super admin bypasses role checks
+        if ($user && $user->hasRole('super_admin')) {
+            return $next($request);
+        }
+
         // Si no tiene rol asignado
         if (!$user->role) {
             return redirect('/dashboard')->with('error', 'No tienes un rol asignado. Contacta al administrador.');

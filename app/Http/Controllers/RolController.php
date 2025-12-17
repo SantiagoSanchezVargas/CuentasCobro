@@ -34,12 +34,14 @@ class RolController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'accion_cumplimiento' => 'nullable|string|max:255',
             'permissions' => 'nullable|array',
         ]);
 
         $role = Role::create([
             'name' => $request->name,
             'description' => $request->description ?? null,
+            'accion_cumplimiento' => $request->accion_cumplimiento ?? null,
         ]);
 
         // Asignar permisos: convertir nombres a IDs
@@ -72,12 +74,14 @@ class RolController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'accion_cumplimiento' => 'nullable|string|max:255',
             'permissions' => 'nullable|array',
         ]);
 
         $role->update([
             'name' => $request->name,
             'description' => $request->description ?? null,
+            'accion_cumplimiento' => $request->accion_cumplimiento ?? null,
         ]);
 
         // Sincronizar permisos: esto actualiza correctamente la tabla pivot

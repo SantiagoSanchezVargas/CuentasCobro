@@ -17,13 +17,33 @@ class SuperAdminSeeder extends Seeder
         $name = 'Super Administrador';
         $password = 'SuperAdmin123!'; // Default seed password: change in production
 
-        $user = User::firstOrCreate([
-            'email' => $email,
-        ], [
-            'name' => $name,
-            'password' => Hash::make($password),
-            'role_id' => $role->id,
-        ]);
+        if (class_exists('\App\\Models\\User')) {
+            $user = User::firstOrCreate([
+                'email' => $email,
+            ], [
+                'name' => $name,
+                'password' => Hash::make($password),
+                'role_id' => $role->id,
+            ]);
+        } else {
+            // Fallback to DB insert/update when User class isn't available
+            $existing = \Illuminate\Support\Facades\DB::table('users')->where('email', $email)->first();
+            if ($existing) {
+                \Illuminate\Support\Facades\DB::table('users')->where('email', $email)->update([
+                    'name' => $name,
+                    'role_id' => $role->id,
+                ]);
+            } else {
+                \Illuminate\Support\Facades\DB::table('users')->insert([
+                    'name' => $name,
+                    'email' => $email,
+                    'password' => Hash::make($password),
+                    'role_id' => $role->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
 
         $this->command->info("Super admin created: {$email} / {$password}");
     }

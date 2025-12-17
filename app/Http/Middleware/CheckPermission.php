@@ -17,6 +17,11 @@ class CheckPermission
 
         $user = Auth::user();
 
+        // Super admin bypasses permission checks
+        if ($user && $user->hasRole('super_admin')) {
+            return $next($request);
+        }
+
         foreach ($permissions as $perm) {
             if ($user->hasPermission($perm) || $user->puedeRealizarAccion($perm)) {
                 return $next($request);
@@ -26,3 +31,4 @@ class CheckPermission
         return redirect('/dashboard')->with('error', 'No tienes permisos para acceder a esta sección.');
     }
 }
+

@@ -284,6 +284,117 @@
             </div>
             @endif
 
+            {{-- Configuración y Consecutivos (Admin Programa) --}}
+            @if(in_array($userRole, ['admin_programa']))
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Configuración</h3>
+                <ul class="sidebar-menu">
+                    <li class="sidebar-item">
+                        <details class="sidebar-dropdown" {{ request()->routeIs('admin.consecutivos.*') ? 'open' : '' }}>
+                            <summary class="sidebar-link">
+                                <span class="material-symbols-rounded">123</span>
+                                <span style="flex:1">Consecutivos</span>
+                                <span class="material-symbols-rounded expand-icon">expand_more</span>
+                            </summary>
+                            <ul class="sidebar-submenu">
+                                <li>
+                                    <a href="{{ route('admin.consecutivos.index') }}" class="sidebar-link {{ request()->routeIs('admin.consecutivos.index') ? 'active' : '' }}">
+                                        <span class="material-symbols-rounded">list</span>
+                                        Ver Consecutivos
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('admin.consecutivos.builder') }}" class="sidebar-link {{ request()->routeIs('admin.consecutivos.builder') ? 'active' : '' }}">
+                                        <span class="material-symbols-rounded">build</span>
+                                        Planificador Rangos
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('admin.consecutivos.create') }}" class="sidebar-link {{ request()->routeIs('admin.consecutivos.create') ? 'active' : '' }}">
+                                        <span class="material-symbols-rounded">add_circle</span>
+                                        Nuevo Consecutivo
+                                    </a>
+                                </li>
+                            </ul>
+                        </details>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ route('admin.permisos.index') }}" class="sidebar-link {{ request()->routeIs('admin.permisos.*') ? 'active' : '' }}">
+                            <span class="material-symbols-rounded">tune</span>
+                            Permisos Granulares
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            @endif
+
+            {{-- Proceso y Seguimiento --}}
+            @if(!$isAuxiliar)
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Proceso</h3>
+                <ul class="sidebar-menu">
+                    <li class="sidebar-item">
+                        <a href="{{ route('aprobaciones.index') }}" class="sidebar-link {{ request()->routeIs('aprobaciones.*') ? 'active' : '' }}">
+                            <span class="material-symbols-rounded">fact_check</span>
+                            Aprobaciones
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ route('cuentas_cobro.seguimiento_general') }}" class="sidebar-link {{ request()->routeIs('cuentas_cobro.seguimiento_general') ? 'active' : '' }}">
+                            <span class="material-symbols-rounded">timeline</span>
+                            Seguimiento
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ route('cuentas_cobro.pdfs') }}" class="sidebar-link {{ request()->routeIs('cuentas_cobro.pdfs') ? 'active' : '' }}">
+                            <span class="material-symbols-rounded">picture_as_pdf</span>
+                            PDFs Generados
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            @endif
+
+            {{-- DIAN Section (Admin Programa, Tesorería) --}}
+            @if(in_array($userRole, ['admin_programa', 'tesoreria', 'administrador']))
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">DIAN</h3>
+                <ul class="sidebar-menu">
+                    <li class="sidebar-item">
+                        <details class="sidebar-dropdown" {{ request()->routeIs('dian.*') ? 'open' : '' }}>
+                            <summary class="sidebar-link">
+                                <span class="material-symbols-rounded">verified</span>
+                                <span style="flex:1">Facturación DIAN</span>
+                                <span class="material-symbols-rounded expand-icon">expand_more</span>
+                            </summary>
+                            <ul class="sidebar-submenu">
+                                <li>
+                                    <a href="{{ route('dian.envios') }}" class="sidebar-link {{ request()->routeIs('dian.envios') ? 'active' : '' }}">
+                                        <span class="material-symbols-rounded">send</span>
+                                        Envíos DIAN
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('dian.numeraciones') }}" class="sidebar-link {{ request()->routeIs('dian.numeraciones') ? 'active' : '' }}">
+                                        <span class="material-symbols-rounded">tag</span>
+                                        Numeraciones
+                                    </a>
+                                </li>
+                                @if(in_array($userRole, ['admin_programa']))
+                                <li>
+                                    <a href="{{ route('dian.configuracion') }}" class="sidebar-link {{ request()->routeIs('dian.configuracion') ? 'active' : '' }}">
+                                        <span class="material-symbols-rounded">settings</span>
+                                        Configuración
+                                    </a>
+                                </li>
+                                @endif
+                            </ul>
+                        </details>
+                    </li>
+                </ul>
+            </div>
+            @endif
+
             @if($canViewReports)
             <div class="sidebar-section">
                 <h3 class="sidebar-title">Análisis</h3>
