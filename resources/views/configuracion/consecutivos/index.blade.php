@@ -11,6 +11,10 @@
         </a>
     </div>
 
+    <div class="flex items-center gap-4 mb-4">
+        <a href="{{ route('consecutivos.builder') }}" class="text-blue-600 hover:underline">Planificador (crear varios rangos)</a>
+    </div>
+
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">

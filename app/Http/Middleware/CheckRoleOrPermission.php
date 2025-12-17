@@ -20,7 +20,12 @@ class CheckRoleOrPermission
             return redirect('/login');
         }
 
-        $user\n\n        // Super admin bypasses all checks\n        if (Auth::user()->hasRole('super_admin')) {\n            return ();\n        }
+        $user = Auth::user();
+
+        // Super admin bypasses all checks
+        if ($user && $user->hasRole('super_admin')) {
+            return $next($request);
+        }
 
         // Laravel passes middleware params already split by commas into $params
         foreach ($params as $param) {

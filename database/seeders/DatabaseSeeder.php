@@ -20,13 +20,33 @@ class DatabaseSeeder extends Seeder
         $this->call(\Database\Seeders\SuperAdminSeeder::class);
         $this->call(DepartamentosMunicipiosSeeder::class);
         $this->call(ContratosDemoSeeder::class);
+        
+        // Catálogos para facturación electrónica
+        $this->call(PucCatalogoSeeder::class);
+        $this->call(PaisesSeeder::class);
+        $this->call(ResponsabilidadesFiscalesSeeder::class);
+        $this->call(ProductosServiciosSeeder::class);
+        $this->call(CentrosCostoSeeder::class);
 
         // Crear un usuario de prueba si no existe
-        if (!User::where('email', 'test@example.com')->exists()) {
-            User::factory()->create([
-                'name' => 'Test User',
-                'email' => 'test@example.com',
-            ]);
+        if (class_exists('\App\\Models\\User')) {
+            if (!User::where('email', 'test@example.com')->exists()) {
+                User::factory()->create([
+                    'name' => 'Test User',
+                    'email' => 'test@example.com',
+                ]);
+            }
+        } else {
+            $exists = \Illuminate\Support\Facades\DB::table('users')->where('email', 'test@example.com')->exists();
+            if (!$exists) {
+                \Illuminate\Support\Facades\DB::table('users')->insert([
+                    'name' => 'Test User',
+                    'email' => 'test@example.com',
+                    'password' => bcrypt('password'),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
         $this->call(CuentaCobroDemoSeeder::class);
     }

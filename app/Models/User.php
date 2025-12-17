@@ -1,2 +1,185 @@
-<?php\n\nnamespace App\Models;\n\nuse Illuminate\Database\Eloquent\Factories\HasFactory;\nuse Illuminate\Foundation\Auth\User as Authenticatable;\nuse Illuminate\Notifications\Notifiable;\nuse App\Models\Role;\n\nclass User extends Authenticatable\n{\n    use HasFactory, Notifiable;\n\n    protected $fillable = [\n        'name',\n        'email',\n        'password',\n        'role_id',\n    ];\n\n    protected $hidden = [\n        'password',\n        'remember_token',\n    ];\n\n    protected $casts = [\n        'email_verified_at' => 'datetime',\n        'password' => 'hashed',\n    ];\n\n    // Relación: cada usuario tiene un rol\n    public function role()\n    {\n        return $this->belongsTo(Role::class);\n    }\n\n    // Relación: usuario tiene atributos adicionales\n    public function atributos()\n    {\n        return $this->hasOne(AtributoUsuario::class, 'user_id');\n    }\n\n    // Relación: documentos subidos por usuario\n    public function documentos()\n    {\n        return $this->hasMany(Documento::class, 'user_id');\n    }\n\n    // Relación: cuentas de cobro creadas por usuario (contratista)\n    public function cuentasDeCobroCreadasPorMi()\n    {\n        return $this->hasMany(CuentaCobro::class, 'user_id');\n    }\n\n    // Relación: historial de cambios de rol\n    public function roleChangeHistory()\n    {\n        return $this->hasMany(RoleChangeHistory::class, 'user_id')->orderBy('changed_at', 'desc');\n    }\n\n    // Métodos de verificación de rol\n    public function hasRole($roleName)\n    {\n        return $this->role && $this->role->name === $roleName;\n    }\n\n    public function hasAnyRole($roles)\n    {\n        if (!is_array($roles)) $roles = [$roles];\n        return $this->role && in_array($this->role->name, $roles);\n    }\n\n    public function isAdmin(): bool\n    {\n        return $this->hasAnyRole(['admin_programa']);\n    }\n\n    public function canApprovePayments(): bool\n    {\n        return $this->hasAnyRole(['tesoreria', 'admin_programa']);\n    }\n\n    public function canManageContracts(): bool\n    {\n        return $this->hasAnyRole(['administrador', 'admin_programa']);\n    }\n\n    public function isContractAdmin(): bool\n    {\n        return $this->hasRole('administrador');\n    }\n\n    /**\n     * Verificar si el usuario tiene un permiso específico a través de su rol.\n     */\n    public function hasPermission($permissionName)\n    {\n        if (!$this->role) {\n            return false;\n        }\n\n        // Resolve alias to canonical name via config\n        $canonical = config('permission_aliases.' . $permissionName, $permissionName);\n\n        return $this->role->permissions()->where('name', $canonical)->exists();\n    }\n\n    /**\n     * Obtener atributos del usuario\n     */\n    public function getAtributos(): AtributoUsuario\n    {\n        return $this->atributos ?? new AtributoUsuario(['user_id' => $this->id]);\n    }\n\n    /**\n     * Obtener nombre completo del usuario\n     */\n    public function getNombreCompleto(): string\n    {\n        $atributos = $this->getAtributos();\n        return trim("{$atributos->nombre_completo} {$atributos->apellidos}") ?: $this->name;\n    }\n\n    /**\n     * Obtener información de contacto\n     */\n    public function getInformacionContacto(): array\n    {\n        return $this->getAtributos()->getContactos();\n    }\n\n    /**\n     * Verificar permisos granulares\n     */\n    public function puedeRealizarAccion(string $accion, ?string $etapa = null, ?string $estado = null): bool\n    {\n        if ($this->hasRole('admin_programa')) {\n            return true; // Admin programa puede todo\n        }\n\n        $permisos = PermisoGranular::byRol($this->role)\n            ->byEtapa($etapa)\n            ->activos()\n            ->get();\n\n        foreach ($permisos as $permiso) {\n            if ($estado && $permiso->estado_requerido && $permiso->estado_requerido !== $estado) {\n                continue;\n            }\n\n            if ($permiso->tienePermiso($accion)) {\n                return true;\n            }\n        }\n\n        return false;\n    }\n\n    /**\n     * Obtener permisos granulares activos del usuario\n     */\n    public function getPermisosActivos(): array\n    {\n        if ($this->hasRole('admin_programa')) {\n            return ['*' => true]; // Todos los permisos\n        }\n\n        return PermisoGranular::byRol($this->role)\n            ->activos()\n            ->get()\n            ->map(fn($p) => $p->getResumenPermisos())\n            ->toArray();\n    }\n\n}
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use App\Models\Role;
+
+class User extends Authenticatable
+{
+    use HasFactory, Notifiable;
+
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'role_id',
+    ];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
+
+    // Relación: cada usuario tiene un rol
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    // Relación: usuario tiene atributos adicionales
+    public function atributos()
+    {
+        return $this->hasOne(AtributoUsuario::class, 'user_id');
+    }
+
+    // Relación: documentos subidos por usuario
+    public function documentos()
+    {
+        return $this->hasMany(Documento::class, 'user_id');
+    }
+
+    // Relación: cuentas de cobro creadas por usuario (contratista)
+    public function cuentasDeCobroCreadasPorMi()
+    {
+        return $this->hasMany(CuentaCobro::class, 'user_id');
+    }
+
+    // Relación: historial de cambios de rol
+    public function roleChangeHistory()
+    {
+        return $this->hasMany(RoleChangeHistory::class, 'user_id')->orderBy('changed_at', 'desc');
+    }
+
+    // Métodos de verificación de rol
+    public function hasRole($roleName)
+    {
+        return $this->role && $this->role->name === $roleName;
+    }
+
+    public function hasAnyRole($roles)
+    {
+        if (!is_array($roles)) $roles = [$roles];
+        return $this->role && in_array($this->role->name, $roles);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->hasAnyRole(['admin_programa']);
+    }
+
+    public function canApprovePayments(): bool
+    {
+        return $this->hasAnyRole(['tesoreria', 'admin_programa']);
+    }
+
+    public function canManageContracts(): bool
+    {
+        return $this->hasAnyRole(['administrador', 'admin_programa']);
+    }
+
+    public function isContractAdmin(): bool
+    {
+        return $this->hasRole('administrador');
+    }
+
+    /**
+     * Verificar si el usuario tiene un permiso específico a través de su rol.
+     */
+    public function hasPermission($permissionName)
+    {
+        if (!$this->role) {
+            return false;
+        }
+
+        // Resolve alias to canonical name via config
+        $canonical = config('permission_aliases.' . $permissionName, $permissionName);
+
+        return $this->role->permissions()->where('name', $canonical)->exists();
+    }
+
+    /**
+     * Obtener atributos del usuario
+     */
+    public function getAtributos(): AtributoUsuario
+    {
+        return $this->atributos ?? new AtributoUsuario(['user_id' => $this->id]);
+    }
+
+    /**
+     * Obtener nombre completo del usuario
+     */
+    public function getNombreCompleto(): string
+    {
+        $atributos = $this->getAtributos();
+        return trim("{$atributos->nombre_completo} {$atributos->apellidos}") ?: $this->name;
+    }
+
+    /**
+     * Obtener información de contacto
+     */
+    public function getInformacionContacto(): array
+    {
+        return $this->getAtributos()->getContactos();
+    }
+
+    /**
+     * Verificar permisos granulares
+     */
+    public function puedeRealizarAccion(string $accion, ?string $etapa = null, ?string $estado = null): bool
+    {
+        if ($this->hasRole('admin_programa')) {
+            return true; // Admin programa puede todo
+        }
+
+        // Administrador (role 'administrador') puede realizar ciertos actos de control
+        // sin requerir permisos granulares explícitos (p.ej. rechazar)
+        if ($this->hasRole('administrador')) {
+            if (in_array($accion, ['rechazar'])) {
+                return true;
+            }
+        }
+
+        $permisos = PermisoGranular::byRol($this->role)
+            ->byEtapa($etapa)
+            ->activos()
+            ->get();
+
+        foreach ($permisos as $permiso) {
+            if ($estado && $permiso->estado_requerido && $permiso->estado_requerido !== $estado) {
+                continue;
+            }
+
+            if ($permiso->tienePermiso($accion)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Obtener permisos granulares activos del usuario
+     */
+    public function getPermisosActivos(): array
+    {
+        if ($this->hasRole('admin_programa')) {
+            return ['*' => true]; // Todos los permisos
+        }
+
+        return PermisoGranular::byRol($this->role)
+            ->activos()
+            ->get()
+            ->map(fn($p) => $p->getResumenPermisos())
+            ->toArray();
+    }
+
+}
 

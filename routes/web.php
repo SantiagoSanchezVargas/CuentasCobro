@@ -17,6 +17,7 @@ use App\Http\Controllers\DocumentoController;
 use App\Http\Controllers\AprobacionController;
 use App\Http\Controllers\PermisoController;
 use App\Http\Controllers\TerceroController;
+use App\Http\Controllers\DianController;
 
 // ========================================
 // RUTA PRINCIPAL
@@ -105,6 +106,18 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/terceros/store', [TerceroController::class, 'store'])->name('terceros.store');
 
     // ========================================
+    // DIAN (Admin Programa, Tesorería, Administrador)
+    // ========================================
+    Route::middleware([\App\Http\Middleware\CheckRoleOrPermission::class . ':admin_programa,tesoreria,administrador'])
+        ->prefix('dian')->name('dian.')->group(function () {
+        Route::get('envios', [DianController::class, 'envios'])->name('envios');
+        Route::get('numeraciones', [DianController::class, 'numeraciones'])->name('numeraciones');
+        Route::post('numeraciones', [DianController::class, 'storeNumeracion'])->name('numeraciones.store');
+        Route::get('configuracion', [DianController::class, 'configuracion'])->name('configuracion');
+        Route::put('configuracion', [DianController::class, 'updateConfiguracion'])->name('configuracion.update');
+    });
+
+    // ========================================
     // ADMIN DEL PROGRAMA
     // ========================================
     Route::middleware(['check.role:admin_programa'])
@@ -113,6 +126,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'adminPrograma'])->name('dashboard');
 
         // CONSECUTIVOS
+        Route::get('consecutivos/builder', [\App\Http\Controllers\ConsecutivoController::class, 'builder'])->name('consecutivos.builder');
+        Route::post('consecutivos/bulk', [\App\Http\Controllers\ConsecutivoController::class, 'storeBulk'])->name('consecutivos.storeBulk');
         Route::resource('consecutivos', \App\Http\Controllers\ConsecutivoController::class);
 
         Route::resource('users', UserController::class)->except(['show']);
@@ -181,12 +196,20 @@ Route::middleware(['auth'])->group(function () {
     // CUENTAS DE COBRO (todos los roles del flujo)
     // ========================================
     // Allow access if user has any of these roles OR has permission 'view_cuenta_cobro'
-    Route::middleware([\App\Http\Middleware\CheckRoleOrPermission::class . ':auxiliar,administrador,tesoreria,admin_programa,view_cuenta_cobro'])
+    Route::middleware([\App\Http\Middleware\CheckRoleOrPermission::class . ':auxiliar,administrador,tesoreria,admin_programa,view_cuenta_cobro,create_cuenta_cobro'])
         ->group(function () {
         
         // Ruta de pagos (acceso también para Tesorería)
         Route::get('cuentas_cobro/pagos', [CuentaCobroController::class, 'pagos'])
             ->name('cuentas_cobro.pagos');
+
+        // Seguimiento General (pipeline)
+        Route::get('cuentas_cobro/seguimiento-general', [CuentaCobroController::class, 'seguimientoGeneral'])
+            ->name('cuentas_cobro.seguimiento_general');
+
+        // Vista de PDFs generados
+        Route::get('cuentas_cobro/pdfs', [CuentaCobroController::class, 'pdfs'])
+            ->name('cuentas_cobro.pdfs');
 
         // Seguimiento de Aprobación
         Route::get('cuentas_cobro/{id}/seguimiento', [CuentaCobroController::class, 'seguimiento'])
@@ -218,7 +241,7 @@ Route::middleware(['auth'])->group(function () {
     // ========================================
     // INTERACCIONES (agregar notas a cuentas)
     // ========================================
-    Route::middleware(['check.role:auxiliar,administrador,tesoreria,admin_programa'])
+    Route::middleware([\App\Http\Middleware\CheckRoleOrPermission::class . ':auxiliar,administrador,tesoreria,admin_programa,add_comments,comentar,view_cuenta_cobro'])
         ->prefix('cuentas_cobro')->name('cuentas_cobro.')->group(function () {
         Route::post('{id}/interacciones', [InteraccionController::class, 'store'])->name('interacciones.store');
         Route::delete('{id}/interacciones/{interaccionId}', [InteraccionController::class, 'destroy'])->name('interacciones.destroy');
@@ -231,10 +254,13 @@ Route::middleware(['auth'])->group(function () {
         // Soportes
         Route::post('{cuenta}/soportes', [SoporteController::class, 'store'])->name('soportes.store');
         Route::delete('{cuenta}/soportes/{soporte}', [SoporteController::class, 'destroy'])->name('soportes.destroy');
-        // Archivar (solo auxiliar)
-        Route::post('{id}/archivar', [CuentaCobroController::class, 'archivar'])->middleware('check.role:auxiliar')->name('archivar');
-        // Desarchivar (solo auxiliar)
-        Route::post('{id}/desarchivar', [CuentaCobroController::class, 'desarchivar'])->middleware('check.role:auxiliar')->name('desarchivar');
+        // Archivar / Desarchivar (dueño, y con permisos)
+        Route::post('{id}/archivar', [CuentaCobroController::class, 'archivar'])
+            ->middleware([\App\Http\Middleware\CheckRoleOrPermission::class . ':archivar,edit_own_cuenta_cobro'])
+            ->name('archivar');
+        Route::post('{id}/desarchivar', [CuentaCobroController::class, 'desarchivar'])
+            ->middleware([\App\Http\Middleware\CheckRoleOrPermission::class . ':archivar,edit_own_cuenta_cobro'])
+            ->name('desarchivar');
     });
 
     // ========================================
@@ -255,7 +281,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/cuentas_cobro/{id}/rechazar-pago', [CuentaCobroController::class, 'rechazarPago'])->name('cuentas_cobro.rechazar_pago');
         Route::post('/cuentas_cobro/{id}/notificar-cliente', [CuentaCobroController::class, 'notificarCliente'])->name('cuentas_cobro.notificar_cliente');
     });
-    // Reenviar (Auxiliar)
-    Route::post('/cuentas_cobro/{id}/reenviar', [CuentaCobroController::class, 'reenviar'])->middleware('check.role:auxiliar')->name('cuentas_cobro.reenviar');
+    // Reenviar (dueño, y con permisos)
+    Route::post('/cuentas_cobro/{id}/reenviar', [CuentaCobroController::class, 'reenviar'])
+        ->middleware([\App\Http\Middleware\CheckRoleOrPermission::class . ':edit_own_cuenta_cobro,editar'])
+        ->name('cuentas_cobro.reenviar');
 });
 

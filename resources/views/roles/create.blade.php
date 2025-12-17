@@ -297,6 +297,11 @@
                 <label class="form-label">Descripción</label>
                 <textarea name="description" class="form-input" rows="3" placeholder="Describe brevemente las responsabilidades de este rol...">{{ old('description') }}</textarea>
             </div>
+
+            <div class="form-group">
+                <label class="form-label">Acción de cumplimiento (qué ejecuta este rol/usuario)</label>
+                <input type="text" name="accion_cumplimiento" class="form-input" value="{{ old('accion_cumplimiento') }}" placeholder="Ej: Aprobar pagos, Validar documentos, Enviar a DIAN">
+            </div>
         </div>
 
         <div class="card">

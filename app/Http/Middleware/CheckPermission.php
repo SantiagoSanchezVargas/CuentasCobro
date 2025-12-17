@@ -15,7 +15,12 @@ class CheckPermission
             return redirect('/login');
         }
 
-        $user\n\n        // Super admin bypasses permission checks\n        if (Auth::user()->hasRole('super_admin')) {\n            return ();\n        }
+        $user = Auth::user();
+
+        // Super admin bypasses permission checks
+        if ($user && $user->hasRole('super_admin')) {
+            return $next($request);
+        }
 
         foreach ($permissions as $perm) {
             if ($user->hasPermission($perm) || $user->puedeRealizarAccion($perm)) {

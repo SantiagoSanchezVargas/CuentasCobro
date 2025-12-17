@@ -10,6 +10,7 @@ use App\Models\Contrato;
 use App\Models\Notificacion;
 use App\Models\User;
 use App\Models\Role;
+use App\Models\Tercero;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
@@ -38,9 +39,17 @@ class CuentaCobroController extends Controller
      */
     public function create()
     {
-        // Solo auxiliar puede crear
-        if ((Auth::user()?->role?->name) !== 'auxiliar') {
-            return redirect()->route('cuentas_cobro.index')->with('error', 'Solo el auxiliar puede crear cuentas de cobro.');
+        $user = Auth::user();
+        if (!$user) {
+            return redirect('/login');
+        }
+
+        // Permitir crear a cualquier rol con permiso global o granular
+        if (!($user->hasRole('super_admin')
+            || $user->hasPermission('create_cuenta_cobro')
+            || $user->puedeRealizarAccion('create_cuenta_cobro'))
+        ) {
+            return redirect()->route('cuentas_cobro.index')->with('error', 'No tienes permisos para crear cuentas de cobro.');
         }
         $contratos = Contrato::all();
 
@@ -56,14 +65,43 @@ class CuentaCobroController extends Controller
         // Obtener consecutivo activo
         $consecutivo = \App\Models\Consecutivo::where('tipo_documento', 'Cuenta de Cobro')
             ->where('activo', true)
+            ->whereDate('vigencia_inicio', '<=', now())
+            ->whereDate('vigencia_fin', '>=', now())
             ->first();
-            
-        $siguienteNumero = $consecutivo ? $consecutivo->siguiente_numero : 'CC-' . (CuentaCobro::count() + 1);
 
-        return view('cuentas_cobro.create', [
+        $siguienteNumero = null;
+        if ($consecutivo && ($consecutivo->numero_actual + 1) <= $consecutivo->numero_final) {
+            $siguienteNumero = $consecutivo->siguiente_numero;
+        } else {
+            $siguienteNumero = 'CC-' . (CuentaCobro::count() + 1);
+            session()->flash('warning', 'No hay consecutivo activo/vigente disponible, se usará numeración automática.');
+        }
+
+        // Obtener terceros para búsqueda
+        $terceros = Tercero::select('id', 'tipo_identificacion', 'identificacion', 'nombre_completo as nombre', 'telefono', 'email', 'direccion', 'tipo_persona as tipo')
+            ->orderBy('nombre_completo')
+            ->get();
+
+        // Cargar departamentos con municipios
+        $departamentos = Departamento::with('municipios')->orderBy('nombre')->get();
+
+        // Cargar catálogos para el formulario
+        $paises = \Illuminate\Support\Facades\DB::table('paises')->where('activo', true)->orderBy('nombre')->get();
+        $responsabilidadesFiscales = \Illuminate\Support\Facades\DB::table('responsabilidades_fiscales')->where('activo', true)->get();
+        $pucCatalogo = \Illuminate\Support\Facades\DB::table('puc_catalogo')->where('activo', true)->orderBy('codigo')->get();
+        $productosServicios = \Illuminate\Support\Facades\DB::table('productos_servicios')->where('activo', true)->orderBy('nombre')->get();
+        $centrosCosto = \Illuminate\Support\Facades\DB::table('centros_costo')->where('activo', true)->orderBy('codigo')->get();
+
+        return view('cuentas_cobro.create_v2', [
             'contratos' => $contratos,
-            'departamentos' => $departamentosFormateados,
-            'siguienteNumero' => $siguienteNumero
+            'departamentos' => $departamentos,
+            'terceros' => $terceros,
+            'siguienteNumero' => $siguienteNumero,
+            'paises' => $paises,
+            'responsabilidadesFiscales' => $responsabilidadesFiscales,
+            'pucCatalogo' => $pucCatalogo,
+            'productos' => $productosServicios,
+            'centrosCosto' => $centrosCosto,
         ]);
     }
     public function seguimiento($id)
@@ -77,6 +115,18 @@ class CuentaCobroController extends Controller
      */
  public function store(Request $request)
 {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login');
+    }
+
+    if (!($user->hasRole('super_admin')
+        || $user->hasPermission('create_cuenta_cobro')
+        || $user->puedeRealizarAccion('create_cuenta_cobro'))
+    ) {
+        return redirect()->route('cuentas_cobro.index')->with('error', 'No tienes permisos para crear cuentas de cobro.');
+    }
+
     $request->validate([
         // 'numero' => 'required|unique:cuentas_cobro', // Automático
         'fecha_emision' => 'required|date',
@@ -158,12 +208,16 @@ class CuentaCobroController extends Controller
     // Actualizar consecutivo si existe
     $consecutivo = \App\Models\Consecutivo::where('tipo_documento', 'Cuenta de Cobro')
         ->where('activo', true)
+        ->whereDate('vigencia_inicio', '<=', now())
+        ->whereDate('vigencia_fin', '>=', now())
         ->first();
-    
+
     $numeroCuenta = $request->numero;
-    if ($consecutivo) {
+    $consecutivoUsado = false;
+    if ($consecutivo && ($consecutivo->numero_actual + 1) <= $consecutivo->numero_final) {
         $numeroCuenta = $consecutivo->siguiente_numero;
         $consecutivo->increment('numero_actual');
+        $consecutivoUsado = true;
     }
 
     // Preparar contrato_id: solo si es numérico y existe, sino null
@@ -185,7 +239,7 @@ class CuentaCobroController extends Controller
             ->format('Y-m-d');
     }
 
-    $legalData['fecha_hora_emision'] = $legalData['fecha_hora_emision']
+    $legalData['fecha_hora_emision'] = !empty($legalData['fecha_hora_emision'])
         ? Carbon::parse($legalData['fecha_hora_emision'])->toDateTimeString()
         : Carbon::parse($request->fecha_emision)
             ->setTimeFromTimeString(now()->format('H:i:s'))
@@ -490,11 +544,18 @@ class CuentaCobroController extends Controller
     public function enviarCliente($id)
     {
         $cuenta = CuentaCobro::findOrFail($id);
-        $role = Auth::user()?->role?->name;
+        $user = Auth::user();
+        if (!$user) {
+            return redirect('/login');
+        }
         if ($cuenta->estado_aprobacion !== 'aprobado') {
             return back()->with('error', 'La cuenta debe estar aprobada para enviarse al cliente.');
         }
-        if (!in_array($role, ['administrador', 'tesoreria', 'admin_programa'])) {
+        // Permitir a cualquier rol con permiso granular/global (o super_admin)
+        if (!($user->hasRole('super_admin')
+            || $user->puedeRealizarAccion('enviar_cliente', $cuenta->etapa_aprobacion, $cuenta->estado_aprobacion)
+            || $user->hasPermission('enviar_cliente'))
+        ) {
             return back()->with('error', 'No tienes permisos para enviar al cliente.');
         }
         $cuenta->update([
@@ -518,8 +579,15 @@ class CuentaCobroController extends Controller
         ]);
 
         $cuenta = CuentaCobro::findOrFail($id);
-        $role = Auth::user()?->role?->name;
-        if (!in_array($role, ['tesoreria', 'admin_programa'])) {
+        $user = Auth::user();
+        if (!$user) {
+            return redirect('/login');
+        }
+
+        if (!($user->hasRole('super_admin')
+            || $user->hasPermission('process_payment')
+            || $user->puedeRealizarAccion('process_payment', $cuenta->etapa_aprobacion, $cuenta->estado_aprobacion))
+        ) {
             return back()->with('error', 'No tienes permisos para registrar pagos.');
         }
         if ($cuenta->etapa_aprobacion !== 'tesoreria' || $cuenta->estado_aprobacion !== 'aprobado') {
@@ -535,7 +603,8 @@ class CuentaCobroController extends Controller
             " | Medio: " . $request->input('medio_pago') .
             ( $request->filled('referencia_pago') ? (" | Ref: " . $request->input('referencia_pago')) : '' ) .
             ( $request->filled('observacion_pago') ? (" | Obs: " . $request->input('observacion_pago')) : '' );
-        $cuenta->observaciones = trim(($cuenta->observaciones ? ($cuenta->observaciones . "\n") : '') . $detallePago);
+        $cuenta->observaciones = trim(($cuenta->observaciones ? ($cuenta->observaciones . "
+") : '') . $detallePago);
         // Al notificar pago, devolver la cuenta al auxiliar (para su control/seguimiento)
         $cuenta->etapa_aprobacion = 'auxiliar';
         $cuenta->save();
@@ -564,8 +633,15 @@ class CuentaCobroController extends Controller
             'motivo' => 'required|string|min:5',
         ]);
         $cuenta = CuentaCobro::findOrFail($id);
-        $role = Auth::user()?->role?->name;
-        if (!in_array($role, ['tesoreria', 'admin_programa'])) {
+        $user = Auth::user();
+        if (!$user) {
+            return redirect('/login');
+        }
+
+        if (!($user->hasRole('super_admin')
+            || $user->hasPermission('process_payment')
+            || $user->puedeRealizarAccion('process_payment', $cuenta->etapa_aprobacion, $cuenta->estado_aprobacion))
+        ) {
             return back()->with('error', 'No tienes permisos para rechazar pagos.');
         }
         if ($cuenta->etapa_aprobacion !== 'tesoreria' || $cuenta->estado_aprobacion !== 'aprobado') {
@@ -573,7 +649,8 @@ class CuentaCobroController extends Controller
         }
 
     $cuenta->estado_pago = 'rejected';
-    $cuenta->observaciones = trim(($cuenta->observaciones ? ($cuenta->observaciones . "\n") : '') . 'Pago rechazado: ' . $request->input('motivo'));
+    $cuenta->observaciones = trim(($cuenta->observaciones ? ($cuenta->observaciones . "
+") : '') . 'Pago rechazado: ' . $request->input('motivo'));
     $cuenta->save();
 
         $cuenta->registrarHistorial(Auth::id(), 'pago_rechazado', 'aprobado', 'aprobado', 'Pago rechazado por Tesorería: '.$request->input('motivo'));
@@ -618,18 +695,25 @@ class CuentaCobroController extends Controller
         $departamentosFormateados[$dep->nombre] = $dep->municipios->pluck('nombre')->toArray();
     }
 
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login');
+    }
+
     // Restricciones de edición
-    $role = Auth::user()?->role?->name;
     $readonly = false;
-    if ($role === 'auxiliar') {
-        if ($cuenta->user_id !== Auth::id() || $cuenta->estado_aprobacion !== 'en_correccion') {
-            return redirect()->route('cuentas_cobro.show', $cuenta->id)->with('error', 'Solo puedes editar cuentas devueltas para corrección.');
-        }
-    } elseif ($role === 'tesoreria') {
-        // Tesorería: acceso de solo lectura al formulario
+
+    $isOwnerInCorrection = ($cuenta->user_id === $user->id && $cuenta->estado_aprobacion === 'en_correccion');
+    $hasEditPermission = ($user->hasPermission('edit_own_cuenta_cobro')
+        || $user->puedeRealizarAccion('edit_own_cuenta_cobro', $cuenta->etapa_aprobacion, $cuenta->estado_aprobacion)
+        || $user->puedeRealizarAccion('editar', $cuenta->etapa_aprobacion, $cuenta->estado_aprobacion));
+
+    // Tesorería o roles con permiso de pago: solo lectura
+    if ($user->hasPermission('process_payment') || $user->puedeRealizarAccion('process_payment', $cuenta->etapa_aprobacion, $cuenta->estado_aprobacion)) {
         $readonly = true;
-    } else {
-        // Otros roles: no editar
+    }
+
+    if (!$isOwnerInCorrection && !$hasEditPermission && !$readonly) {
         return redirect()->route('cuentas_cobro.show', $cuenta->id)->with('error', 'No tienes permisos para editar esta cuenta.');
     }
 
@@ -807,12 +891,20 @@ class CuentaCobroController extends Controller
     public function devolver(Request $request, $id)
     {
         $cuenta = CuentaCobro::findOrFail($id);
-        $role = Auth::user()?->role?->name;
+        $user = Auth::user();
         $request->validate(['motivo' => 'required|string|min:5']);
         if ($cuenta->estado_aprobacion !== 'en_revision' || $cuenta->etapa_aprobacion !== 'administrador') {
             return back()->with('error', 'La cuenta no está en etapa de Administrador.');
         }
-        if (!in_array($role, ['administrador', 'admin_programa'])) {
+
+        if (!$user) {
+            return redirect('/login');
+        }
+
+        if (!($user->hasRole('super_admin')
+            || $user->hasPermission('request_corrections')
+            || $user->puedeRealizarAccion('request_corrections', $cuenta->etapa_aprobacion, $cuenta->estado_aprobacion))
+        ) {
             return back()->with('error', 'No tienes permisos para devolver esta cuenta.');
         }
         $estadoAnterior = $cuenta->estado_aprobacion;
@@ -841,9 +933,22 @@ class CuentaCobroController extends Controller
     public function reenviar($id)
     {
         $cuenta = CuentaCobro::findOrFail($id);
-        if (Auth::user()?->role?->name !== 'auxiliar' || $cuenta->user_id !== Auth::id()) {
+        $user = Auth::user();
+        if (!$user) {
+            return redirect('/login');
+        }
+
+        if ($cuenta->user_id !== Auth::id()) {
             return back()->with('error', 'No puedes reenviar esta cuenta.');
         }
+
+        if (!($user->hasRole('super_admin')
+            || $user->hasPermission('edit_own_cuenta_cobro')
+            || $user->puedeRealizarAccion('edit_own_cuenta_cobro', $cuenta->etapa_aprobacion, $cuenta->estado_aprobacion))
+        ) {
+            return back()->with('error', 'No tienes permisos para reenviar esta cuenta.');
+        }
+
         if ($cuenta->estado_aprobacion !== 'en_correccion') {
             return back()->with('error', 'La cuenta no está en corrección.');
         }
@@ -1137,9 +1242,20 @@ class CuentaCobroController extends Controller
     public function archivar($id)
     {
         $cuenta = CuentaCobro::findOrFail($id);
-        $role = Auth::user()?->role?->name;
-        if ($role !== 'auxiliar' || $cuenta->user_id !== Auth::id()) {
+        $user = Auth::user();
+        if (!$user) {
+            return redirect('/login');
+        }
+
+        if ($cuenta->user_id !== Auth::id()) {
             return back()->with('error', 'No puedes archivar esta cuenta.');
+        }
+
+        if (!($user->hasRole('super_admin')
+            || $user->hasPermission('edit_own_cuenta_cobro')
+            || $user->puedeRealizarAccion('archivar', $cuenta->etapa_aprobacion, $cuenta->estado_aprobacion))
+        ) {
+            return back()->with('error', 'No tienes permisos para archivar esta cuenta.');
         }
         if ($cuenta->archived_at) {
             return back()->with('info', 'La cuenta ya está archivada.');
@@ -1259,9 +1375,20 @@ class CuentaCobroController extends Controller
     public function desarchivar($id)
     {
         $cuenta = CuentaCobro::findOrFail($id);
-        $role = Auth::user()?->role?->name;
-        if ($role !== 'contratista' || $cuenta->user_id !== Auth::id()) {
+        $user = Auth::user();
+        if (!$user) {
+            return redirect('/login');
+        }
+
+        if ($cuenta->user_id !== Auth::id()) {
             return back()->with('error', 'No puedes desarchivar esta cuenta.');
+        }
+
+        if (!($user->hasRole('super_admin')
+            || $user->hasPermission('edit_own_cuenta_cobro')
+            || $user->puedeRealizarAccion('archivar', $cuenta->etapa_aprobacion, $cuenta->estado_aprobacion))
+        ) {
+            return back()->with('error', 'No tienes permisos para desarchivar esta cuenta.');
         }
         if (!$cuenta->archived_at) {
             return back()->with('info', 'La cuenta no está archivada.');
@@ -1270,6 +1397,75 @@ class CuentaCobroController extends Controller
         $cuenta->save();
         $cuenta->registrarHistorial(Auth::id(), 'desarchivado', $cuenta->estado_aprobacion, $cuenta->estado_aprobacion, 'Cuenta desarchivada por el contratista.');
         return redirect()->route('cuentas_cobro.show', $cuenta->id)->with('success', 'Cuenta desarchivada.');
+    }
+
+    /**
+     * Vista de seguimiento general del pipeline
+     */
+    public function seguimientoGeneral()
+    {
+        // Estadísticas por estado
+        $stats = [
+            'pendiente' => CuentaCobro::where('estado_aprobacion', 'pendiente')->count(),
+            'en_revision' => CuentaCobro::where('estado_aprobacion', 'en_revision')->count(),
+            'aprobado' => CuentaCobro::where('estado_aprobacion', 'aprobado')->count(),
+            'rechazado' => CuentaCobro::where('estado_aprobacion', 'rechazado')->count(),
+            'pagado' => CuentaCobro::where('estado_aprobacion', 'pagado')->count(),
+        ];
+
+        // Conteo por etapa
+        $porEtapa = [
+            'supervisor' => CuentaCobro::where('etapa_aprobacion', 'supervisor')->whereIn('estado_aprobacion', ['pendiente', 'en_revision'])->count(),
+            'ordenador_gasto' => CuentaCobro::where('etapa_aprobacion', 'ordenador_gasto')->whereIn('estado_aprobacion', ['pendiente', 'en_revision'])->count(),
+            'contratacion' => CuentaCobro::where('etapa_aprobacion', 'contratacion')->whereIn('estado_aprobacion', ['pendiente', 'en_revision'])->count(),
+            'alcalde' => CuentaCobro::where('etapa_aprobacion', 'alcalde')->whereIn('estado_aprobacion', ['pendiente', 'en_revision'])->count(),
+            'tesoreria' => CuentaCobro::where('etapa_aprobacion', 'tesoreria')->whereIn('estado_aprobacion', ['pendiente', 'en_revision'])->count(),
+        ];
+
+        // Actividades recientes (usando historial o interacciones)
+        $actividades = \App\Models\CuentaCobroHistorial::with('usuario', 'cuentaCobro')
+            ->orderBy('created_at', 'desc')
+            ->take(10)
+            ->get()
+            ->map(function ($h) {
+                return (object) [
+                    'tipo' => $h->accion ?? 'info',
+                    'descripcion' => $h->cuentaCobro ? "Cuenta #{$h->cuentaCobro->numero}: {$h->accion}" : $h->accion,
+                    'usuario' => $h->usuario->name ?? 'Sistema',
+                    'cuenta_cobro_id' => $h->cuenta_cobro_id,
+                    'created_at' => $h->created_at,
+                ];
+            });
+
+        return view('cuentas_cobro.seguimiento_general', compact('stats', 'porEtapa', 'actividades'));
+    }
+
+    /**
+     * Vista de PDFs generados
+     */
+    public function pdfs(Request $request)
+    {
+        $query = CuentaCobro::query();
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('numero', 'like', "%{$search}%")
+                  ->orWhere('nombre_beneficiario', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('fecha_desde')) {
+            $query->whereDate('fecha_emision', '>=', $request->fecha_desde);
+        }
+
+        if ($request->filled('fecha_hasta')) {
+            $query->whereDate('fecha_emision', '<=', $request->fecha_hasta);
+        }
+
+        $cuentas = $query->orderBy('fecha_emision', 'desc')->paginate(12);
+
+        return view('cuentas_cobro.pdfs', compact('cuentas'));
     }
 }
 

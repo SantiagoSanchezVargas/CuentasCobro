@@ -56,19 +56,42 @@ class UsersRolesSeeder extends Seeder
                 $this->command->warn("Rol no encontrado: {$data['role']}. Omite usuario {$data['email']}");
                 continue;
             }
-            $user = User::firstOrCreate(
-                ['email' => $data['email']],
-                [
-                    'name' => $data['name'],
-                    'password' => Hash::make($data['password']),
-                    'role_id' => $role->id,
-                    'email_verified_at' => now(),
-                ]
-            );
+            // Try to use the User model; if it's not available (autoload issue), fallback to DB
+            if (class_exists('\App\\Models\\User')) {
+                $user = User::firstOrCreate(
+                    ['email' => $data['email']],
+                    [
+                        'name' => $data['name'],
+                        'password' => Hash::make($data['password']),
+                        'role_id' => $role->id,
+                        'email_verified_at' => now(),
+                    ]
+                );
 
-            // Ensure role assignment
-            if ($user->role_id !== $role->id) {
-                $user->update(['role_id' => $role->id]);
+                // Ensure role assignment
+                if ($user->role_id !== $role->id) {
+                    $user->update(['role_id' => $role->id]);
+                }
+            } else {
+                // Fallback: insert or update using DB to avoid seeding failure
+                $existing = \Illuminate\Support\Facades\DB::table('users')->where('email', $data['email'])->first();
+                if ($existing) {
+                    \Illuminate\Support\Facades\DB::table('users')->where('email', $data['email'])->update([
+                        'name' => $data['name'],
+                        'role_id' => $role->id,
+                        'email_verified_at' => now(),
+                    ]);
+                } else {
+                    \Illuminate\Support\Facades\DB::table('users')->insert([
+                        'name' => $data['name'],
+                        'email' => $data['email'],
+                        'password' => Hash::make($data['password']),
+                        'role_id' => $role->id,
+                        'email_verified_at' => now(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
             }
 
             $this->command->info("Usuario listo: {$data['email']} ({$data['role']})");

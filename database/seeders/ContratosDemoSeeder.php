@@ -24,7 +24,12 @@ class ContratosDemoSeeder extends Seeder
             'Consultoría',
         ];
 
-        $users = User::pluck('id')->all();
+        if (class_exists('\App\\Models\\User')) {
+            $users = User::pluck('id')->all();
+        } else {
+            $users = \Illuminate\Support\Facades\DB::table('users')->pluck('id')->all();
+        }
+
         if (empty($users)) {
             $this->command?->warn('No hay usuarios para asociar contratos.');
             return;
