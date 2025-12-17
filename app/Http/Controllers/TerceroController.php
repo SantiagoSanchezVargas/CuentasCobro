@@ -36,11 +36,18 @@ class TerceroController extends Controller
             'razon_social' => 'required_if:tipo_persona,juridica',
             'email' => 'nullable|email',
             'telefono' => 'nullable',
+            'codigo_pais' => 'nullable',
             'direccion' => 'nullable',
             'ciudad' => 'nullable',
             'departamento' => 'nullable',
-            'responsabilidad_fiscal' => 'nullable|array',
+            'responsabilidades_fiscales' => 'nullable|array',
         ]);
+
+        // Convertir responsabilidades_fiscales a responsabilidad_fiscal para el modelo
+        if (isset($validated['responsabilidades_fiscales'])) {
+            $validated['responsabilidad_fiscal'] = $validated['responsabilidades_fiscales'];
+            unset($validated['responsabilidades_fiscales']);
+        }
 
         $tercero = Tercero::create($validated);
 

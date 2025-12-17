@@ -119,7 +119,7 @@
                 <div>
                     <div class="doc-icon">
                         <span class="material-symbols-rounded">
-                            {{ Str::endsWith($doc->nombre_archivo, '.pdf') ? 'picture_as_pdf' : 'description' }}
+                            {{ str_ends_with(strtolower($doc->nombre_archivo ?? ''), '.pdf') ? 'picture_as_pdf' : 'description' }}
                         </span>
                     </div>
                     <h3 class="doc-name">{{ $doc->nombre_original ?? $doc->nombre_archivo }}</h3>

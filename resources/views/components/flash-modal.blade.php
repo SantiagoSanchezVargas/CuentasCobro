@@ -7,22 +7,32 @@
         return (string) $value;
     };
 
+    // Función helper para verificar si un string contiene alguna de las palabras
+    $strContains = static function ($haystack, $needles) {
+        foreach ((array) $needles as $needle) {
+            if ($needle !== '' && stripos($haystack, $needle) !== false) {
+                return true;
+            }
+        }
+        return false;
+    };
+
     $messages = collect();
 
     $successRaw = session('success');
     if ($successRaw) {
         $successHtml = $toHtml($successRaw);
-        $successText = \Illuminate\Support\Str::lower(strip_tags($successHtml));
+        $successText = strtolower(strip_tags($successHtml));
         $successLabel = 'Operación exitosa';
         $successTitle = 'Acción completada';
 
-        if (\Illuminate\Support\Str::contains($successText, ['cread'])) {
+        if ($strContains($successText, ['cread'])) {
             $successLabel = 'Creación completada';
             $successTitle = 'Elemento creado';
-        } elseif (\Illuminate\Support\Str::contains($successText, ['actualiz'])) {
+        } elseif ($strContains($successText, ['actualiz'])) {
             $successLabel = 'Actualización exitosa';
             $successTitle = 'Cambios guardados';
-        } elseif (\Illuminate\Support\Str::contains($successText, ['elimin'])) {
+        } elseif ($strContains($successText, ['elimin'])) {
             $successLabel = 'Elemento eliminado';
             $successTitle = 'Acción completada';
         }
@@ -72,8 +82,8 @@
     $errorHtml = $errorRaw ? $toHtml($errorRaw) : null;
 
     if (!$permissionRaw && $errorHtml) {
-        $errorText = \Illuminate\Support\Str::lower(strip_tags($errorHtml));
-        if (\Illuminate\Support\Str::contains($errorText, ['permiso', 'autoriz', 'deneg', 'forbid'])) {
+        $errorText = strtolower(strip_tags($errorHtml));
+        if ($strContains($errorText, ['permiso', 'autoriz', 'deneg', 'forbid'])) {
             $permissionRaw = $errorHtml;
             $errorHtml = null;
         }

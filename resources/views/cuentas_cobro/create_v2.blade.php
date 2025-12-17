@@ -357,16 +357,17 @@
 
     .siigo-items-table .item-input {
         width: 100%;
-        padding: 8px 10px;
-        border: 1px solid transparent;
-        border-radius: 4px;
-        font-size: 13px;
+        padding: 10px 12px;
+        border: 1px solid var(--siigo-gray-200);
+        border-radius: 6px;
+        font-size: 14px;
         transition: all 0.2s;
-        background: transparent;
+        background: white;
+        min-width: 80px;
     }
 
     .siigo-items-table .item-input:hover {
-        border-color: var(--siigo-gray-300);
+        border-color: var(--siigo-primary-light);
         background: white;
     }
 
@@ -374,6 +375,19 @@
         border-color: var(--siigo-primary);
         background: white;
         outline: none;
+        box-shadow: 0 0 0 3px rgba(0, 166, 153, 0.1);
+    }
+
+    .siigo-items-table td {
+        padding: 12px 8px;
+        vertical-align: middle;
+    }
+
+    .siigo-items-table th {
+        padding: 14px 8px;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     .siigo-items-table .row-total {
@@ -689,11 +703,15 @@
         background: white;
         border-radius: 12px;
         width: 100%;
-        max-width: 700px;
+        max-width: 850px;
         max-height: 90vh;
         overflow: hidden;
         transform: scale(0.9);
         transition: transform 0.3s;
+    }
+
+    .siigo-modal.modal-lg {
+        max-width: 950px;
     }
 
     .siigo-modal-overlay.active .siigo-modal {
@@ -920,7 +938,7 @@
                                         <option value="{{ $contrato->id }}" 
                                                 data-objeto="{{ $contrato->objeto }}"
                                                 data-valor="{{ $contrato->valor }}">
-                                            {{ $contrato->numero }} - {{ Str::limit($contrato->objeto, 40) }}
+                                            {{ $contrato->numero }} - {{ substr($contrato->objeto ?? '', 0, 40) }}{{ strlen($contrato->objeto ?? '') > 40 ? '...' : '' }}
                                         </option>
                                         @endforeach
                                     @endif
@@ -961,20 +979,20 @@
                         </h3>
                         <span class="material-symbols-rounded chevron">expand_more</span>
                     </div>
-                    <div class="siigo-card-body" style="padding: 0;">
-                        <table class="siigo-items-table">
+                    <div class="siigo-card-body" style="padding: 0; overflow-x: auto;">
+                        <table class="siigo-items-table" style="min-width: 900px;">
                             <thead>
                                 <tr>
-                                    <th style="width: 4%">#</th>
-                                    <th style="width: 12%">Código PUC</th>
-                                    <th style="width: 20%">Servicio / Producto</th>
-                                    <th style="width: 16%">Descripción</th>
-                                    <th style="width: 10%">Centro Costo</th>
-                                    <th style="width: 6%">Cant.</th>
-                                    <th style="width: 12%">Valor Unit.</th>
-                                    <th style="width: 8%">Impuesto</th>
-                                    <th style="width: 10%">Total</th>
-                                    <th style="width: 4%"></th>
+                                    <th style="width: 40px; min-width: 40px;">#</th>
+                                    <th style="width: 100px; min-width: 100px;">Código PUC</th>
+                                    <th style="width: 180px; min-width: 180px;">Servicio / Producto</th>
+                                    <th style="width: 160px; min-width: 160px;">Descripción</th>
+                                    <th style="width: 130px; min-width: 130px;">Centro Costo</th>
+                                    <th style="width: 70px; min-width: 70px;">Cant.</th>
+                                    <th style="width: 120px; min-width: 120px;">Valor Unit.</th>
+                                    <th style="width: 90px; min-width: 90px;">Impuesto</th>
+                                    <th style="width: 110px; min-width: 110px;">Total</th>
+                                    <th style="width: 50px; min-width: 50px;"></th>
                                 </tr>
                             </thead>
                             <tbody id="itemsTableBody">
@@ -1008,19 +1026,27 @@
                         <span class="material-symbols-rounded chevron">expand_more</span>
                     </div>
                     <div class="siigo-card-body">
-                        <div class="siigo-form-grid">
+                        <div class="siigo-form-grid cols-2">
                             <div class="siigo-form-group full-width">
-                                <label class="siigo-label">Concepto / Observaciones</label>
-                                <textarea name="concepto_cobro" class="siigo-input" rows="3" placeholder="Describe el concepto del cobro o agrega notas adicionales..."></textarea>
+                                <label class="siigo-label">Concepto / Observaciones <span class="required">*</span></label>
+                                <textarea name="concepto_cobro" class="siigo-input" rows="3" placeholder="Describe el concepto del cobro (mínimo 10 caracteres)..." required minlength="10" style="font-size: 14px; padding: 12px;"></textarea>
                             </div>
                             <div class="siigo-form-group">
-                                <label class="siigo-label">Adjuntar Soporte (Opcional)</label>
-                                <input type="file" name="soporte" class="siigo-input" accept=".pdf,.jpg,.png,.doc,.docx">
-                                <small style="color: var(--siigo-gray-500); font-size: 11px;">PDF, imágenes o documentos. Máx 5MB</small>
+                                <label class="siigo-label">Fecha Prestación del Servicio <span class="required">*</span></label>
+                                <input type="date" name="fecha_prestacion_servicio" class="siigo-input" value="{{ date('Y-m-d') }}" required style="font-size: 14px; padding: 10px 12px;">
                             </div>
                             <div class="siigo-form-group">
                                 <label class="siigo-label">Fecha de Vencimiento</label>
-                                <input type="date" name="fecha_vencimiento" class="siigo-input" value="{{ date('Y-m-d', strtotime('+30 days')) }}">
+                                <input type="date" name="fecha_vencimiento" class="siigo-input" value="{{ date('Y-m-d', strtotime('+30 days')) }}" style="font-size: 14px; padding: 10px 12px;">
+                            </div>
+                            <div class="siigo-form-group">
+                                <label class="siigo-label">Adjuntar Soporte (Opcional)</label>
+                                <input type="file" name="soporte" class="siigo-input" accept=".pdf,.jpg,.png,.doc,.docx" style="font-size: 14px; padding: 10px 12px;">
+                                <small style="color: var(--siigo-gray-500); font-size: 11px;">PDF, imágenes o documentos. Máx 5MB</small>
+                            </div>
+                            <div class="siigo-form-group">
+                                <label class="siigo-label">Plazo de Pago (días)</label>
+                                <input type="number" name="plazo_pago" class="siigo-input" value="30" min="0" max="365" style="font-size: 14px; padding: 10px 12px;">
                             </div>
                         </div>
                     </div>
@@ -1119,7 +1145,7 @@
 
     <!-- Modal Nuevo Tercero -->
     <div class="siigo-modal-overlay" id="modalTercero">
-        <div class="siigo-modal">
+        <div class="siigo-modal modal-lg">
             <div class="siigo-modal-header">
                 <h2>
                     <span class="material-symbols-rounded icon">person_add</span>
@@ -1131,23 +1157,23 @@
             </div>
             <div class="siigo-modal-body">
                 <form id="formNuevoTercero">
-                    <div class="siigo-form-grid cols-2" style="gap: 16px;">
+                    <div class="siigo-form-grid cols-2" style="gap: 20px;">
                         <div class="siigo-form-group full-width">
-                            <label class="siigo-label">Tipo de Persona <span class="required">*</span></label>
-                            <div style="display: flex; gap: 16px;">
-                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                    <input type="radio" name="modal_tipo_persona" value="natural" checked>
+                            <label class="siigo-label" style="font-size: 13px; font-weight: 600;">Tipo de Persona <span class="required">*</span></label>
+                            <div style="display: flex; gap: 24px; margin-top: 8px;">
+                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px;">
+                                    <input type="radio" name="modal_tipo_persona" value="natural" checked style="width: 18px; height: 18px;">
                                     <span>Persona Natural</span>
                                 </label>
-                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                    <input type="radio" name="modal_tipo_persona" value="juridica">
+                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px;">
+                                    <input type="radio" name="modal_tipo_persona" value="juridica" style="width: 18px; height: 18px;">
                                     <span>Persona Jurídica</span>
                                 </label>
                             </div>
                         </div>
                         <div class="siigo-form-group">
-                            <label class="siigo-label">Tipo de Identificación <span class="required">*</span></label>
-                            <select id="modal_tipo_id" class="siigo-input" required>
+                            <label class="siigo-label" style="font-size: 13px; font-weight: 600;">Tipo de Identificación <span class="required">*</span></label>
+                            <select id="modal_tipo_id" class="siigo-input" required style="font-size: 14px; padding: 10px 12px;">
                                 <option value="CC">Cédula de Ciudadanía</option>
                                 <option value="NIT">NIT</option>
                                 <option value="CE">Cédula de Extranjería</option>
@@ -1156,52 +1182,52 @@
                             </select>
                         </div>
                         <div class="siigo-form-group">
-                            <label class="siigo-label">Número de Identificación <span class="required">*</span></label>
+                            <label class="siigo-label" style="font-size: 13px; font-weight: 600;">Número de Identificación <span class="required">*</span></label>
                             <div style="display: flex; gap: 8px;">
-                                <input type="text" id="modal_identificacion" class="siigo-input" placeholder="Ej: 1234567890" required style="flex: 1;">
-                                <input type="text" id="modal_dv" class="siigo-input" placeholder="DV" style="width: 60px; display: none;">
+                                <input type="text" id="modal_identificacion" class="siigo-input" placeholder="Ej: 1234567890" required style="flex: 1; font-size: 14px; padding: 10px 12px;">
+                                <input type="text" id="modal_dv" class="siigo-input" placeholder="DV" style="width: 70px; display: none; font-size: 14px; padding: 10px 12px;">
                             </div>
                         </div>
                         <div class="siigo-form-group" id="divNombreCompleto">
-                            <label class="siigo-label">Nombre Completo <span class="required">*</span></label>
-                            <input type="text" id="modal_nombre" class="siigo-input" placeholder="Ej: Juan Pérez García" required>
+                            <label class="siigo-label" style="font-size: 13px; font-weight: 600;">Nombre Completo <span class="required">*</span></label>
+                            <input type="text" id="modal_nombre" class="siigo-input" placeholder="Ej: Juan Pérez García" required style="font-size: 14px; padding: 10px 12px;">
                         </div>
                         <div class="siigo-form-group" id="divRazonSocial" style="display: none;">
-                            <label class="siigo-label">Razón Social <span class="required">*</span></label>
-                            <input type="text" id="modal_razon_social" class="siigo-input" placeholder="Ej: Empresa S.A.S.">
+                            <label class="siigo-label" style="font-size: 13px; font-weight: 600;">Razón Social <span class="required">*</span></label>
+                            <input type="text" id="modal_razon_social" class="siigo-input" placeholder="Ej: Empresa S.A.S." style="font-size: 14px; padding: 10px 12px;">
                         </div>
                         <div class="siigo-form-group">
-                            <label class="siigo-label">Teléfono</label>
+                            <label class="siigo-label" style="font-size: 13px; font-weight: 600;">Teléfono</label>
                             <div style="display: flex; gap: 8px;">
-                                <select id="modal_codigo_pais" class="siigo-input" style="width: 140px;">
+                                <select id="modal_codigo_pais" class="siigo-input" style="width: 160px; font-size: 14px; padding: 10px 12px;">
                                     @foreach($paises as $pais)
                                     <option value="{{ $pais->indicativo }}" {{ $pais->codigo_iso2 === 'CO' ? 'selected' : '' }}>
                                         {{ $pais->codigo_iso2 }} {{ $pais->indicativo }}
                                     </option>
                                     @endforeach
                                 </select>
-                                <input type="text" id="modal_telefono" class="siigo-input" placeholder="Ej: 3001234567" style="flex: 1;">
+                                <input type="text" id="modal_telefono" class="siigo-input" placeholder="Ej: 3001234567" style="flex: 1; font-size: 14px; padding: 10px 12px;">
                             </div>
                         </div>
                         <div class="siigo-form-group">
-                            <label class="siigo-label">Email</label>
-                            <input type="email" id="modal_email" class="siigo-input" placeholder="Ej: correo@ejemplo.com">
+                            <label class="siigo-label" style="font-size: 13px; font-weight: 600;">Email</label>
+                            <input type="email" id="modal_email" class="siigo-input" placeholder="Ej: correo@ejemplo.com" style="font-size: 14px; padding: 10px 12px;">
                         </div>
                         <div class="siigo-form-group full-width">
-                            <label class="siigo-label">Responsabilidades Fiscales</label>
-                            <div id="responsabilidadesFiscalesContainer" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 150px; overflow-y: auto; border: 1px solid var(--siigo-gray-200); border-radius: 8px; padding: 12px;">
+                            <label class="siigo-label" style="font-size: 13px; font-weight: 600;">Responsabilidades Fiscales</label>
+                            <div id="responsabilidadesFiscalesContainer" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-height: 180px; overflow-y: auto; border: 1px solid var(--siigo-gray-200); border-radius: 8px; padding: 16px; background: #fafafa;">
                                 @foreach($responsabilidadesFiscales as $resp)
-                                <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; font-size: 12px;">
-                                    <input type="checkbox" name="modal_responsabilidades[]" value="{{ $resp->codigo }}">
-                                    <span><strong>{{ $resp->codigo }}</strong>: {{ Str::limit($resp->nombre, 40) }}</span>
+                                <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 13px;">
+                                    <input type="checkbox" name="modal_responsabilidades[]" value="{{ $resp->codigo }}" style="width: 16px; height: 16px; margin-top: 2px;">
+                                    <span><strong>{{ $resp->codigo }}</strong>: {{ $resp->nombre }}</span>
                                 </label>
                                 @endforeach
                             </div>
-                            <small style="color: var(--siigo-gray-500); font-size: 11px;">Según Resolución DIAN - Ley 2024/2025</small>
+                            <small style="color: var(--siigo-gray-500); font-size: 11px; margin-top: 4px; display: block;">Según Resolución DIAN - Ley 2024/2025</small>
                         </div>
                         <div class="siigo-form-group">
-                            <label class="siigo-label">Departamento</label>
-                            <select id="modal_departamento" class="siigo-input">
+                            <label class="siigo-label" style="font-size: 13px; font-weight: 600;">Departamento</label>
+                            <select id="modal_departamento" class="siigo-input" style="font-size: 14px; padding: 10px 12px;">
                                 <option value="">Seleccionar...</option>
                                 @foreach($departamentos as $dep)
                                 <option value="{{ $dep->nombre }}" data-id="{{ $dep->id }}">{{ $dep->nombre }}</option>
@@ -1209,23 +1235,23 @@
                             </select>
                         </div>
                         <div class="siigo-form-group">
-                            <label class="siigo-label">Ciudad/Municipio</label>
-                            <select id="modal_ciudad" class="siigo-input">
+                            <label class="siigo-label" style="font-size: 13px; font-weight: 600;">Ciudad/Municipio</label>
+                            <select id="modal_ciudad" class="siigo-input" style="font-size: 14px; padding: 10px 12px;">
                                 <option value="">Seleccionar departamento primero</option>
                             </select>
                         </div>
                         <div class="siigo-form-group full-width">
-                            <label class="siigo-label">Dirección</label>
-                            <input type="text" id="modal_direccion" class="siigo-input" placeholder="Ej: Calle 123 # 45-67">
+                            <label class="siigo-label" style="font-size: 13px; font-weight: 600;">Dirección</label>
+                            <input type="text" id="modal_direccion" class="siigo-input" placeholder="Ej: Calle 123 # 45-67, Barrio Centro" style="font-size: 14px; padding: 10px 12px;">
                         </div>
                     </div>
                 </form>
             </div>
-            <div class="siigo-modal-footer">
-                <button type="button" class="siigo-btn siigo-btn-secondary" onclick="closeNewTerceroModal()">
+            <div class="siigo-modal-footer" style="padding: 20px 24px;">
+                <button type="button" class="siigo-btn siigo-btn-secondary" onclick="closeNewTerceroModal()" style="padding: 12px 24px; font-size: 14px;">
                     Cancelar
                 </button>
-                <button type="button" class="siigo-btn siigo-btn-primary" onclick="saveNewTercero()">
+                <button type="button" class="siigo-btn siigo-btn-primary" onclick="saveNewTercero()" style="padding: 12px 24px; font-size: 14px;">
                     <span class="material-symbols-rounded">save</span>
                     Guardar Tercero
                 </button>
@@ -1894,7 +1920,130 @@
 
     // Preview Document
     function previewDocument() {
-        alert('Vista previa próximamente');
+        // Recopilar datos del formulario
+        const terceroNombre = document.getElementById('nombreBeneficiario')?.value || 'Sin especificar';
+        const terceroId = document.getElementById('identificacion')?.value || '';
+        const terceroTipoId = document.getElementById('tipoIdentificacion')?.value || 'CC';
+        const docNumber = document.getElementById('docNumber')?.textContent || 'Auto';
+        const fecha = new Date().toLocaleDateString('es-CO');
+        
+        // Recopilar items
+        let itemsHtml = '';
+        let subtotal = 0;
+        let totalIva = 0;
+        
+        document.querySelectorAll('#itemsTableBody tr').forEach((row, idx) => {
+            const item = row.querySelector('.item-name')?.value || '';
+            const desc = row.querySelector('input[name*="descripcion"]')?.value || '';
+            const qty = parseFloat(row.querySelector('.item-qty')?.value) || 0;
+            const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
+            const tax = parseFloat(row.querySelector('.item-tax')?.value) || 0;
+            const lineTotal = qty * price;
+            const lineTax = lineTotal * (tax / 100);
+            
+            subtotal += lineTotal;
+            totalIva += lineTax;
+            
+            if (item) {
+                itemsHtml += `
+                    <tr>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">${idx + 1}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">${item}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">${desc}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${qty}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(price)}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${tax}%</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-weight: 600;">${formatCurrency(lineTotal + lineTax)}</td>
+                    </tr>
+                `;
+            }
+        });
+        
+        const total = subtotal + totalIva;
+        const concepto = document.querySelector('textarea[name="concepto_cobro"]')?.value || '';
+        
+        // Crear ventana de vista previa
+        const previewWindow = window.open('', '_blank', 'width=800,height=900');
+        previewWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Vista Previa - Cuenta de Cobro ${docNumber}</title>
+                <style>
+                    body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 40px; background: #f5f5f5; }
+                    .container { max-width: 700px; margin: 0 auto; background: white; padding: 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                    .header { text-align: center; border-bottom: 3px solid #00a699; padding-bottom: 20px; margin-bottom: 30px; }
+                    .header h1 { color: #00a699; margin: 0; font-size: 28px; }
+                    .header p { color: #666; margin: 10px 0 0; }
+                    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+                    .info-box { background: #f8f9fa; padding: 15px; border-radius: 8px; }
+                    .info-box label { font-size: 11px; color: #666; text-transform: uppercase; display: block; margin-bottom: 5px; }
+                    .info-box span { font-size: 14px; font-weight: 600; color: #333; }
+                    table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+                    thead { background: #00a699; color: white; }
+                    th { padding: 12px; text-align: left; font-size: 12px; text-transform: uppercase; }
+                    .totals { background: #f8f9fa; padding: 20px; border-radius: 8px; }
+                    .totals-row { display: flex; justify-content: space-between; padding: 8px 0; }
+                    .totals-row.total { font-size: 20px; font-weight: 700; color: #00a699; border-top: 2px solid #00a699; padding-top: 15px; margin-top: 10px; }
+                    .concepto { background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid #ffc107; }
+                    .footer { text-align: center; color: #999; font-size: 12px; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; }
+                    .btn-print { background: #00a699; color: white; border: none; padding: 12px 30px; border-radius: 6px; cursor: pointer; font-size: 14px; margin-top: 20px; }
+                    .btn-print:hover { background: #008f84; }
+                    @media print { .no-print { display: none; } body { background: white; } .container { box-shadow: none; } }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>CUENTA DE COBRO</h1>
+                        <p>Nº ${docNumber} | Fecha: ${fecha}</p>
+                    </div>
+                    
+                    <div class="info-grid">
+                        <div class="info-box">
+                            <label>Beneficiario</label>
+                            <span>${terceroNombre}</span>
+                        </div>
+                        <div class="info-box">
+                            <label>${terceroTipoId}</label>
+                            <span>${terceroId}</span>
+                        </div>
+                    </div>
+                    
+                    ${concepto ? `<div class="concepto"><strong>Concepto:</strong> ${concepto}</div>` : ''}
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Descripción</th>
+                                <th>Detalle</th>
+                                <th>Cant.</th>
+                                <th>V. Unit.</th>
+                                <th>IVA</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHtml || '<tr><td colspan="7" style="text-align: center; padding: 20px; color: #999;">Sin items</td></tr>'}
+                        </tbody>
+                    </table>
+                    
+                    <div class="totals">
+                        <div class="totals-row"><span>Subtotal:</span><span>${formatCurrency(subtotal)}</span></div>
+                        <div class="totals-row"><span>IVA:</span><span>${formatCurrency(totalIva)}</span></div>
+                        <div class="totals-row total"><span>TOTAL A PAGAR:</span><span>${formatCurrency(total)}</span></div>
+                    </div>
+                    
+                    <div class="footer">
+                        <p>Documento generado el ${new Date().toLocaleString('es-CO')}</p>
+                        <button class="btn-print no-print" onclick="window.print()">Imprimir</button>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `);
+        previewWindow.document.close();
     }
 
     // Close dropdown when clicking outside

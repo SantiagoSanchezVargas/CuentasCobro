@@ -17,6 +17,7 @@ class Tercero extends Model
         'direccion',
         'ciudad',
         'departamento',
+        'codigo_pais',
         'telefono',
         'email',
         'responsabilidad_fiscal',
