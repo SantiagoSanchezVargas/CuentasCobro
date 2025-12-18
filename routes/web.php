@@ -100,10 +100,15 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // ========================================
-    // TERCEROS (AJAX)
+    // TERCEROS (CRUD + AJAX)
     // ========================================
+    Route::get('/terceros', [TerceroController::class, 'index'])->name('terceros.index');
     Route::get('/terceros/search', [TerceroController::class, 'search'])->name('terceros.search');
     Route::post('/terceros/store', [TerceroController::class, 'store'])->name('terceros.store');
+    Route::get('/terceros/{id}/edit', [TerceroController::class, 'edit'])->name('terceros.edit');
+    Route::put('/terceros/{id}', [TerceroController::class, 'update'])->name('terceros.update');
+    Route::delete('/terceros/{id}', [TerceroController::class, 'destroy'])->name('terceros.destroy');
+    Route::post('/terceros/{id}/update-inline', [TerceroController::class, 'updateInline'])->name('terceros.updateInline');
 
     // ========================================
     // DIAN (Admin Programa, Tesorería, Administrador)

@@ -918,6 +918,70 @@
                     </div>
                 </div>
 
+                <!-- Comprador / Deudor (quien paga) -->
+                <div class="siigo-card" id="cardDeudor">
+                    <div class="siigo-card-header" onclick="toggleCard('cardDeudor')">
+                        <h3>
+                            <span class="material-symbols-rounded icon">domain</span>
+                            Comprador / Deudor (quien paga)
+                        </h3>
+                        <span class="material-symbols-rounded chevron">expand_more</span>
+                    </div>
+                    <div class="siigo-card-body">
+                        <div class="siigo-form-grid">
+                            <div class="siigo-form-group full-width">
+                                <label class="siigo-label">Buscar Comprador <span class="required">*</span></label>
+                                <div class="siigo-input-group" style="position: relative;">
+                                    <span class="material-symbols-rounded input-icon">search</span>
+                                    <input type="text" id="searchDeudor" class="siigo-input" placeholder="Buscar por nombre, cédula o NIT..." autocomplete="off">
+                                    <button type="button" class="input-action" onclick="openNewTerceroModal('deudor')">
+                                        <span class="material-symbols-rounded" style="font-size: 14px;">add</span>
+                                        Nuevo
+                                    </button>
+                                    <div class="siigo-search-dropdown" id="deudorDropdown">
+                                        <!-- Results populated by JS -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="deudorDetails" style="display: none; margin-top: 20px; padding: 16px; background: var(--siigo-gray-100); border-radius: 8px;">
+                            <div class="siigo-form-grid cols-3">
+                                <div class="siigo-form-group">
+                                    <label class="siigo-label">Nombre Completo</label>
+                                    <input type="text" name="nombre_deudor" id="nombreDeudor" class="siigo-input" required>
+                                </div>
+                                <div class="siigo-form-group">
+                                    <label class="siigo-label">Tipo Documento</label>
+                                    <select name="tipo_documento_deudor" id="tipoDocDeudor" class="siigo-input">
+                                        <option value="CC">Cédula de Ciudadanía</option>
+                                        <option value="NIT">NIT</option>
+                                        <option value="CE">Cédula de Extranjería</option>
+                                        <option value="PA">Pasaporte</option>
+                                    </select>
+                                </div>
+                                <div class="siigo-form-group">
+                                    <label class="siigo-label">Número Documento</label>
+                                    <input type="text" name="numero_documento_deudor" id="numDocDeudor" class="siigo-input" required>
+                                </div>
+                                <div class="siigo-form-group">
+                                    <label class="siigo-label">Teléfono</label>
+                                    <input type="text" name="telefono_deudor" id="telefonoDeudor" class="siigo-input">
+                                </div>
+                                <div class="siigo-form-group">
+                                    <label class="siigo-label">Email</label>
+                                    <input type="email" name="email_deudor" id="emailDeudor" class="siigo-input">
+                                </div>
+                                <div class="siigo-form-group">
+                                    <label class="siigo-label">Dirección</label>
+                                    <input type="text" name="direccion_deudor" id="direccionDeudor" class="siigo-input">
+                                </div>
+                            </div>
+                            <input type="hidden" name="deudor_id" id="deudorId">
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Contrato Asociado -->
                 <div class="siigo-card" id="cardContrato">
                     <div class="siigo-card-header" onclick="toggleCard('cardContrato')">
@@ -1723,10 +1787,67 @@
         updateProgress();
     }
 
+    // Deudor (Comprador) Search
+    const searchDeudorInput = document.getElementById('searchDeudor');
+    const deudorDropdown = document.getElementById('deudorDropdown');
+    let currentModalTarget = 'beneficiario'; // Track which field the modal is for
+
+    searchDeudorInput?.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        if (query.length < 2) {
+            deudorDropdown.classList.remove('active');
+            return;
+        }
+
+        const filtered = terceros.filter(t => 
+            t.nombre?.toLowerCase().includes(query) || 
+            t.identificacion?.includes(query)
+        );
+
+        if (filtered.length > 0) {
+            deudorDropdown.innerHTML = filtered.slice(0, 5).map(t => `
+                <div class="siigo-search-item" onclick='selectDeudor(${JSON.stringify(t)})'>
+                    <div class="name">${t.nombre}</div>
+                    <div class="meta">${t.tipo_identificacion || 'CC'}: ${t.identificacion} • ${t.email || 'Sin email'}</div>
+                </div>
+            `).join('');
+            deudorDropdown.classList.add('active');
+        } else {
+            deudorDropdown.innerHTML = `
+                <div class="siigo-search-item" onclick="openNewTerceroModal('deudor')">
+                    <div class="name" style="color: var(--siigo-primary);">
+                        <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: text-bottom;">add</span>
+                        Crear nuevo tercero
+                    </div>
+                    <div class="meta">No se encontraron resultados para "${query}"</div>
+                </div>
+            `;
+            deudorDropdown.classList.add('active');
+        }
+    });
+
+    function selectDeudor(tercero) {
+        document.getElementById('deudorId').value = tercero.id || '';
+        document.getElementById('nombreDeudor').value = tercero.nombre || '';
+        document.getElementById('tipoDocDeudor').value = tercero.tipo_identificacion || 'CC';
+        document.getElementById('numDocDeudor').value = tercero.identificacion || '';
+        document.getElementById('telefonoDeudor').value = tercero.telefono || '';
+        document.getElementById('emailDeudor').value = tercero.email || '';
+        document.getElementById('direccionDeudor').value = tercero.direccion || '';
+
+        document.getElementById('deudorDetails').style.display = 'block';
+        document.getElementById('searchDeudor').value = tercero.nombre;
+        deudorDropdown.classList.remove('active');
+        
+        updateProgress();
+    }
+
     // Modal Tercero Functions
-    function openNewTerceroModal() {
+    function openNewTerceroModal(target = 'beneficiario') {
+        currentModalTarget = target;
         document.getElementById('modalTercero').classList.add('active');
         dropdown?.classList.remove('active');
+        deudorDropdown?.classList.remove('active');
     }
 
     function closeNewTerceroModal() {
@@ -1829,8 +1950,12 @@
                 };
                 terceros.push(nuevoTercero);
                 
-                // Seleccionar automáticamente
-                selectTercero(nuevoTercero);
+                // Seleccionar automáticamente según el target
+                if (currentModalTarget === 'deudor') {
+                    selectDeudor(nuevoTercero);
+                } else {
+                    selectTercero(nuevoTercero);
+                }
                 closeNewTerceroModal();
                 
                 alert('Tercero creado exitosamente');

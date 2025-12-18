@@ -31,6 +31,9 @@ class Tercero extends Model
         'es_proveedor' => 'boolean',
     ];
 
+    // Append computed attributes to JSON
+    protected $appends = ['nombre'];
+
     // Helper to get display name
     public function getNombreAttribute()
     {

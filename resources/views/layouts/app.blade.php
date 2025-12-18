@@ -280,6 +280,12 @@
                             </a>
                         @endif
                     </li>
+                    <li class="sidebar-item">
+                        <a href="{{ route('terceros.index') }}" class="sidebar-link {{ request()->routeIs('terceros.*') ? 'active' : '' }}">
+                            <span class="material-symbols-rounded">contacts</span>
+                            Terceros / Clientes
+                        </a>
+                    </li>
                 </ul>
             </div>
             @endif

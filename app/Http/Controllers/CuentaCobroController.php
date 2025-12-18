@@ -77,10 +77,22 @@ class CuentaCobroController extends Controller
             session()->flash('warning', 'No hay consecutivo activo/vigente disponible, se usará numeración automática.');
         }
 
-        // Obtener terceros para búsqueda
-        $terceros = Tercero::select('id', 'tipo_identificacion', 'identificacion', 'nombre_completo as nombre', 'telefono', 'email', 'direccion', 'tipo_persona as tipo')
+        // Obtener terceros para búsqueda - includes computed 'nombre' attribute via $appends
+        $terceros = Tercero::select('id', 'tipo_identificacion', 'identificacion', 'nombre_completo', 'razon_social', 'tipo_persona', 'telefono', 'email', 'direccion')
             ->orderBy('nombre_completo')
-            ->get();
+            ->get()
+            ->map(function($t) {
+                return [
+                    'id' => $t->id,
+                    'nombre' => $t->nombre, // Uses getNombreAttribute accessor
+                    'tipo_identificacion' => $t->tipo_identificacion,
+                    'identificacion' => $t->identificacion,
+                    'telefono' => $t->telefono,
+                    'email' => $t->email,
+                    'direccion' => $t->direccion,
+                    'tipo' => $t->tipo_persona === 'juridica' ? 'Persona Jurídica' : 'Persona Natural'
+                ];
+            });
 
         // Cargar departamentos con municipios
         $departamentos = Departamento::with('municipios')->orderBy('nombre')->get();
@@ -717,11 +729,29 @@ class CuentaCobroController extends Controller
         return redirect()->route('cuentas_cobro.show', $cuenta->id)->with('error', 'No tienes permisos para editar esta cuenta.');
     }
 
+    // Obtener terceros para búsqueda
+    $terceros = Tercero::select('id', 'tipo_identificacion', 'identificacion', 'nombre_completo', 'razon_social', 'tipo_persona', 'telefono', 'email', 'direccion')
+        ->orderBy('nombre_completo')
+        ->get();
+
+    // Cargar catálogos para el formulario
+    $paises = \Illuminate\Support\Facades\DB::table('paises')->where('activo', true)->orderBy('nombre')->get();
+    $responsabilidadesFiscales = \Illuminate\Support\Facades\DB::table('responsabilidades_fiscales')->where('activo', true)->get();
+    $pucCatalogo = \Illuminate\Support\Facades\DB::table('puc_catalogo')->where('activo', true)->orderBy('codigo')->get();
+    $productosServicios = \Illuminate\Support\Facades\DB::table('productos_servicios')->where('activo', true)->orderBy('nombre')->get();
+    $centrosCosto = \Illuminate\Support\Facades\DB::table('centros_costo')->where('activo', true)->orderBy('codigo')->get();
+
     return view('cuentas_cobro.edit', [
         'cuenta' => $cuenta,
         'contratos' => $contratos,
         'departamentos' => $departamentosFormateados,
+        'terceros' => $terceros,
         'readonly' => $readonly,
+        'paises' => $paises,
+        'responsabilidadesFiscales' => $responsabilidadesFiscales,
+        'pucCatalogo' => $pucCatalogo,
+        'productos' => $productosServicios,
+        'centrosCosto' => $centrosCosto,
     ]);
 }
 
