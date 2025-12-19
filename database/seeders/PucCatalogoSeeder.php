@@ -10,11 +10,13 @@ class PucCatalogoSeeder extends Seeder
 {
     public function run(): void
     {
-        // Clear existing data
+       Schema::disableForeignKeyConstraints(); 
         DB::table('puc_catalogo')->truncate();
+        Schema::enableForeignKeyConstraints();
+
+        // 2. Quitamos la línea que tenías aquí repetida de truncate
 
         $path = database_path('data/puc_codes.php');
-        
         if (!file_exists($path)) {
             // Fallback to hardcoded basic list if file doesn't exist
             $this->command->warn("File not found: $path. Using basic fallback list.");
