@@ -1556,12 +1556,20 @@ class CuentaCobroController extends Controller
         $query->orderBy($orderBy, $orderDir);
 
         // Obtener estadísticas
-        $stats = [
-            'total_cuentas' => CuentaCobro::count(),
-            'monto_total' => CuentaCobro::sum('total'),
-            'pendientes' => CuentaCobro::where('estado', 'enviado')->count(),
-            'pagadas' => CuentaCobro::where('estado', 'pagado')->count(),
-        ];
+
+    $stats = [
+        'total_cuentas' => CuentaCobro::count(),
+        
+        // 1. Usamos 'valor_total' que es el nombre real en tu DB
+        'monto_total' => CuentaCobro::sum('valor_total'), 
+        
+        // 2. Ajustamos los filtros según tus columnas de estado
+        // Asumo que 'enviado' se refiere a 'estado_aprobacion'
+        'pendientes' => CuentaCobro::where('estado_aprobacion', 'enviado')->count(),
+        
+        // 3. Para pagadas usamos la columna 'estado_pago'
+        'pagadas' => CuentaCobro::where('estado_pago', 'pagado')->count(),
+    ];
 
         $cuentas = $query->paginate(50)->withQueryString();
 
