@@ -43,7 +43,7 @@ class PermisoController extends Controller
         }
 
         $roles = Role::all();
-        $etapasFluj = ['supervisor', 'ordenador_gasto', 'contratacion', 'alcalde', 'tesoreria'];
+        $etapasFluj = ['auxiliar', 'administrador', 'tesoreria'];
         $estados = ['en_revision', 'aprobado', 'rechazado', 'en_correccion'];
 
         return view('permisos.create', compact('roles', 'etapasFluj', 'estados'));
@@ -123,7 +123,7 @@ class PermisoController extends Controller
 
         $permiso = PermisoGranular::findOrFail($id);
         $roles = Role::all();
-        $etapasFluj = ['supervisor', 'ordenador_gasto', 'contratacion', 'alcalde', 'tesoreria'];
+        $etapasFluj = ['auxiliar', 'administrador', 'tesoreria'];
 
         return view('permisos.edit', compact('permiso', 'roles', 'etapasFluj'));
     }
@@ -236,36 +236,20 @@ class PermisoController extends Controller
         $role = Role::findOrFail($roleId);
         $plantilla = $request->plantilla;
 
-        // Plantillas predefinidas
+        // Plantillas predefinidas - Nuevo flujo: auxiliar → administrador → tesoreria
         $plantillas = [
-            'contratista' => [
+            'auxiliar' => [
                 'puede_crear' => true,
                 'puede_leer' => true,
                 'puede_editar' => true,
                 'puede_subir_documentos' => true,
                 'puede_descargar_documentos' => true,
                 'puede_archivar' => true,
-            ],
-            'supervisor' => [
-                'puede_leer' => true,
                 'puede_aprobar' => true,
                 'puede_rechazar' => true,
                 'puede_comentar' => true,
-                'puede_descargar_documentos' => true,
-                'puede_ver_reportes' => true,
             ],
-            'ordenador_gasto' => [
-                'puede_leer' => true,
-                'puede_aprobar' => true,
-                'puede_rechazar' => true,
-                'puede_devolver' => true,
-                'puede_comentar' => true,
-                'puede_descargar_documentos' => true,
-                'puede_enviar_cliente' => true,
-                'puede_ver_todas_cuentas' => true,
-                'puede_ver_reportes' => true,
-            ],
-            'contratacion' => [
+            'administrador' => [
                 'puede_leer' => true,
                 'puede_aprobar' => true,
                 'puede_rechazar' => true,
@@ -273,18 +257,10 @@ class PermisoController extends Controller
                 'puede_devolver_correccion' => true,
                 'puede_comentar' => true,
                 'puede_descargar_documentos' => true,
-                'puede_gestionar_contratos' => true,
-            ],
-            'alcalde' => [
-                'puede_leer' => true,
-                'puede_aprobar' => true,
-                'puede_rechazar' => true,
-                'puede_devolver' => true,
-                'puede_comentar' => true,
-                'puede_descargar_documentos' => true,
                 'puede_enviar_cliente' => true,
                 'puede_ver_todas_cuentas' => true,
                 'puede_ver_reportes' => true,
+                'puede_gestionar_contratos' => true,
             ],
             'tesoreria' => [
                 'puede_leer' => true,
@@ -294,6 +270,43 @@ class PermisoController extends Controller
                 'puede_devolver' => true,
                 'puede_enviar_cliente' => true,
                 'puede_ver_reportes' => true,
+                'puede_ver_todas_cuentas' => true,
+            ],
+            'admin_programa' => [
+                'puede_crear' => true,
+                'puede_leer' => true,
+                'puede_editar' => true,
+                'puede_aprobar' => true,
+                'puede_rechazar' => true,
+                'puede_devolver' => true,
+                'puede_devolver_correccion' => true,
+                'puede_comentar' => true,
+                'puede_subir_documentos' => true,
+                'puede_descargar_documentos' => true,
+                'puede_registrar_pago' => true,
+                'puede_archivar' => true,
+                'puede_enviar_cliente' => true,
+                'puede_ver_todas_cuentas' => true,
+                'puede_ver_reportes' => true,
+                'puede_gestionar_contratos' => true,
+            ],
+            'super_admin' => [
+                'puede_crear' => true,
+                'puede_leer' => true,
+                'puede_editar' => true,
+                'puede_aprobar' => true,
+                'puede_rechazar' => true,
+                'puede_devolver' => true,
+                'puede_devolver_correccion' => true,
+                'puede_comentar' => true,
+                'puede_subir_documentos' => true,
+                'puede_descargar_documentos' => true,
+                'puede_registrar_pago' => true,
+                'puede_archivar' => true,
+                'puede_enviar_cliente' => true,
+                'puede_ver_todas_cuentas' => true,
+                'puede_ver_reportes' => true,
+                'puede_gestionar_contratos' => true,
             ],
         ];
 

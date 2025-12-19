@@ -54,7 +54,7 @@
 
     <!-- Agregar nueva interacción -->
     @php 
-        $canAddInteraccion = in_array(Auth::user()?->role?->name, ['contratista', 'ordenador_gasto', 'supervisor', 'tesoreria', 'contratacion', 'alcalde', 'super_admin']);
+        $canAddInteraccion = in_array(Auth::user()?->role?->name, ['auxiliar', 'administrador', 'tesoreria', 'admin_programa', 'super_admin']);
     @endphp
 
     @if($canAddInteraccion)

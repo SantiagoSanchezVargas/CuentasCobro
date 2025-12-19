@@ -366,7 +366,19 @@
 
                     <div class="form-group">
                         <label class="form-label">Teléfono</label>
-                        <input type="text" name="telefono" class="form-input" value="{{ old('telefono', $tercero->telefono) }}" placeholder="+57 300 123 4567">
+                        <div style="display: flex; gap: 8px;">
+                            <select name="codigo_pais" class="form-select" style="width: 140px;">
+                                @foreach($paises as $pais)
+                                    @php
+                                        $selected = ($tercero->codigo_pais == $pais->indicativo) || (!$tercero->codigo_pais && $pais->codigo_iso2 == 'CO');
+                                    @endphp
+                                    <option value="{{ $pais->indicativo }}" {{ $selected ? 'selected' : '' }}>
+                                        {{ $pais->codigo_iso2 }} {{ $pais->indicativo }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <input type="text" name="telefono" class="form-input" value="{{ old('telefono', $tercero->telefono) }}" placeholder="300 123 4567" style="flex: 1;">
+                        </div>
                     </div>
 
                     <div class="form-group full-width">
@@ -374,19 +386,52 @@
                         <input type="text" name="direccion" class="form-input" value="{{ old('direccion', $tercero->direccion) }}" placeholder="Calle, número, barrio...">
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Departamento</label>
-                        <select name="departamento" class="form-select" id="departamentoSelect">
-                            <option value="">Seleccionar...</option>
-                            @foreach($departamentos as $dep)
-                                <option value="{{ $dep->nombre }}" {{ $tercero->departamento === $dep->nombre ? 'selected' : '' }}>{{ $dep->nombre }}</option>
+                    <div class="form-group full-width">
+                        <label class="form-label">País</label>
+                        <select name="pais" id="paisSelect" class="form-select" onchange="toggleUbicacion()">
+                            @foreach($paises as $pais)
+                                @php
+                                    $selected = ($tercero->pais == $pais->nombre) || (!$tercero->pais && $pais->codigo_iso2 == 'CO');
+                                @endphp
+                                <option value="{{ $pais->nombre }}" data-code="{{ $pais->codigo_iso2 }}" {{ $selected ? 'selected' : '' }}>
+                                    {{ $pais->nombre }}
+                                </option>
                             @endforeach
                         </select>
+                        <input type="hidden" name="pais_codigo" id="paisCodigo" value="{{ $tercero->pais_codigo ?? 'CO' }}">
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Ciudad</label>
-                        <input type="text" name="ciudad" class="form-input" value="{{ old('ciudad', $tercero->ciudad) }}" placeholder="Ciudad">
+                    <!-- Ubicación Colombia -->
+                    <div id="divUbicacionColombia" class="form-group full-width" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 0;">
+                        <div class="form-group">
+                            <label class="form-label">Departamento</label>
+                            <select name="departamento" class="form-select" id="departamentoSelect">
+                                <option value="">Seleccionar...</option>
+                                @foreach($departamentos as $dep)
+                                    <option value="{{ $dep->nombre }}" {{ $tercero->departamento === $dep->nombre ? 'selected' : '' }}>{{ $dep->nombre }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Ciudad/Municipio</label>
+                            <select name="ciudad" class="form-select" id="ciudadSelect">
+                                <option value="{{ $tercero->ciudad }}">{{ $tercero->ciudad }}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Ubicación Extranjero -->
+                    <div id="divUbicacionExtranjero" class="form-group full-width" style="display: none; grid-template-columns: 1fr 1fr; gap: 24px; margin: 0;">
+                        <div class="form-group">
+                            <label class="form-label">Estado/Provincia</label>
+                            <input type="text" name="departamento_ext" id="departamentoExt" class="form-input" value="{{ $tercero->departamento }}" placeholder="Ej: Florida">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Ciudad</label>
+                            <input type="text" name="ciudad_ext" id="ciudadExt" class="form-input" value="{{ $tercero->ciudad }}" placeholder="Ej: Miami">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -436,6 +481,15 @@
 </div>
 
 <script>
+    // Departamentos y municipios data
+    const departamentosData = @json($departamentos->map(function($dep) {
+        return [
+            'id' => $dep->id,
+            'nombre' => $dep->nombre,
+            'municipios' => $dep->municipios->pluck('nombre')->toArray()
+        ];
+    }));
+
     function toggleTipoPersona() {
         const isJuridica = document.querySelector('input[name="tipo_persona"]:checked').value === 'juridica';
         
@@ -449,5 +503,67 @@
         });
         document.querySelector('input[name="tipo_persona"]:checked').closest('.type-option').classList.add('active');
     }
+
+    function toggleUbicacion() {
+        const paisSelect = document.getElementById('paisSelect');
+        const selectedOption = paisSelect.options[paisSelect.selectedIndex];
+        const isColombia = selectedOption.dataset.code === 'CO';
+        
+        document.getElementById('paisCodigo').value = selectedOption.dataset.code;
+        document.getElementById('divUbicacionColombia').style.display = isColombia ? 'grid' : 'none';
+        document.getElementById('divUbicacionExtranjero').style.display = isColombia ? 'none' : 'grid';
+        
+        // Disable/Enable inputs based on visibility to avoid submitting wrong data
+        if (isColombia) {
+            document.getElementById('departamentoSelect').name = 'departamento';
+            document.getElementById('ciudadSelect').name = 'ciudad';
+            document.getElementById('departamentoExt').name = '';
+            document.getElementById('ciudadExt').name = '';
+        } else {
+            document.getElementById('departamentoSelect').name = '';
+            document.getElementById('ciudadSelect').name = '';
+            document.getElementById('departamentoExt').name = 'departamento';
+            document.getElementById('ciudadExt').name = 'ciudad';
+        }
+    }
+
+    // Load municipios
+    document.getElementById('departamentoSelect').addEventListener('change', function() {
+        const select = document.getElementById('ciudadSelect');
+        select.innerHTML = '<option value="">Seleccionar...</option>';
+        
+        const dep = departamentosData.find(d => d.nombre === this.value);
+        if (dep && dep.municipios) {
+            dep.municipios.forEach(mun => {
+                const option = document.createElement('option');
+                option.value = mun;
+                option.textContent = mun;
+                select.appendChild(option);
+            });
+        }
+    });
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleUbicacion();
+        
+        // Pre-load municipios if department is selected
+        const currentDep = document.getElementById('departamentoSelect').value;
+        const currentCity = "{{ $tercero->ciudad }}";
+        
+        if (currentDep) {
+            const select = document.getElementById('ciudadSelect');
+            const dep = departamentosData.find(d => d.nombre === currentDep);
+            if (dep && dep.municipios) {
+                dep.municipios.forEach(mun => {
+                    const option = document.createElement('option');
+                    option.value = mun;
+                    option.textContent = mun;
+                    if (mun === currentCity) option.selected = true;
+                    select.appendChild(option);
+                });
+            }
+        }
+    });
 </script>
 @endsection

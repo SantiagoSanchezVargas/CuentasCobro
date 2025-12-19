@@ -287,7 +287,7 @@
 
             <div class="form-group">
                 <label class="form-label">Nombre del Rol</label>
-                <input type="text" name="name" class="form-input" placeholder="Ej: Supervisor de Contratos" required value="{{ old('name') }}">
+                <input type="text" name="name" class="form-input" placeholder="Ej: Revisor de Documentos" required value="{{ old('name') }}">
                 @error('name')
                     <span style="color: #ef4444; font-size: 13px; margin-top: 4px; display: block;">{{ $message }}</span>
                 @enderror

@@ -2,798 +2,77 @@
 
 @section('title', 'Nueva Cuenta de Cobro')
 
+@push('styles')
+<link rel="stylesheet" href="{{ asset('css/views/cuenta-cobro-form.css') }}">
+@endpush
+
 @section('content')
-<style>
-    /* Siigo Nube Inspired Design System */
-    :root {
-        --siigo-primary: #00b5e2;
-        --siigo-primary-dark: #0097be;
-        --siigo-secondary: #6c5ce7;
-        --siigo-success: #00b894;
-        --siigo-warning: #fdcb6e;
-        --siigo-danger: #e74c3c;
-        --siigo-dark: #2d3436;
-        --siigo-gray-100: #f8f9fa;
-        --siigo-gray-200: #e9ecef;
-        --siigo-gray-300: #dfe6e9;
-        --siigo-gray-400: #b2bec3;
-        --siigo-gray-500: #636e72;
-        --siigo-shadow: 0 2px 12px rgba(0,0,0,0.08);
-        --siigo-radius: 8px;
-    }
-
-    .siigo-page {
-        background: var(--siigo-gray-100);
-        min-height: 100vh;
-        padding: 24px;
-    }
-
-    /* Top Navigation Bar */
-    .siigo-topbar {
-        background: white;
-        border-radius: var(--siigo-radius);
-        box-shadow: var(--siigo-shadow);
-        padding: 16px 24px;
-        margin-bottom: 24px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .siigo-topbar-left {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-    }
-
-    .siigo-back-btn {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        color: var(--siigo-gray-500);
-        text-decoration: none;
-        font-weight: 500;
-        font-size: 14px;
-        padding: 8px 12px;
-        border-radius: 6px;
-        transition: all 0.2s;
-    }
-
-    .siigo-back-btn:hover {
-        background: var(--siigo-gray-100);
-        color: var(--siigo-primary);
-    }
-
-    .siigo-doc-type {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .siigo-doc-type select {
-        border: 2px solid var(--siigo-primary);
-        border-radius: 6px;
-        padding: 8px 16px;
-        font-weight: 600;
-        color: var(--siigo-primary);
-        background: white;
-        cursor: pointer;
-    }
-
-    .siigo-doc-number {
-        background: var(--siigo-gray-100);
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-weight: 700;
-        color: var(--siigo-dark);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .siigo-doc-number .icon {
-        color: var(--siigo-primary);
-    }
-
-    .siigo-topbar-right {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .siigo-status-badge {
-        background: linear-gradient(135deg, var(--siigo-warning), #f39c12);
-        color: #5a4010;
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    /* Main Layout */
-    .siigo-main-grid {
-        display: grid;
-        grid-template-columns: 1fr 380px;
-        gap: 24px;
-    }
-
-    @media (max-width: 1200px) {
-        .siigo-main-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    /* Cards */
-    .siigo-card {
-        background: white;
-        border-radius: var(--siigo-radius);
-        box-shadow: var(--siigo-shadow);
-        margin-bottom: 20px;
-        overflow: hidden;
-    }
-
-    .siigo-card-header {
-        padding: 16px 20px;
-        border-bottom: 1px solid var(--siigo-gray-200);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        cursor: pointer;
-        user-select: none;
-        transition: background 0.2s;
-    }
-
-    .siigo-card-header:hover {
-        background: var(--siigo-gray-100);
-    }
-
-    .siigo-card-header h3 {
-        font-size: 15px;
-        font-weight: 700;
-        color: var(--siigo-dark);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin: 0;
-    }
-
-    .siigo-card-header h3 .icon {
-        color: var(--siigo-primary);
-        font-size: 20px;
-    }
-
-    .siigo-card-header .chevron {
-        color: var(--siigo-gray-400);
-        transition: transform 0.3s;
-    }
-
-    .siigo-card-header.collapsed .chevron {
-        transform: rotate(-90deg);
-    }
-
-    .siigo-card-body {
-        padding: 20px;
-        transition: all 0.3s ease;
-    }
-
-    .siigo-card-body.collapsed {
-        display: none;
-    }
-
-    /* Form Elements */
-    .siigo-form-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 16px;
-    }
-
-    .siigo-form-grid.cols-3 {
-        grid-template-columns: repeat(3, 1fr);
-    }
-
-    .siigo-form-grid.cols-4 {
-        grid-template-columns: repeat(4, 1fr);
-    }
-
-    .siigo-form-group {
-        margin-bottom: 0;
-    }
-
-    .siigo-form-group.full-width {
-        grid-column: 1 / -1;
-    }
-
-    .siigo-label {
-        display: block;
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--siigo-gray-500);
-        margin-bottom: 6px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .siigo-label .required {
-        color: var(--siigo-danger);
-    }
-
-    .siigo-input {
-        width: 100%;
-        padding: 10px 14px;
-        border: 1.5px solid var(--siigo-gray-300);
-        border-radius: 6px;
-        font-size: 14px;
-        transition: all 0.2s;
-        background: white;
-    }
-
-    .siigo-input:focus {
-        border-color: var(--siigo-primary);
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.1);
-    }
-
-    .siigo-input:disabled, .siigo-input[readonly] {
-        background: var(--siigo-gray-100);
-        color: var(--siigo-gray-500);
-    }
-
-    .siigo-input-group {
-        position: relative;
-    }
-
-    .siigo-input-group .siigo-input {
-        padding-left: 40px;
-    }
-
-    .siigo-input-group .input-icon {
-        position: absolute;
-        left: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--siigo-gray-400);
-        font-size: 20px;
-    }
-
-    .siigo-input-group .input-action {
-        position: absolute;
-        right: 8px;
-        top: 50%;
-        transform: translateY(-50%);
-        background: var(--siigo-primary);
-        color: white;
-        border: none;
-        border-radius: 4px;
-        padding: 4px 8px;
-        font-size: 12px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-
-    /* Search Dropdown */
-    .siigo-search-dropdown {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: white;
-        border: 1px solid var(--siigo-gray-300);
-        border-radius: 6px;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-        max-height: 300px;
-        overflow-y: auto;
-        z-index: 100;
-        display: none;
-    }
-
-    .siigo-search-dropdown.active {
-        display: block;
-    }
-
-    .siigo-search-item {
-        padding: 12px 16px;
-        cursor: pointer;
-        border-bottom: 1px solid var(--siigo-gray-200);
-        transition: background 0.2s;
-    }
-
-    .siigo-search-item:hover {
-        background: var(--siigo-gray-100);
-    }
-
-    .siigo-search-item:last-child {
-        border-bottom: none;
-    }
-
-    .siigo-search-item .name {
-        font-weight: 600;
-        color: var(--siigo-dark);
-    }
-
-    .siigo-search-item .meta {
-        font-size: 12px;
-        color: var(--siigo-gray-500);
-        margin-top: 2px;
-    }
-
-    /* Items Table */
-    .siigo-items-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .siigo-items-table thead {
-        background: linear-gradient(135deg, var(--siigo-gray-100), var(--siigo-gray-200));
-    }
-
-    .siigo-items-table th {
-        padding: 12px 10px;
-        text-align: left;
-        font-size: 11px;
-        font-weight: 700;
-        color: var(--siigo-gray-500);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .siigo-items-table td {
-        padding: 10px;
-        border-bottom: 1px solid var(--siigo-gray-200);
-        vertical-align: middle;
-    }
-
-    .siigo-items-table tbody tr {
-        transition: background 0.2s;
-    }
-
-    .siigo-items-table tbody tr:hover {
-        background: var(--siigo-gray-100);
-    }
-
-    .siigo-items-table .item-input {
-        width: 100%;
-        padding: 10px 12px;
-        border: 1px solid var(--siigo-gray-200);
-        border-radius: 6px;
-        font-size: 14px;
-        transition: all 0.2s;
-        background: white;
-        min-width: 80px;
-    }
-
-    .siigo-items-table .item-input:hover {
-        border-color: var(--siigo-primary-light);
-        background: white;
-    }
-
-    .siigo-items-table .item-input:focus {
-        border-color: var(--siigo-primary);
-        background: white;
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(0, 166, 153, 0.1);
-    }
-
-    .siigo-items-table td {
-        padding: 12px 8px;
-        vertical-align: middle;
-    }
-
-    .siigo-items-table th {
-        padding: 14px 8px;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .siigo-items-table .row-total {
-        font-weight: 700;
-        color: var(--siigo-dark);
-        text-align: right;
-        padding-right: 16px;
-    }
-
-    .siigo-items-table .delete-btn {
-        background: none;
-        border: none;
-        color: var(--siigo-gray-400);
-        cursor: pointer;
-        padding: 4px;
-        border-radius: 4px;
-        transition: all 0.2s;
-    }
-
-    .siigo-items-table .delete-btn:hover {
-        background: #fee2e2;
-        color: var(--siigo-danger);
-    }
-
-    /* Add Item Row */
-    .siigo-add-item {
-        padding: 16px 20px;
-        border-top: 1px dashed var(--siigo-gray-300);
-        display: flex;
-        align-items: center;
-        gap: 20px;
-    }
-
-    .siigo-add-btn {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        color: var(--siigo-primary);
-        font-weight: 600;
-        font-size: 13px;
-        cursor: pointer;
-        padding: 8px 12px;
-        border-radius: 6px;
-        transition: all 0.2s;
-        border: none;
-        background: none;
-    }
-
-    .siigo-add-btn:hover {
-        background: rgba(0, 181, 226, 0.1);
-    }
-
-    /* Summary Panel */
-    .siigo-summary {
-        position: sticky;
-        top: 24px;
-    }
-
-    .siigo-summary-card {
-        background: white;
-        border-radius: var(--siigo-radius);
-        box-shadow: var(--siigo-shadow);
-        overflow: hidden;
-    }
-
-    .siigo-summary-header {
-        background: linear-gradient(135deg, var(--siigo-dark), #34495e);
-        color: white;
-        padding: 20px;
-    }
-
-    .siigo-summary-header h3 {
-        font-size: 14px;
-        font-weight: 600;
-        opacity: 0.8;
-        margin-bottom: 8px;
-    }
-
-    .siigo-summary-header .total {
-        font-size: 32px;
-        font-weight: 800;
-    }
-
-    .siigo-summary-body {
-        padding: 20px;
-    }
-
-    .siigo-summary-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 0;
-        font-size: 14px;
-    }
-
-    .siigo-summary-row.divider {
-        border-top: 1px solid var(--siigo-gray-200);
-        margin-top: 8px;
-        padding-top: 16px;
-    }
-
-    .siigo-summary-row .label {
-        color: var(--siigo-gray-500);
-    }
-
-    .siigo-summary-row .value {
-        font-weight: 600;
-        color: var(--siigo-dark);
-    }
-
-    .siigo-summary-row.total-row {
-        background: var(--siigo-gray-100);
-        margin: 0 -20px;
-        padding: 16px 20px;
-        font-size: 16px;
-    }
-
-    .siigo-summary-row.total-row .value {
-        color: var(--siigo-primary);
-        font-weight: 800;
-        font-size: 20px;
-    }
-
-    /* Action Buttons */
-    .siigo-actions {
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .siigo-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 14px 20px;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 14px;
-        cursor: pointer;
-        transition: all 0.2s;
-        border: none;
-    }
-
-    .siigo-btn-primary {
-        background: linear-gradient(135deg, var(--siigo-success), #00a080);
-        color: white;
-    }
-
-    .siigo-btn-primary:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0, 184, 148, 0.3);
-    }
-
-    .siigo-btn-secondary {
-        background: var(--siigo-gray-100);
-        color: var(--siigo-gray-500);
-        border: 1px solid var(--siigo-gray-300);
-    }
-
-    .siigo-btn-secondary:hover {
-        background: var(--siigo-gray-200);
-    }
-
-    .siigo-btn-outline {
-        background: transparent;
-        color: var(--siigo-primary);
-        border: 2px solid var(--siigo-primary);
-    }
-
-    .siigo-btn-outline:hover {
-        background: rgba(0, 181, 226, 0.1);
-    }
-
-    /* Quick Info Cards */
-    .siigo-info-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
-        margin-bottom: 16px;
-    }
-
-    .siigo-info-card {
-        background: var(--siigo-gray-100);
-        border-radius: 8px;
-        padding: 12px;
-        text-align: center;
-    }
-
-    .siigo-info-card .value {
-        font-size: 20px;
-        font-weight: 800;
-        color: var(--siigo-dark);
-    }
-
-    .siigo-info-card .label {
-        font-size: 11px;
-        color: var(--siigo-gray-500);
-        text-transform: uppercase;
-    }
-
-    /* Tax Selector */
-    .siigo-tax-select {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-
-    .siigo-tax-chip {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        padding: 4px 10px;
-        background: var(--siigo-gray-100);
-        border: 1px solid var(--siigo-gray-300);
-        border-radius: 20px;
-        font-size: 12px;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .siigo-tax-chip:hover {
-        border-color: var(--siigo-primary);
-    }
-
-    .siigo-tax-chip.active {
-        background: rgba(0, 181, 226, 0.1);
-        border-color: var(--siigo-primary);
-        color: var(--siigo-primary);
-    }
-
-    /* Progress Steps */
-    .siigo-progress {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 12px;
-    }
-
-    .siigo-progress-step {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 12px;
-        color: var(--siigo-gray-400);
-    }
-
-    .siigo-progress-step.active {
-        color: var(--siigo-primary);
-        font-weight: 600;
-    }
-
-    .siigo-progress-step.completed {
-        color: var(--siigo-success);
-    }
-
-    .siigo-progress-step .step-num {
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
-        background: var(--siigo-gray-200);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 11px;
-    }
-
-    .siigo-progress-step.active .step-num {
-        background: var(--siigo-primary);
-        color: white;
-    }
-
-    .siigo-progress-step.completed .step-num {
-        background: var(--siigo-success);
-        color: white;
-    }
-
-    .siigo-progress-line {
-        flex: 1;
-        height: 2px;
-        background: var(--siigo-gray-200);
-    }
-
-    .siigo-progress-line.completed {
-        background: var(--siigo-success);
-    }
-
-    /* Modal Styles */
-    .siigo-modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0,0,0,0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s;
-    }
-
-    .siigo-modal-overlay.active {
-        opacity: 1;
-        visibility: visible;
-    }
-
-    .siigo-modal {
-        background: white;
-        border-radius: 12px;
-        width: 100%;
-        max-width: 850px;
-        max-height: 90vh;
-        overflow: hidden;
-        transform: scale(0.9);
-        transition: transform 0.3s;
-    }
-
-    .siigo-modal.modal-lg {
-        max-width: 950px;
-    }
-
-    .siigo-modal-overlay.active .siigo-modal {
-        transform: scale(1);
-    }
-
-    .siigo-modal-header {
-        padding: 20px 24px;
-        border-bottom: 1px solid var(--siigo-gray-200);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .siigo-modal-header h2 {
-        font-size: 18px;
-        font-weight: 700;
-        color: var(--siigo-dark);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .siigo-modal-header h2 .icon {
-        color: var(--siigo-primary);
-    }
-
-    .siigo-modal-close {
-        background: none;
-        border: none;
-        color: var(--siigo-gray-400);
-        cursor: pointer;
-        padding: 8px;
-        border-radius: 6px;
-        transition: all 0.2s;
-    }
-
-    .siigo-modal-close:hover {
-        background: var(--siigo-gray-100);
-        color: var(--siigo-dark);
-    }
-
-    .siigo-modal-body {
-        padding: 24px;
-        overflow-y: auto;
-        max-height: calc(90vh - 140px);
-    }
-
-    .siigo-modal-footer {
-        padding: 16px 24px;
-        border-top: 1px solid var(--siigo-gray-200);
-        display: flex;
-        justify-content: flex-end;
-        gap: 12px;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .siigo-form-grid {
-            grid-template-columns: 1fr;
-        }
-        .siigo-form-grid.cols-3,
-        .siigo-form-grid.cols-4 {
-            grid-template-columns: 1fr;
-        }
-        .siigo-topbar {
-            flex-direction: column;
-            gap: 16px;
-        }
-        .siigo-info-grid {
-            grid-template-columns: 1fr;
-        }
-        .siigo-modal {
-            margin: 20px;
-            max-width: calc(100% - 40px);
-        }
-    }
-</style>
-
 <div class="siigo-page">
     <form action="{{ route('cuentas_cobro.store') }}" method="POST" id="cuentaCobroForm" enctype="multipart/form-data">
         @csrf
+        
+        {{-- Alertas del Consecutivo --}}
+        @if(isset($consecutivoInfo))
+            @if(!empty($consecutivoInfo['alertas']))
+                <div class="consecutivo-alertas">
+                    @foreach($consecutivoInfo['alertas'] as $alerta)
+                        <div class="alert-consecutivo alert-{{ $alerta['tipo'] }}">
+                            <span class="material-symbols-rounded">
+                                @if($alerta['tipo'] === 'danger')
+                                    error
+                                @elseif($alerta['tipo'] === 'warning')
+                                    warning
+                                @else
+                                    check_circle
+                                @endif
+                            </span>
+                            <div>
+                                <strong>{{ $alerta['titulo'] }}</strong>
+                                <p style="margin: 4px 0 0; font-size: 13px; opacity: 0.9;">{{ $alerta['mensaje'] }}</p>
+                            </div>
+                            @if($alerta['tipo'] === 'danger' || $alerta['tipo'] === 'warning')
+                                @if(auth()->user()->hasRole('super_admin') || auth()->user()->hasRole('admin_programa'))
+                                    <a href="{{ route('admin.consecutivos.create') }}" class="btn-new-consecutivo">
+                                        <span class="material-symbols-rounded">add</span>
+                                        Nuevo Consecutivo
+                                    </a>
+                                @endif
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+            
+            {{-- Info del consecutivo actual --}}
+            <div class="consecutivo-info-bar">
+                <div class="info-left">
+                    <span class="material-symbols-rounded" style="font-size: 28px; opacity: 0.9;">receipt_long</span>
+                    <div>
+                        <div class="info-title">Consecutivo Activo</div>
+                        <div class="info-number">{{ $siguienteNumero }}</div>
+                        <div class="info-resolution">Resolución: {{ $consecutivoInfo['resolucion'] ?? 'N/A' }}</div>
+                    </div>
+                </div>
+                <div class="info-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">{{ number_format($consecutivoInfo['disponibles']) }}</div>
+                        <div class="stat-label">Disponibles</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ $consecutivoInfo['porcentaje_uso'] }}%</div>
+                        <div class="stat-label">Usado</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" style="font-size: 14px;">{{ $consecutivoInfo['vigencia_formato'] ?? $consecutivoInfo['dias_restantes'] . ' días' }}</div>
+                        <div class="stat-label">Vigencia Restante</div>
+                    </div>
+                    <div class="stat-item" style="border-left: 1px solid rgba(255,255,255,0.3); padding-left: 24px;">
+                        <div class="stat-value" style="font-size: 13px;">Vence</div>
+                        <div class="stat-label">{{ $consecutivoInfo['vigencia_fin'] }}</div>
+                    </div>
+                </div>
+            </div>
+        @endif
         
         <!-- Top Bar -->
         <div class="siigo-topbar">
@@ -1090,27 +369,41 @@
                         <span class="material-symbols-rounded chevron">expand_more</span>
                     </div>
                     <div class="siigo-card-body">
-                        <div class="siigo-form-grid cols-2">
-                            <div class="siigo-form-group full-width">
-                                <label class="siigo-label">Concepto / Observaciones <span class="required">*</span></label>
-                                <textarea name="concepto_cobro" class="siigo-input" rows="3" placeholder="Describe el concepto del cobro (mínimo 10 caracteres)..." required minlength="10" style="font-size: 14px; padding: 12px;"></textarea>
-                            </div>
+                        <!-- Concepto / Observaciones -->
+                        <div class="siigo-form-group" style="margin-bottom: 20px;">
+                            <label class="siigo-label" style="font-size: 14px; font-weight: 600;">Concepto / Observaciones <span class="required">*</span></label>
+                            <textarea name="concepto_cobro" class="siigo-input" rows="4" placeholder="Describe detalladamente el servicio prestado o el motivo del cobro..." required minlength="10" style="font-size: 14px; padding: 14px; border-radius: 8px; resize: vertical;"></textarea>
+                            <small style="color: var(--siigo-gray-500); font-size: 12px;">Mínimo 10 caracteres. Este texto aparecerá en el documento PDF.</small>
+                        </div>
+                        
+                        <!-- Grid de fechas -->
+                        <div class="siigo-form-grid cols-2" style="margin-bottom: 20px;">
                             <div class="siigo-form-group">
                                 <label class="siigo-label">Fecha Prestación del Servicio <span class="required">*</span></label>
-                                <input type="date" name="fecha_prestacion_servicio" class="siigo-input" value="{{ date('Y-m-d') }}" required style="font-size: 14px; padding: 10px 12px;">
+                                <input type="date" name="fecha_prestacion_servicio" class="siigo-input" value="{{ date('Y-m-d') }}" required style="font-size: 14px; padding: 12px;">
                             </div>
                             <div class="siigo-form-group">
                                 <label class="siigo-label">Fecha de Vencimiento</label>
-                                <input type="date" name="fecha_vencimiento" class="siigo-input" value="{{ date('Y-m-d', strtotime('+30 days')) }}" style="font-size: 14px; padding: 10px 12px;">
+                                <input type="date" name="fecha_vencimiento" class="siigo-input" value="{{ date('Y-m-d', strtotime('+30 days')) }}" style="font-size: 14px; padding: 12px;">
                             </div>
-                            <div class="siigo-form-group">
-                                <label class="siigo-label">Adjuntar Soporte (Opcional)</label>
-                                <input type="file" name="soporte" class="siigo-input" accept=".pdf,.jpg,.png,.doc,.docx" style="font-size: 14px; padding: 10px 12px;">
-                                <small style="color: var(--siigo-gray-500); font-size: 11px;">PDF, imágenes o documentos. Máx 5MB</small>
+                        </div>
+                        
+                        <!-- Adjuntar Archivo -->
+                        <div class="siigo-form-group" style="margin-bottom: 20px;">
+                            <label class="siigo-label" style="font-size: 14px; font-weight: 600;">Adjuntar Soporte (Opcional)</label>
+                            <div class="file-upload-area" style="border: 2px dashed var(--siigo-gray-300); border-radius: 10px; padding: 24px; text-align: center; background: var(--siigo-gray-100); cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('soporteFile').click()" onmouseover="this.style.borderColor='var(--siigo-primary)'" onmouseout="this.style.borderColor='var(--siigo-gray-300)'">
+                                <input type="file" name="soporte" id="soporteFile" class="siigo-input" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" style="display: none;" onchange="updateFileLabel(this)">
+                                <span class="material-symbols-rounded" style="font-size: 40px; color: var(--siigo-primary); display: block; margin-bottom: 8px;">cloud_upload</span>
+                                <p id="fileLabel" style="margin: 0; color: var(--siigo-gray-500); font-size: 14px;">Haz clic o arrastra un archivo aquí</p>
+                                <small style="color: var(--siigo-gray-400); font-size: 12px;">PDF, imágenes, Word o Excel. Máximo 5MB</small>
                             </div>
+                        </div>
+                        
+                        <!-- Plazo de pago -->
+                        <div class="siigo-form-grid cols-2">
                             <div class="siigo-form-group">
                                 <label class="siigo-label">Plazo de Pago (días)</label>
-                                <input type="number" name="plazo_pago" class="siigo-input" value="30" min="0" max="365" style="font-size: 14px; padding: 10px 12px;">
+                                <input type="number" name="plazo_pago" class="siigo-input" value="30" min="0" max="365" style="font-size: 14px; padding: 12px;">
                             </div>
                         </div>
                     </div>
@@ -1289,20 +582,46 @@
                             </div>
                             <small style="color: var(--siigo-gray-500); font-size: 11px; margin-top: 4px; display: block;">Según Resolución DIAN - Ley 2024/2025</small>
                         </div>
-                        <div class="siigo-form-group">
-                            <label class="siigo-label" style="font-size: 13px; font-weight: 600;">Departamento</label>
-                            <select id="modal_departamento" class="siigo-input" style="font-size: 14px; padding: 10px 12px;">
-                                <option value="">Seleccionar...</option>
-                                @foreach($departamentos as $dep)
-                                <option value="{{ $dep->nombre }}" data-id="{{ $dep->id }}">{{ $dep->nombre }}</option>
+                        <div class="siigo-form-group full-width">
+                            <label class="siigo-label" style="font-size: 13px; font-weight: 600;">País</label>
+                            <select id="modal_pais" class="siigo-input" style="font-size: 14px; padding: 10px 12px;" onchange="toggleUbicacion()">
+                                @foreach($paises as $pais)
+                                <option value="{{ $pais->nombre }}" data-code="{{ $pais->codigo_iso2 }}" {{ $pais->codigo_iso2 === 'CO' ? 'selected' : '' }}>
+                                    {{ $pais->nombre }}
+                                </option>
                                 @endforeach
                             </select>
                         </div>
-                        <div class="siigo-form-group">
-                            <label class="siigo-label" style="font-size: 13px; font-weight: 600;">Ciudad/Municipio</label>
-                            <select id="modal_ciudad" class="siigo-input" style="font-size: 14px; padding: 10px 12px;">
-                                <option value="">Seleccionar departamento primero</option>
-                            </select>
+
+                        <!-- Ubicación Colombia -->
+                        <div id="divUbicacionColombia" class="siigo-form-group full-width" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 0;">
+                            <div class="siigo-form-group">
+                                <label class="siigo-label" style="font-size: 13px; font-weight: 600;">Departamento</label>
+                                <select id="modal_departamento" class="siigo-input" style="font-size: 14px; padding: 10px 12px;">
+                                    <option value="">Seleccionar...</option>
+                                    @foreach($departamentos as $dep)
+                                    <option value="{{ $dep->nombre }}" data-id="{{ $dep->id }}">{{ $dep->nombre }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="siigo-form-group">
+                                <label class="siigo-label" style="font-size: 13px; font-weight: 600;">Ciudad/Municipio</label>
+                                <select id="modal_ciudad" class="siigo-input" style="font-size: 14px; padding: 10px 12px;">
+                                    <option value="">Seleccionar departamento primero</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Ubicación Extranjero -->
+                        <div id="divUbicacionExtranjero" class="siigo-form-group full-width" style="display: none; grid-template-columns: 1fr 1fr; gap: 16px; margin: 0;">
+                            <div class="siigo-form-group">
+                                <label class="siigo-label" style="font-size: 13px; font-weight: 600;">Estado/Provincia</label>
+                                <input type="text" id="modal_estado_ext" class="siigo-input" placeholder="Ej: Florida" style="font-size: 14px; padding: 10px 12px;">
+                            </div>
+                            <div class="siigo-form-group">
+                                <label class="siigo-label" style="font-size: 13px; font-weight: 600;">Ciudad</label>
+                                <input type="text" id="modal_ciudad_ext" class="siigo-input" placeholder="Ej: Miami" style="font-size: 14px; padding: 10px 12px;">
+                            </div>
                         </div>
                         <div class="siigo-form-group full-width">
                             <label class="siigo-label" style="font-size: 13px; font-weight: 600;">Dirección</label>
@@ -1388,7 +707,7 @@
 
     <!-- Modal PUC -->
     <div class="siigo-modal-overlay" id="modalPuc">
-        <div class="siigo-modal" style="max-width: 700px;">
+        <div class="siigo-modal" style="max-width: 600px; margin: auto;">
             <div class="siigo-modal-header">
                 <h2>
                     <span class="material-symbols-rounded icon">account_tree</span>
@@ -1399,38 +718,28 @@
                 </button>
             </div>
             <div class="siigo-modal-body">
-                <div class="siigo-form-group" style="margin-bottom: 16px;">
-                    <div class="siigo-input-group">
-                        <input type="text" id="searchPuc" class="siigo-input" placeholder="Buscar por código o nombre de cuenta...">
-                        <span class="siigo-input-icon">
-                            <span class="material-symbols-rounded">search</span>
-                        </span>
+                <!-- Centered Search Box -->
+                <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+                    <div class="siigo-input-group" style="width: 100%; max-width: 450px; position: relative;">
+                        <span class="material-symbols-rounded" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--siigo-gray-400);">search</span>
+                        <input type="text" id="searchPuc" class="siigo-input" placeholder="Buscar por código o nombre..." style="padding-left: 40px; text-align: left;">
                     </div>
                 </div>
-                <div id="pucList" style="max-height: 400px; overflow-y: auto;">
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        @foreach($pucCatalogo as $puc)
-                        <div class="puc-item" data-codigo="{{ $puc->codigo }}" data-nombre="{{ $puc->nombre }}" 
-                             style="padding: 10px; border: 1px solid var(--siigo-gray-200); border-radius: 6px; cursor: pointer; transition: all 0.2s;"
-                             onclick="selectPuc(this)" onmouseover="this.style.background='var(--siigo-gray-100)'" onmouseout="this.style.background='white'">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <span style="font-family: monospace; font-weight: 700; color: var(--siigo-primary);">{{ $puc->codigo }}</span>
-                                    <span style="margin-left: 12px;">{{ $puc->nombre }}</span>
-                                </div>
-                                <span class="material-symbols-rounded" style="color: var(--siigo-gray-400); font-size: 18px;">chevron_right</span>
-                            </div>
-                            @if($puc->clase)
-                            <div style="font-size: 11px; color: var(--siigo-gray-500); margin-top: 4px;">Clase: {{ $puc->clase }} | Naturaleza: {{ $puc->naturaleza }}</div>
-                            @endif
+                
+                <!-- PUC List with dynamic loading -->
+                <div id="pucList" style="max-height: 350px; overflow-y: auto; border: 1px solid var(--siigo-gray-200); border-radius: 8px;">
+                    <div id="pucListContent" style="display: flex; flex-direction: column;">
+                        <!-- Items loaded dynamically via JS -->
+                        <div style="padding: 20px; text-align: center; color: var(--siigo-gray-500);">
+                            <span class="material-symbols-rounded" style="font-size: 32px; display: block; margin-bottom: 8px;">search</span>
+                            Escriba para buscar cuentas PUC
                         </div>
-                        @endforeach
                     </div>
                 </div>
             </div>
-            <div class="siigo-modal-footer">
-                <small style="flex: 1; color: var(--siigo-gray-500);">Haga clic en una cuenta para aplicarla a la fila seleccionada</small>
+            <div class="siigo-modal-footer" style="justify-content: center;">
                 <button type="button" class="siigo-btn siigo-btn-secondary" onclick="closePucModal()">
+                    <span class="material-symbols-rounded">close</span>
                     Cerrar
                 </button>
             </div>
@@ -1608,32 +917,98 @@
         closeCatalogoModal();
     }
 
-    // ==================== PUC ====================
+    // ==================== PUC MODAL ====================
     function openPucModal() {
         document.getElementById('modalPuc').classList.add('active');
         document.getElementById('searchPuc').focus();
+        // Show initial hint
+        renderPucListModal('');
     }
 
     function closePucModal() {
         document.getElementById('modalPuc').classList.remove('active');
         document.getElementById('searchPuc').value = '';
-        filterPucList('');
         selectedItemRow = null;
     }
 
-    function filterPucList(query) {
-        const items = document.querySelectorAll('#pucList .puc-item');
-        const q = query.toLowerCase();
-        items.forEach(item => {
-            const codigo = item.dataset.codigo?.toLowerCase() || '';
-            const nombre = item.dataset.nombre?.toLowerCase() || '';
-            const visible = codigo.includes(q) || nombre.includes(q);
-            item.style.display = visible ? '' : 'none';
+    function renderPucListModal(query) {
+        const container = document.getElementById('pucListContent');
+        const q = query.toLowerCase().trim();
+        
+        if (q.length === 0) {
+            // Show initial message
+            container.innerHTML = `
+                <div style="padding: 30px; text-align: center; color: var(--siigo-gray-500);">
+                    <span class="material-symbols-rounded" style="font-size: 40px; display: block; margin-bottom: 12px; color: var(--siigo-primary);">search</span>
+                    <p style="margin: 0;">Escriba un código o nombre para buscar</p>
+                    <small>Ej: 1105, Caja, Bancos, Honorarios</small>
+                </div>
+            `;
+            return;
+        }
+        
+        // Filter results
+        const filtered = pucData.filter(p => 
+            p.codigo.startsWith(q) || 
+            p.nombre.toLowerCase().includes(q) ||
+            (p.grupo && p.grupo.toLowerCase().includes(q)) ||
+            (p.clase && p.clase.toLowerCase().includes(q))
+        ).slice(0, 100);
+        
+        if (filtered.length === 0) {
+            container.innerHTML = `
+                <div style="padding: 30px; text-align: center; color: var(--siigo-gray-500);">
+                    <span class="material-symbols-rounded" style="font-size: 40px; display: block; margin-bottom: 12px;">search_off</span>
+                    No se encontraron resultados para "${query}"
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '';
+        filtered.forEach(p => {
+            const safeName = p.nombre.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            html += `
+                <div class="puc-modal-item" onclick="selectPucFromModal('${p.codigo}', '${safeName}')" 
+                     style="padding: 12px 16px; border-bottom: 1px solid var(--siigo-gray-100); cursor: pointer; transition: background 0.15s;"
+                     onmouseover="this.style.background='#f0f9ff'" onmouseout="this.style.background='white'">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="font-family: monospace; font-weight: 700; color: var(--siigo-primary); font-size: 14px;">${p.codigo}</span>
+                            <span style="margin-left: 12px; color: var(--siigo-dark);">${p.nombre}</span>
+                        </div>
+                        <span class="material-symbols-rounded" style="color: var(--siigo-gray-400); font-size: 18px;">chevron_right</span>
+                    </div>
+                    <div style="font-size: 11px; color: var(--siigo-gray-500); margin-top: 4px;">
+                        Clase: ${p.clase || '-'} | ${p.naturaleza || 'Sin naturaleza'}
+                    </div>
+                </div>
+            `;
         });
+        
+        container.innerHTML = html;
+    }
+    
+    function selectPucFromModal(codigo, nombre) {
+        if (selectedItemRow) {
+            const pucInput = selectedItemRow.querySelector('.item-puc');
+            const pucNombreInput = selectedItemRow.querySelector('.item-puc-nombre');
+            if (pucInput) pucInput.value = codigo;
+            if (pucNombreInput) pucNombreInput.value = nombre;
+        } else {
+            const lastRow = document.querySelector('#itemsTableBody tr:last-child');
+            if (lastRow) {
+                const pucInput = lastRow.querySelector('.item-puc');
+                const pucNombreInput = lastRow.querySelector('.item-puc-nombre');
+                if (pucInput) pucInput.value = codigo;
+                if (pucNombreInput) pucNombreInput.value = nombre;
+            }
+        }
+        closePucModal();
     }
 
     document.getElementById('searchPuc')?.addEventListener('input', function() {
-        filterPucList(this.value);
+        renderPucListModal(this.value);
     });
 
     function selectPuc(item) {
@@ -1659,20 +1034,90 @@
         closePucModal();
     }
 
-    // Búsqueda rápida en línea para PUC
+    // ==================== PUC DROPDOWN LOGIC ====================
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.puc-selector')) {
+            closeAllPucDropdowns();
+        }
+    });
+
+    function closeAllPucDropdowns() {
+        document.querySelectorAll('.puc-dropdown').forEach(el => el.remove());
+    }
+
     function showPucDropdown(input) {
-        // Registrar la fila seleccionada para el modal PUC
-        selectedItemRow = input.closest('tr');
+        closeAllPucDropdowns(); // Close others
+        
+        const container = input.closest('.puc-selector');
+        let dropdown = container.querySelector('.puc-dropdown');
+        
+        if (!dropdown) {
+            dropdown = document.createElement('div');
+            dropdown.className = 'puc-dropdown active';
+            container.appendChild(dropdown);
+        }
+        
+        // If input is empty, show initial list (e.g. first 20)
+        filterPucDropdown(input);
     }
 
     function filterPucDropdown(input) {
-        // Búsqueda inline simplificada - solo abre modal si escribe más de 2 caracteres
-        if (input.value.length >= 2) {
-            const found = pucData.find(p => p.codigo.startsWith(input.value) || p.nombre.toLowerCase().includes(input.value.toLowerCase()));
-            if (found) {
-                input.title = `${found.codigo} - ${found.nombre}`;
-            }
+        const container = input.closest('.puc-selector');
+        let dropdown = container.querySelector('.puc-dropdown');
+        
+        if (!dropdown) {
+            showPucDropdown(input);
+            dropdown = container.querySelector('.puc-dropdown');
         }
+
+        const query = input.value.toLowerCase();
+        
+        // Filter data
+        const filtered = pucData.filter(p => 
+            p.codigo.startsWith(query) || 
+            p.nombre.toLowerCase().includes(query) ||
+            (p.grupo && p.grupo.toLowerCase().includes(query)) ||
+            (p.clase && p.clase.toLowerCase().includes(query))
+        ).slice(0, 50); // Limit to 50 results for performance
+
+        if (filtered.length === 0) {
+            dropdown.innerHTML = '<div class="puc-dropdown-item" style="cursor: default; color: #999;">No se encontraron resultados</div>';
+            return;
+        }
+
+        let html = '';
+        filtered.forEach(p => {
+            // Escape quotes in name
+            const safeName = p.nombre.replace(/'/g, "\\'");
+            html += `
+                <div class="puc-dropdown-item" onclick="selectPucFromDropdown('${p.codigo}', '${safeName}', this)">
+                    <div>
+                        <span class="code">${p.codigo}</span>
+                        <span class="name">${p.nombre}</span>
+                    </div>
+                    <div class="meta">
+                        <span>Clase: ${p.clase || '-'}</span>
+                        <span>•</span>
+                        <span>${p.naturaleza || '-'}</span>
+                    </div>
+                </div>
+            `;
+        });
+        
+        dropdown.innerHTML = html;
+    }
+
+    function selectPucFromDropdown(codigo, nombre, element) {
+        const container = element.closest('.puc-selector');
+        const input = container.querySelector('.item-puc');
+        const nameInput = container.querySelector('.item-puc-nombre');
+        
+        input.value = codigo;
+        if (nameInput) nameInput.value = nombre;
+        
+        closeAllPucDropdowns();
     }
 
     // Calculate Totals
@@ -1869,6 +1314,24 @@
         });
     });
 
+    // Toggle Ubicación
+    function toggleUbicacion() {
+        const paisSelect = document.getElementById('modal_pais');
+        const selectedOption = paisSelect.options[paisSelect.selectedIndex];
+        const isColombia = selectedOption.dataset.code === 'CO';
+        
+        document.getElementById('divUbicacionColombia').style.display = isColombia ? 'grid' : 'none';
+        document.getElementById('divUbicacionExtranjero').style.display = isColombia ? 'none' : 'grid';
+        
+        // Update phone code if possible
+        const phoneSelect = document.getElementById('modal_codigo_pais');
+        // Try to match by ISO code in the text
+        const phoneOption = Array.from(phoneSelect.options).find(opt => opt.text.includes(selectedOption.dataset.code));
+        if (phoneOption) {
+            phoneSelect.value = phoneOption.value;
+        }
+    }
+
     // Guardar nuevo tercero
     async function saveNewTercero() {
         const tipoPersonaRaw = document.querySelector('input[name="modal_tipo_persona"]:checked').value;
@@ -1882,9 +1345,21 @@
         const telefono = document.getElementById('modal_telefono').value;
         const telefonoCompleto = telefono ? `${codigoPais} ${telefono}` : null;
         const email = document.getElementById('modal_email').value;
-        const departamento = document.getElementById('modal_departamento').value;
-        const ciudad = document.getElementById('modal_ciudad').value;
         const direccion = document.getElementById('modal_direccion').value;
+        
+        // Ubicación
+        const paisSelect = document.getElementById('modal_pais');
+        const pais = paisSelect.value;
+        const paisCodigo = paisSelect.options[paisSelect.selectedIndex].dataset.code;
+        
+        let departamento, ciudad;
+        if (paisCodigo === 'CO') {
+            departamento = document.getElementById('modal_departamento').value;
+            ciudad = document.getElementById('modal_ciudad').value;
+        } else {
+            departamento = document.getElementById('modal_estado_ext').value;
+            ciudad = document.getElementById('modal_ciudad_ext').value;
+        }
         
         // Obtener responsabilidades fiscales seleccionadas
         const responsabilidades = [];
@@ -1924,6 +1399,8 @@
                     codigo_pais: codigoPais || '+57',
                     telefono: telefonoCompleto,
                     email: email || null,
+                    pais: pais,
+                    pais_codigo: paisCodigo,
                     departamento: departamento || null,
                     ciudad: ciudad || null,
                     direccion: direccion || null,
@@ -1948,6 +1425,8 @@
                     direccion: direccion,
                     tipo: tipoPersona === 'natural' ? 'Persona Natural' : 'Persona Jurídica'
                 };
+                
+                // Ensure it's added to the array
                 terceros.push(nuevoTercero);
                 
                 // Seleccionar automáticamente según el target
@@ -1958,7 +1437,16 @@
                 }
                 closeNewTerceroModal();
                 
-                alert('Tercero creado exitosamente');
+                // Show success message
+                const toast = document.createElement('div');
+                toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #00b894; color: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999; animation: slideIn 0.3s ease-out;';
+                toast.innerHTML = '<span class="material-symbols-rounded" style="vertical-align: middle; margin-right: 8px;">check_circle</span> Tercero creado y seleccionado';
+                document.body.appendChild(toast);
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+                
             } else {
                 // Mostrar errores de validación
                 let errorMsg = 'Error al crear tercero:\n';
@@ -2184,6 +1672,27 @@
             closeNewTerceroModal();
         }
     });
+
+    // File upload label update
+    function updateFileLabel(input) {
+        const label = document.getElementById('fileLabel');
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+            label.innerHTML = `<strong>${file.name}</strong> (${sizeMB} MB)`;
+            label.style.color = 'var(--siigo-primary)';
+            
+            // Update container style
+            const container = input.closest('.file-upload-area');
+            if (container) {
+                container.style.borderColor = 'var(--siigo-success)';
+                container.style.background = '#f0fdf4';
+            }
+        } else {
+            label.textContent = 'Haz clic o arrastra un archivo aquí';
+            label.style.color = 'var(--siigo-gray-500)';
+        }
+    }
 
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {

@@ -378,23 +378,20 @@
                     @case('super_admin')
                         admin_panel_settings
                         @break
-                    @case('alcalde')
-                        account_balance
+                    @case('admin_programa')
+                        manage_accounts
                         @break
-                    @case('supervisor')
-                        supervisor_account
+                    @case('administrador')
+                        admin_panel_settings
                         @break
-                    @case('contratista')
-                        engineering
-                        @break
-                    @case('ordenador_gasto')
-                        payments
+                    @case('auxiliar')
+                        support_agent
                         @break
                     @case('tesoreria')
                         account_balance_wallet
                         @break
                     @default
-                        admin_panel_settings
+                        badge
                 @endswitch
             </span>
         </div>

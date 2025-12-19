@@ -20,9 +20,21 @@ class CuentaCobroHistorial extends Model
         return $this->belongsTo(CuentaCobro::class, 'cuenta_cobro_id');
     }
 
+    // Alias para compatibilidad
+    public function cuentaCobro()
+    {
+        return $this->belongsTo(CuentaCobro::class, 'cuenta_cobro_id');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    // Alias para compatibilidad con el controlador
+    public function usuario()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function getIcono(): string

@@ -27,26 +27,49 @@
     }
 
     .page-header {
-        background: var(--purple-gradient);
-        border-radius: 24px;
-        padding: 40px 32px;
+        background: linear-gradient(135deg, #2d3436 0%, #34495e 100%);
+        border-radius: 16px;
+        padding: 28px 32px;
         color: white;
-        margin-bottom: 32px;
+        margin-bottom: 28px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        box-shadow: 0 10px 40px rgba(99, 102, 241, 0.2);
+        box-shadow: 0 10px 40px rgba(45, 52, 54, 0.3);
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .header-content::before {
+        content: 'analytics';
+        font-family: 'Material Symbols Rounded';
+        font-size: 28px;
+        width: 56px;
+        height: 56px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
     }
 
     .header-content h1 {
-        font-size: 32px;
+        font-size: 26px;
         font-weight: 700;
-        margin: 0 0 8px 0;
+        margin: 0 0 4px 0;
     }
 
     .header-content p {
-        font-size: 16px;
-        opacity: 0.95;
+        font-size: 14px;
+        opacity: 0.85;
         margin: 0;
     }
 
@@ -56,23 +79,36 @@
     }
 
     .btn-header {
-        background: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.15);
         color: white;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        padding: 12px 24px;
-        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        padding: 10px 20px;
+        border-radius: 10px;
         font-weight: 600;
+        font-size: 13px;
         text-decoration: none;
         display: flex;
         align-items: center;
         gap: 8px;
+        -webkit-backdrop-filter: blur(8px);
         backdrop-filter: blur(8px);
-        transition: all 0.2s;
+        transition: all 0.25s ease;
     }
 
     .btn-header:hover {
-        background: rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.25);
         transform: translateY(-2px);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-header.primary {
+        background: #10b981;
+        border-color: #10b981;
+    }
+
+    .btn-header.primary:hover {
+        background: #059669;
     }
 
     .stats-grid {
@@ -295,17 +331,17 @@
             <p>Visión general del estado financiero y operativo</p>
         </div>
         <div class="header-actions">
-            <a href="{{ route('reportes.exportar', 'general') }}" class="btn-header">
+            <a href="{{ route('reportes.exportar', 'general') }}" class="btn-header primary">
                 <span class="material-symbols-rounded">download</span>
                 Exportar General
             </a>
-            <a href="{{ route('cuentas_cobro.exportar_pagos', ['format' => 'csv']) }}" class="btn-header" style="background: white; color: var(--primary-blue);">
+            <a href="{{ route('cuentas_cobro.exportar_pagos', ['format' => 'csv']) }}" class="btn-header">
                 <span class="material-symbols-rounded">description</span>
-                Pagos CSV
+                CSV
             </a>
-            <a href="{{ route('cuentas_cobro.exportar_pagos', ['format' => 'excel']) }}" class="btn-header" style="background: white; color: var(--primary-blue);">
+            <a href="{{ route('cuentas_cobro.exportar_pagos', ['format' => 'excel']) }}" class="btn-header">
                 <span class="material-symbols-rounded">table_view</span>
-                Pagos Excel
+                Excel
             </a>
         </div>
     </div>

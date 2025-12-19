@@ -56,7 +56,7 @@ class ConsecutivoController extends Controller
             ]);
         }
 
-        return redirect()->route('consecutivos.index')->with('success', 'Rangos creados exitosamente.');
+        return redirect()->route('admin.consecutivos.index')->with('success', 'Rangos creados exitosamente.');
     }
 
     public function store(Request $request)
@@ -74,7 +74,7 @@ class ConsecutivoController extends Controller
 
         Consecutivo::create($data);
 
-        return redirect()->route('consecutivos.index')->with('success', 'Consecutivo creado correctamente.');
+        return redirect()->route('admin.consecutivos.index')->with('success', 'Consecutivo creado correctamente.');
     }
 
     public function edit(Consecutivo $consecutivo)
@@ -92,6 +92,6 @@ class ConsecutivoController extends Controller
 
         $consecutivo->update($request->all());
 
-        return redirect()->route('consecutivos.index')->with('success', 'Consecutivo actualizado correctamente.');
+        return redirect()->route('admin.consecutivos.index')->with('success', 'Consecutivo actualizado correctamente.');
     }
 }

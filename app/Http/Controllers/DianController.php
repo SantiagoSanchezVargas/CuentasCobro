@@ -51,7 +51,31 @@ class DianController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('dian.numeraciones', compact('numeraciones'));
+        // Obtener consecutivos para vincular
+        $consecutivos = DB::table('consecutivos')
+            ->select('consecutivos.*')
+            ->leftJoin('dian_numerations', 'consecutivos.dian_numeration_id', '=', 'dian_numerations.id')
+            ->get()
+            ->map(function ($consecutivo) {
+                return (object)[
+                    'id' => $consecutivo->id,
+                    'nombre' => $consecutivo->nombre,
+                    'prefijo' => $consecutivo->prefijo,
+                    'dian_numeration_id' => $consecutivo->dian_numeration_id,
+                ];
+            });
+
+        // Stats
+        $stats = [
+            'total' => $numeraciones->count(),
+            'activas' => $numeraciones->where('active', true)->count(),
+            'disponibles' => $numeraciones->sum(function ($n) {
+                return $n->end_number - $n->current_number + 1;
+            }),
+            'consecutivos_vinculados' => $consecutivos->whereNotNull('dian_numeration_id')->count(),
+        ];
+
+        return view('dian.numeraciones', compact('numeraciones', 'consecutivos', 'stats'));
     }
 
     /**
@@ -147,5 +171,91 @@ class DianController extends Controller
 
         return redirect()->route('dian.configuracion')
             ->with('success', 'Configuración DIAN actualizada exitosamente.');
+    }
+
+    /**
+     * Vincular numeración DIAN a un consecutivo
+     */
+    public function vincularConsecutivo(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'consecutivo_id' => 'required|exists:consecutivos,id',
+        ]);
+
+        $numeracion = DB::table('dian_numerations')->where('id', $id)->first();
+
+        if (!$numeracion) {
+            return redirect()->route('dian.numeraciones')
+                ->with('error', 'Numeración no encontrada.');
+        }
+
+        // Actualizar el consecutivo con la numeración DIAN
+        DB::table('consecutivos')
+            ->where('id', $validated['consecutivo_id'])
+            ->update([
+                'dian_numeration_id' => $id,
+                'updated_at' => now(),
+            ]);
+
+        return redirect()->route('dian.numeraciones')
+            ->with('success', 'Numeración vinculada exitosamente al consecutivo.');
+    }
+
+    /**
+     * Activar/desactivar numeración DIAN
+     */
+    public function toggleNumeracion($id)
+    {
+        $numeracion = DB::table('dian_numerations')->where('id', $id)->first();
+
+        if (!$numeracion) {
+            return redirect()->route('dian.numeraciones')
+                ->with('error', 'Numeración no encontrada.');
+        }
+
+        // Si se activa, desactivar las demás
+        if (!$numeracion->active) {
+            DB::table('dian_numerations')->update(['active' => false]);
+        }
+
+        DB::table('dian_numerations')
+            ->where('id', $id)
+            ->update([
+                'active' => !$numeracion->active,
+                'updated_at' => now(),
+            ]);
+
+        $estado = !$numeracion->active ? 'activada' : 'desactivada';
+        
+        return redirect()->route('dian.numeraciones')
+            ->with('success', "Numeración {$estado} exitosamente.");
+    }
+
+    /**
+     * Eliminar numeración DIAN
+     */
+    public function destroyNumeracion($id)
+    {
+        $numeracion = DB::table('dian_numerations')->where('id', $id)->first();
+
+        if (!$numeracion) {
+            return redirect()->route('dian.numeraciones')
+                ->with('error', 'Numeración no encontrada.');
+        }
+
+        // Verificar que no tenga consecutivos vinculados
+        $consecutivosVinculados = DB::table('consecutivos')
+            ->where('dian_numeration_id', $id)
+            ->count();
+
+        if ($consecutivosVinculados > 0) {
+            return redirect()->route('dian.numeraciones')
+                ->with('error', 'No se puede eliminar la numeración porque tiene consecutivos vinculados.');
+        }
+
+        DB::table('dian_numerations')->where('id', $id)->delete();
+
+        return redirect()->route('dian.numeraciones')
+            ->with('success', 'Numeración eliminada exitosamente.');
     }
 }

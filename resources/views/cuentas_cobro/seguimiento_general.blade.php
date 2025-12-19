@@ -26,13 +26,11 @@
     <!-- Pipeline Visual -->
     <div style="background: white; border-radius: 16px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow-x: auto;">
         <h3 style="margin: 0 0 20px 0; font-size: 16px; font-weight: 600; color: var(--apple-text-muted);">Pipeline de Aprobación</h3>
-        <div style="display: flex; gap: 16px; min-width: 900px;">
+        <div style="display: flex; gap: 16px; min-width: 600px;">
             @php
                 $etapas = [
-                    ['key' => 'supervisor', 'label' => 'Supervisor', 'icon' => 'person', 'color' => '#6366f1'],
-                    ['key' => 'ordenador_gasto', 'label' => 'Ordenador Gasto', 'icon' => 'account_balance', 'color' => '#8b5cf6'],
-                    ['key' => 'contratacion', 'label' => 'Contratación', 'icon' => 'description', 'color' => '#a855f7'],
-                    ['key' => 'alcalde', 'label' => 'Alcalde', 'icon' => 'gavel', 'color' => '#d946ef'],
+                    ['key' => 'auxiliar', 'label' => 'Auxiliar', 'icon' => 'support_agent', 'color' => '#6366f1'],
+                    ['key' => 'administrador', 'label' => 'Administrador', 'icon' => 'admin_panel_settings', 'color' => '#8b5cf6'],
                     ['key' => 'tesoreria', 'label' => 'Tesorería', 'icon' => 'payments', 'color' => '#ec4899'],
                 ];
             @endphp

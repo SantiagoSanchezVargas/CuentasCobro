@@ -1,0 +1,1121 @@
+/* ================================================
+   CUENTA DE COBRO - Form Styles (create_v2.blade.php)
+   Siigo Nube Inspired Design System
+   ================================================ */
+
+/* ========== CSS Variables ========== */
+:root {
+    --siigo-primary: #00b5e2;
+    --siigo-primary-dark: #0097be;
+    --siigo-primary-light: #e0f7fa;
+    --siigo-secondary: #6c5ce7;
+    --siigo-success: #00b894;
+    --siigo-warning: #fdcb6e;
+    --siigo-danger: #e74c3c;
+    --siigo-dark: #2d3436;
+    --siigo-gray-100: #f8f9fa;
+    --siigo-gray-200: #e9ecef;
+    --siigo-gray-300: #dfe6e9;
+    --siigo-gray-400: #b2bec3;
+    --siigo-gray-500: #636e72;
+    --siigo-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --siigo-radius: 8px;
+}
+
+/* ========== Page Layout ========== */
+.siigo-page {
+    background: var(--siigo-gray-100);
+    min-height: 100vh;
+    padding: 24px;
+}
+
+/* ========== Top Navigation Bar ========== */
+.siigo-topbar {
+    background: white;
+    border-radius: var(--siigo-radius);
+    box-shadow: var(--siigo-shadow);
+    padding: 16px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.siigo-topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.siigo-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--siigo-gray-500);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.siigo-back-btn:hover {
+    background: var(--siigo-gray-100);
+    color: var(--siigo-primary);
+}
+
+.siigo-doc-type {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.siigo-doc-type select {
+    border: 2px solid var(--siigo-primary);
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-weight: 600;
+    color: var(--siigo-primary);
+    background: white;
+    cursor: pointer;
+}
+
+.siigo-doc-number {
+    background: var(--siigo-gray-100);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 700;
+    color: var(--siigo-dark);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.siigo-doc-number .icon {
+    color: var(--siigo-primary);
+}
+
+.siigo-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.siigo-status-badge {
+    background: linear-gradient(135deg, var(--siigo-warning), #f39c12);
+    color: #5a4010;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ========== Consecutivo Info Bar ========== */
+.consecutivo-info-bar {
+    background: linear-gradient(135deg, var(--siigo-dark), #34495e);
+    color: white;
+    border-radius: var(--siigo-radius);
+    padding: 12px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.consecutivo-info-bar .info-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.consecutivo-info-bar .info-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    opacity: 0.8;
+    letter-spacing: 0.5px;
+}
+
+.consecutivo-info-bar .info-number {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.consecutivo-info-bar .info-resolution {
+    font-size: 12px;
+    opacity: 0.85;
+    margin-top: 2px;
+}
+
+.consecutivo-info-bar .info-stats {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.consecutivo-info-bar .stat-item {
+    text-align: center;
+}
+
+.consecutivo-info-bar .stat-value {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.consecutivo-info-bar .stat-label {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+/* ========== Main Layout ========== */
+.siigo-main-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+@media (max-width: 1200px) {
+    .siigo-main-grid {
+        grid-template-columns: 1fr;
+        max-width: 900px;
+    }
+}
+
+@media (max-width: 900px) {
+    .siigo-main-grid {
+        max-width: 100%;
+    }
+}
+
+/* ========== Cards ========== */
+.siigo-card {
+    background: white;
+    border-radius: var(--siigo-radius);
+    box-shadow: var(--siigo-shadow);
+    margin-bottom: 20px;
+}
+
+.siigo-card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--siigo-gray-200);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+    transition: background 0.2s;
+}
+
+.siigo-card-header:hover {
+    background: var(--siigo-gray-100);
+}
+
+.siigo-card-header h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--siigo-dark);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+}
+
+.siigo-card-header h3 .icon {
+    color: var(--siigo-primary);
+    font-size: 20px;
+}
+
+.siigo-card-header .chevron {
+    color: var(--siigo-gray-400);
+    transition: transform 0.3s;
+}
+
+.siigo-card-header.collapsed .chevron {
+    transform: rotate(-90deg);
+}
+
+.siigo-card-body {
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.siigo-card-body.collapsed {
+    display: none;
+}
+
+/* ========== Form Elements ========== */
+.siigo-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.siigo-form-grid.cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.siigo-form-grid.cols-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.siigo-form-group {
+    margin-bottom: 0;
+}
+
+.siigo-form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.siigo-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--siigo-gray-500);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.siigo-label .required {
+    color: var(--siigo-danger);
+}
+
+.siigo-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--siigo-gray-300);
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s;
+    background: white;
+}
+
+.siigo-input:focus {
+    border-color: var(--siigo-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.1);
+}
+
+.siigo-input:disabled,
+.siigo-input[readonly] {
+    background: var(--siigo-gray-100);
+    color: var(--siigo-gray-500);
+}
+
+.siigo-input-group {
+    position: relative;
+}
+
+.siigo-input-group .siigo-input {
+    padding-left: 40px;
+}
+
+.siigo-input-group .input-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--siigo-gray-400);
+    font-size: 20px;
+}
+
+.siigo-input-group .input-action {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--siigo-primary);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ========== Search Dropdown ========== */
+.siigo-search-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid var(--siigo-gray-300);
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+}
+
+.siigo-search-dropdown.active {
+    display: block;
+}
+
+.siigo-search-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--siigo-gray-200);
+    transition: background 0.2s;
+}
+
+.siigo-search-item:hover {
+    background: var(--siigo-gray-100);
+}
+
+.siigo-search-item:last-child {
+    border-bottom: none;
+}
+
+.siigo-search-item .name {
+    font-weight: 600;
+    color: var(--siigo-dark);
+}
+
+.siigo-search-item .meta {
+    font-size: 12px;
+    color: var(--siigo-gray-500);
+    margin-top: 2px;
+}
+
+/* ========== Items Table ========== */
+.siigo-items-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.siigo-items-table thead {
+    background: linear-gradient(135deg, var(--siigo-gray-100), var(--siigo-gray-200));
+}
+
+.siigo-items-table th {
+    padding: 14px 8px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--siigo-gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.siigo-items-table td {
+    padding: 12px 8px;
+    border-bottom: 1px solid var(--siigo-gray-200);
+    vertical-align: middle;
+}
+
+.siigo-items-table tbody tr {
+    transition: background 0.2s;
+}
+
+.siigo-items-table tbody tr:hover {
+    background: var(--siigo-gray-100);
+}
+
+.siigo-items-table .item-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--siigo-gray-200);
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s;
+    background: white;
+    min-width: 80px;
+}
+
+.siigo-items-table .item-input:hover {
+    border-color: var(--siigo-primary-light);
+    background: white;
+}
+
+.siigo-items-table .item-input:focus {
+    border-color: var(--siigo-primary);
+    background: white;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 166, 153, 0.1);
+}
+
+.siigo-items-table .row-total {
+    font-weight: 700;
+    color: var(--siigo-dark);
+    text-align: right;
+    padding-right: 16px;
+}
+
+.siigo-items-table .delete-btn {
+    background: none;
+    border: none;
+    color: var(--siigo-gray-400);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.siigo-items-table .delete-btn:hover {
+    background: #fee2e2;
+    color: var(--siigo-danger);
+}
+
+/* ========== Add Item Row ========== */
+.siigo-add-item {
+    padding: 16px 20px;
+    border-top: 1px dashed var(--siigo-gray-300);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.siigo-add-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--siigo-primary);
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    border: none;
+    background: none;
+}
+
+.siigo-add-btn:hover {
+    background: rgba(0, 181, 226, 0.1);
+}
+
+/* ========== Summary Panel ========== */
+.siigo-summary {
+    position: sticky;
+    top: 24px;
+}
+
+.siigo-summary-card {
+    background: white;
+    border-radius: var(--siigo-radius);
+    box-shadow: var(--siigo-shadow);
+    overflow: hidden;
+}
+
+.siigo-summary-header {
+    background: linear-gradient(135deg, var(--siigo-dark), #34495e);
+    color: white;
+    padding: 20px;
+}
+
+.siigo-summary-header h3 {
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0.8;
+    margin-bottom: 8px;
+}
+
+.siigo-summary-header .total {
+    font-size: 32px;
+    font-weight: 800;
+}
+
+.siigo-summary-body {
+    padding: 20px;
+}
+
+.siigo-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    font-size: 14px;
+}
+
+.siigo-summary-row.divider {
+    border-top: 1px solid var(--siigo-gray-200);
+    margin-top: 8px;
+    padding-top: 16px;
+}
+
+.siigo-summary-row .label {
+    color: var(--siigo-gray-500);
+}
+
+.siigo-summary-row .value {
+    font-weight: 600;
+    color: var(--siigo-dark);
+}
+
+.siigo-summary-row.total-row {
+    background: var(--siigo-gray-100);
+    margin: 0 -20px;
+    padding: 16px 20px;
+    font-size: 16px;
+}
+
+.siigo-summary-row.total-row .value {
+    color: var(--siigo-primary);
+    font-weight: 800;
+    font-size: 20px;
+}
+
+/* ========== Action Buttons ========== */
+.siigo-actions {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.siigo-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.siigo-btn-primary {
+    background: linear-gradient(135deg, var(--siigo-success), #00a080);
+    color: white;
+}
+
+.siigo-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 184, 148, 0.3);
+}
+
+.siigo-btn-secondary {
+    background: var(--siigo-gray-100);
+    color: var(--siigo-gray-500);
+    border: 1px solid var(--siigo-gray-300);
+}
+
+.siigo-btn-secondary:hover {
+    background: var(--siigo-gray-200);
+}
+
+.siigo-btn-outline {
+    background: transparent;
+    color: var(--siigo-primary);
+    border: 2px solid var(--siigo-primary);
+}
+
+.siigo-btn-outline:hover {
+    background: rgba(0, 181, 226, 0.1);
+}
+
+/* ========== Quick Info Cards ========== */
+.siigo-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.siigo-info-card {
+    background: var(--siigo-gray-100);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+}
+
+.siigo-info-card .value {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--siigo-dark);
+}
+
+.siigo-info-card .label {
+    font-size: 11px;
+    color: var(--siigo-gray-500);
+    text-transform: uppercase;
+}
+
+/* ========== Tax Selector ========== */
+.siigo-tax-select {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.siigo-tax-chip {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: var(--siigo-gray-100);
+    border: 1px solid var(--siigo-gray-300);
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.siigo-tax-chip:hover {
+    border-color: var(--siigo-primary);
+}
+
+.siigo-tax-chip.active {
+    background: rgba(0, 181, 226, 0.1);
+    border-color: var(--siigo-primary);
+    color: var(--siigo-primary);
+}
+
+/* ========== Progress Steps ========== */
+.siigo-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.siigo-progress-step {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--siigo-gray-400);
+}
+
+.siigo-progress-step.active {
+    color: var(--siigo-primary);
+    font-weight: 600;
+}
+
+.siigo-progress-step.completed {
+    color: var(--siigo-success);
+}
+
+.siigo-progress-step .step-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--siigo-gray-200);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 11px;
+}
+
+.siigo-progress-step.active .step-num {
+    background: var(--siigo-primary);
+    color: white;
+}
+
+.siigo-progress-step.completed .step-num {
+    background: var(--siigo-success);
+    color: white;
+}
+
+.siigo-progress-line {
+    flex: 1;
+    height: 2px;
+    background: var(--siigo-gray-200);
+}
+
+.siigo-progress-line.completed {
+    background: var(--siigo-success);
+}
+
+/* ========== Modal Styles ========== */
+.siigo-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s;
+}
+
+.siigo-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.siigo-modal {
+    background: white;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 850px;
+    max-height: 90vh;
+    overflow: hidden;
+    transform: scale(0.9);
+    transition: transform 0.3s;
+}
+
+.siigo-modal.modal-lg {
+    max-width: 950px;
+}
+
+.siigo-modal-overlay.active .siigo-modal {
+    transform: scale(1);
+}
+
+.siigo-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--siigo-gray-200);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.siigo-modal-header h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--siigo-dark);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.siigo-modal-header h2 .icon {
+    color: var(--siigo-primary);
+}
+
+.siigo-modal-close {
+    background: none;
+    border: none;
+    color: var(--siigo-gray-400);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.siigo-modal-close:hover {
+    background: var(--siigo-gray-100);
+    color: var(--siigo-dark);
+}
+
+.siigo-modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    max-height: calc(90vh - 140px);
+}
+
+.siigo-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--siigo-gray-200);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+/* ========== PUC Dropdown Styles ========== */
+.puc-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 400px;
+    max-height: 300px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid var(--siigo-gray-300);
+    border-radius: 0 0 var(--siigo-radius) var(--siigo-radius);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    display: none;
+}
+
+.puc-dropdown.active {
+    display: block;
+}
+
+.puc-dropdown-item {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--siigo-gray-100);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.puc-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.puc-dropdown-item:hover {
+    background: #f0f9ff;
+}
+
+.puc-dropdown-item .code {
+    font-weight: 700;
+    color: var(--siigo-primary);
+    font-family: monospace;
+    font-size: 13px;
+}
+
+.puc-dropdown-item .name {
+    font-size: 13px;
+    color: var(--siigo-dark);
+    margin-left: 8px;
+}
+
+.puc-dropdown-item .meta {
+    font-size: 11px;
+    color: var(--siigo-gray-500);
+    margin-top: 2px;
+    display: flex;
+    gap: 10px;
+}
+
+/* ========== Consecutivo Alerts ========== */
+.consecutivo-alertas .alert-consecutivo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    border-radius: var(--siigo-radius);
+    margin-bottom: 8px;
+}
+
+.alert-consecutivo.alert-danger {
+    background: #fdecea;
+    border-left: 4px solid var(--siigo-danger);
+    color: #c0392b;
+}
+
+.alert-consecutivo.alert-warning {
+    background: #fef9e7;
+    border-left: 4px solid var(--siigo-warning);
+    color: #9a7b4f;
+}
+
+.alert-consecutivo.alert-info {
+    background: #e8f8f5;
+    border-left: 4px solid var(--siigo-success);
+    color: #1e8449;
+}
+
+/* ========== Alert Message Styling ========== */
+.alert-consecutivo p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    opacity: 0.9;
+}
+
+/* ========== Items Table Specific Widths ========== */
+.siigo-items-table th.col-num { width: 40px; min-width: 40px; }
+.siigo-items-table th.col-puc { width: 100px; min-width: 100px; }
+.siigo-items-table th.col-service { width: 180px; min-width: 180px; }
+.siigo-items-table th.col-desc { width: 160px; min-width: 160px; }
+.siigo-items-table th.col-centro { width: 130px; min-width: 130px; }
+.siigo-items-table th.col-cant { width: 70px; min-width: 70px; }
+.siigo-items-table th.col-valor { width: 120px; min-width: 120px; }
+.siigo-items-table th.col-tax { width: 90px; min-width: 90px; }
+.siigo-items-table th.col-total { width: 110px; min-width: 110px; }
+.siigo-items-table th.col-actions { width: 50px; min-width: 50px; }
+
+/* ========== File Upload Area ========== */
+.file-upload-area {
+    border: 2px dashed var(--siigo-gray-300);
+    border-radius: 10px;
+    padding: 24px;
+    text-align: center;
+    background: var(--siigo-gray-100);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.file-upload-area:hover {
+    border-color: var(--siigo-primary);
+}
+
+.file-upload-area .upload-icon {
+    font-size: 40px;
+    color: var(--siigo-primary);
+    display: block;
+    margin-bottom: 8px;
+}
+
+.file-upload-area .file-label {
+    margin: 0;
+    color: var(--siigo-gray-500);
+    font-size: 14px;
+}
+
+.file-upload-area small {
+    color: var(--siigo-gray-400);
+    font-size: 12px;
+}
+
+/* ========== Contract Info Box ========== */
+.contrato-info-box {
+    display: none;
+    margin-top: 16px;
+    padding: 12px;
+    background: #e8f5e9;
+    border-radius: 6px;
+    border-left: 4px solid var(--siigo-success);
+}
+
+.contrato-info-box p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--siigo-dark);
+}
+
+/* ========== Details Panel (Tercero, Deudor) ========== */
+.details-panel {
+    display: none;
+    margin-top: 20px;
+    padding: 16px;
+    background: var(--siigo-gray-100);
+    border-radius: 8px;
+}
+
+.details-panel.active {
+    display: block;
+}
+
+/* ========== Quick Actions Card ========== */
+.quick-actions-card {
+    margin-top: 16px;
+}
+
+.quick-actions-card .siigo-card-body {
+    padding: 16px;
+}
+
+.quick-actions-card h4 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--siigo-dark);
+    margin-bottom: 12px;
+}
+
+.quick-actions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.quick-actions-list .siigo-back-btn {
+    justify-content: flex-start;
+}
+
+/* ========== Date Input Container ========== */
+.date-input-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--siigo-gray-500);
+    font-size: 13px;
+}
+
+.date-input-container .material-symbols-rounded {
+    font-size: 18px;
+}
+
+.date-input-container input[type="date"] {
+    width: auto;
+    padding: 6px 10px;
+}
+
+/* ========== Form Group Spacing Utilities ========== */
+.form-group-lg {
+    margin-bottom: 20px;
+}
+
+.form-group-lg .siigo-label {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.form-group-lg textarea,
+.form-group-lg input {
+    font-size: 14px;
+    padding: 14px;
+    border-radius: 8px;
+}
+
+.form-group-lg textarea {
+    resize: vertical;
+}
+
+.form-group-lg small {
+    color: var(--siigo-gray-500);
+    font-size: 12px;
+}
+
+/* ========== Stat Item Utilities ========== */
+.stat-item-separator {
+    border-left: 1px solid rgba(255,255,255,0.3);
+    padding-left: 24px;
+}
+
+.stat-value-sm {
+    font-size: 14px;
+}
+
+.stat-value-xs {
+    font-size: 13px;
+}
+
+/* ========== Icon Sizes ========== */
+.icon-14 { font-size: 14px; }
+.icon-16 { font-size: 16px; }
+.icon-18 { font-size: 18px; }
+.icon-28 { font-size: 28px; opacity: 0.9; }
+.icon-40 { font-size: 40px; }
+
+/* ========== Input Width Utilities ========== */
+.input-auto { width: auto; }
+.input-lg { font-size: 14px; padding: 12px; }
+
+/* ========== Card Body Utilities ========== */
+.card-body-table {
+    padding: 0;
+    overflow-x: auto;
+}
+
+.table-responsive {
+    min-width: 900px;
+}
+
+@media (max-width: 768px) {
+    .siigo-topbar {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .siigo-info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .siigo-modal {
+        margin: 20px;
+        max-width: calc(100% - 40px);
+    }
+    
+    .consecutivo-info-bar {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .consecutivo-info-bar .info-stats {
+        justify-content: center;
+    }
+}

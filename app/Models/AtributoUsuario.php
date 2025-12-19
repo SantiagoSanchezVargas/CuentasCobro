@@ -123,10 +123,8 @@ class AtributoUsuario extends Model
         $roleName = $this->usuario?->role?->name;
 
         return match($roleName) {
-            'supervisor' => 'supervisor',
-            'ordenador_gasto' => 'ordenador_gasto',
-            'contratacion' => 'contratacion',
-            'alcalde' => 'alcalde',
+            'auxiliar' => 'auxiliar',
+            'administrador' => 'administrador',
             'tesoreria' => 'tesoreria',
             default => null,
         };

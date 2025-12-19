@@ -2,176 +2,336 @@
 
 @section('title', 'Numeraciones DIAN')
 
+@push('styles')
+<link rel="stylesheet" href="{{ asset('css/views/dian.css') }}">
+@endpush
+
 @section('content')
-<div class="page-container">
-    <!-- Header -->
-    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-        <div>
-            <h1 style="font-size: 28px; font-weight: 700; color: var(--apple-dark); margin-bottom: 4px;">
-                <span class="material-symbols-rounded" style="vertical-align: middle; margin-right: 8px;">tag</span>
-                Numeraciones Autorizadas DIAN
-            </h1>
-            <p style="color: var(--apple-text-muted); font-size: 15px;">
-                Gestión de prefijos y rangos de numeración autorizados
-            </p>
+<div class="dian-page">
+    <!-- Header con Gradiente -->
+    <div class="dian-header">
+        <div class="header-content">
+            <div class="header-icon">
+                <span class="material-symbols-rounded">tag</span>
+            </div>
+            <div class="header-text">
+                <h1>Numeraciones DIAN</h1>
+                <p>Rangos de numeración autorizados para facturación electrónica</p>
+            </div>
         </div>
-        @if(auth()->user()->role->name === 'admin_programa')
-        <div>
-            <button onclick="openNuevaNumeracionModal()" class="btn-apple">
+        <div class="header-actions">
+            <a href="{{ route('admin.consecutivos.index') }}" class="btn-header-secondary">
+                <span class="material-symbols-rounded">sync</span>
+                Ver Consecutivos
+            </a>
+            @if(auth()->user()->hasAnyRole(['super_admin', 'admin_programa']))
+            <button onclick="openNuevaNumeracionModal()" class="btn-header-primary">
                 <span class="material-symbols-rounded">add</span>
                 Nueva Numeración
             </button>
+            @endif
         </div>
-        @endif
     </div>
 
-    <!-- Info Card -->
-    <div style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 20px 24px; border-radius: 16px; margin-bottom: 24px;">
-        <div style="display: flex; align-items: center; gap: 16px;">
-            <span class="material-symbols-rounded" style="font-size: 40px; opacity: 0.9;">info</span>
-            <div>
-                <p style="font-weight: 600; font-size: 16px; margin: 0 0 4px 0;">Numeración de Facturación Electrónica</p>
-                <p style="font-size: 14px; opacity: 0.9; margin: 0;">
-                    Las numeraciones deben ser autorizadas por la DIAN antes de usarse. Cada rango tiene vigencia y debe asociarse a un tipo de documento.
-                </p>
+    <!-- Stats Cards -->
+    <div class="dian-stats-grid">
+        <div class="stat-card stat-success">
+            <div class="stat-icon">
+                <span class="material-symbols-rounded">check_circle</span>
             </div>
+            <div class="stat-info">
+                <div class="stat-value">{{ $stats['activas'] ?? 0 }}</div>
+                <div class="stat-label">Activas</div>
+            </div>
+        </div>
+        <div class="stat-card stat-primary">
+            <div class="stat-icon">
+                <span class="material-symbols-rounded">receipt_long</span>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value">{{ $stats['total'] ?? 0 }}</div>
+                <div class="stat-label">Total Numeraciones</div>
+            </div>
+        </div>
+        <div class="stat-card stat-warning">
+            <div class="stat-icon">
+                <span class="material-symbols-rounded">numbers</span>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value">{{ number_format($stats['disponibles'] ?? 0, 0, '', '.') }}</div>
+                <div class="stat-label">Números Disponibles</div>
+            </div>
+        </div>
+        <div class="stat-card stat-info">
+            <div class="stat-icon">
+                <span class="material-symbols-rounded">sync_alt</span>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value">{{ $stats['consecutivos_vinculados'] ?? 0 }}</div>
+                <div class="stat-label">Sincronizados</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Banner -->
+    <div class="info-banner">
+        <span class="material-symbols-rounded">info</span>
+        <div>
+            <strong>Sincronización con Consecutivos</strong>
+            <p>Las numeraciones DIAN se pueden vincular con los consecutivos del sistema para mantener la trazabilidad de los documentos electrónicos.</p>
         </div>
     </div>
 
     <!-- Table -->
-    <div style="background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="background: #f8fafc;">
-                    <th style="padding: 14px 16px; text-align: left; font-size: 13px; font-weight: 600; color: var(--apple-text-muted);">Prefijo</th>
-                    <th style="padding: 14px 16px; text-align: left; font-size: 13px; font-weight: 600; color: var(--apple-text-muted);">Resolución</th>
-                    <th style="padding: 14px 16px; text-align: center; font-size: 13px; font-weight: 600; color: var(--apple-text-muted);">Rango</th>
-                    <th style="padding: 14px 16px; text-align: center; font-size: 13px; font-weight: 600; color: var(--apple-text-muted);">Actual</th>
-                    <th style="padding: 14px 16px; text-align: center; font-size: 13px; font-weight: 600; color: var(--apple-text-muted);">Uso</th>
-                    <th style="padding: 14px 16px; text-align: left; font-size: 13px; font-weight: 600; color: var(--apple-text-muted);">Autorizado</th>
-                    <th style="padding: 14px 16px; text-align: center; font-size: 13px; font-weight: 600; color: var(--apple-text-muted);">Estado</th>
-                    <th style="padding: 14px 16px; text-align: center; font-size: 13px; font-weight: 600; color: var(--apple-text-muted);">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($numeraciones ?? [] as $num)
-                @php
-                    $total = $num->end_number - $num->start_number + 1;
-                    $usado = $num->current_number - $num->start_number;
-                    $porcentaje = $total > 0 ? round(($usado / $total) * 100) : 0;
-                @endphp
-                <tr style="border-top: 1px solid #f1f5f9;">
-                    <td style="padding: 14px 16px; font-weight: 700; font-family: monospace; font-size: 15px;">{{ $num->prefix ?? 'SIN' }}</td>
-                    <td style="padding: 14px 16px;">{{ $num->resolution_number ?? '—' }}</td>
-                    <td style="padding: 14px 16px; text-align: center; font-family: monospace;">
-                        {{ number_format($num->start_number, 0, '', '.') }} - {{ number_format($num->end_number, 0, '', '.') }}
-                    </td>
-                    <td style="padding: 14px 16px; text-align: center; font-weight: 600;">{{ number_format($num->current_number, 0, '', '.') }}</td>
-                    <td style="padding: 14px 16px;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <div style="flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
-                                <div style="width: {{ $porcentaje }}%; height: 100%; background: {{ $porcentaje > 90 ? '#ef4444' : ($porcentaje > 70 ? '#f59e0b' : '#10b981') }};"></div>
+    <div class="dian-card">
+        <div class="card-header">
+            <h3>
+                <span class="material-symbols-rounded">list_alt</span>
+                Listado de Numeraciones
+            </h3>
+        </div>
+        <div class="card-body table-responsive">
+            <table class="dian-table">
+                <thead>
+                    <tr>
+                        <th>Prefijo</th>
+                        <th>Resolución</th>
+                        <th class="text-center">Rango</th>
+                        <th class="text-center">Actual</th>
+                        <th>Uso</th>
+                        <th>Vigencia</th>
+                        <th class="text-center">Consecutivo</th>
+                        <th class="text-center">Estado</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($numeraciones as $num)
+                    @php
+                        $total = $num->end_number - $num->start_number + 1;
+                        $usado = $num->current_number - $num->start_number;
+                        $porcentaje = $total > 0 ? round(($usado / $total) * 100) : 0;
+                        $consecutivoVinculado = \App\Models\Consecutivo::where('dian_numeration_id', $num->id)->first();
+                    @endphp
+                    <tr>
+                        <td class="cell-prefix">{{ $num->prefix ?? 'SIN' }}</td>
+                        <td>{{ $num->resolution_number ?? '—' }}</td>
+                        <td class="text-center cell-mono">
+                            {{ number_format($num->start_number, 0, '', '.') }} - {{ number_format($num->end_number, 0, '', '.') }}
+                        </td>
+                        <td class="text-center cell-current">{{ number_format($num->current_number, 0, '', '.') }}</td>
+                        <td>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar {{ $porcentaje > 90 ? 'danger' : ($porcentaje > 70 ? 'warning' : 'success') }}" style="width: {{ $porcentaje }}%"></div>
                             </div>
-                            <span style="font-size: 12px; font-weight: 600; color: {{ $porcentaje > 90 ? '#ef4444' : '#64748b' }};">{{ $porcentaje }}%</span>
-                        </div>
-                    </td>
-                    <td style="padding: 14px 16px; font-size: 13px; color: #64748b;">
-                        {{ $num->authorized_at ? \Carbon\Carbon::parse($num->authorized_at)->format('d/m/Y') : '—' }}
-                    </td>
-                    <td style="padding: 14px 16px; text-align: center;">
-                        @if($num->active)
-                        <span style="padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #d1fae5; color: #059669;">Activo</span>
-                        @else
-                        <span style="padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #f1f5f9; color: #64748b;">Inactivo</span>
-                        @endif
-                    </td>
-                    <td style="padding: 14px 16px; text-align: center;">
-                        <div style="display: flex; gap: 8px; justify-content: center;">
-                            <button onclick="editarNumeracion({{ $num->id }})" class="btn-icon" title="Editar" style="padding: 6px; border-radius: 8px; background: #f1f5f9; border: none; cursor: pointer;">
-                                <span class="material-symbols-rounded" style="font-size: 18px;">edit</span>
+                            <span class="progress-text {{ $porcentaje > 90 ? 'text-danger' : '' }}">{{ $porcentaje }}%</span>
+                        </td>
+                        <td class="cell-date">
+                            @if($num->authorized_at)
+                                {{ \Carbon\Carbon::parse($num->authorized_at)->format('d/m/Y') }}
+                            @else
+                                —
+                            @endif
+                        </td>
+                        <td class="text-center">
+                            @if($consecutivoVinculado)
+                                <a href="{{ route('admin.consecutivos.edit', $consecutivoVinculado->id) }}" class="link-consecutivo">
+                                    <span class="material-symbols-rounded">link</span>
+                                    {{ $consecutivoVinculado->prefijo }}
+                                </a>
+                            @else
+                                <button onclick="vincularConsecutivo({{ $num->id }})" class="btn-vincular">
+                                    <span class="material-symbols-rounded">add_link</span>
+                                    Vincular
+                                </button>
+                            @endif
+                        </td>
+                        <td class="text-center">
+                            @if($num->active)
+                                <span class="badge badge-success">Activo</span>
+                            @else
+                                <span class="badge badge-inactive">Inactivo</span>
+                            @endif
+                        </td>
+                        <td class="text-center">
+                            <div class="action-buttons">
+                                <button onclick="editarNumeracion({{ $num->id }})" class="btn-action" title="Editar">
+                                    <span class="material-symbols-rounded">edit</span>
+                                </button>
+                                <button onclick="toggleNumeracion({{ $num->id }}, {{ $num->active ? 0 : 1 }})" 
+                                        class="btn-action {{ $num->active ? 'warning' : 'primary' }}" 
+                                        title="{{ $num->active ? 'Desactivar' : 'Activar' }}">
+                                    <span class="material-symbols-rounded">{{ $num->active ? 'pause' : 'play_arrow' }}</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="9" class="empty-state">
+                            <span class="material-symbols-rounded">inbox</span>
+                            <p>No hay numeraciones registradas</p>
+                            <button onclick="openNuevaNumeracionModal()" class="btn-primary-sm">
+                                <span class="material-symbols-rounded">add</span>
+                                Crear Primera Numeración
                             </button>
-                            <button onclick="toggleNumeracion({{ $num->id }}, {{ $num->active ? 0 : 1 }})" class="btn-icon" title="{{ $num->active ? 'Desactivar' : 'Activar' }}" style="padding: 6px; border-radius: 8px; background: {{ $num->active ? '#fef3c7' : '#dbeafe' }}; border: none; cursor: pointer;">
-                                <span class="material-symbols-rounded" style="font-size: 18px;">{{ $num->active ? 'pause' : 'play_arrow' }}</span>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="8" style="padding: 48px; text-align: center; color: var(--apple-text-muted);">
-                        <span class="material-symbols-rounded" style="font-size: 48px; opacity: 0.5; display: block; margin-bottom: 12px;">numbers</span>
-                        No hay numeraciones registradas
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <!-- Modal Nueva Numeración -->
-<div id="nuevaNumeracionModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
-    <div style="background: white; border-radius: 16px; width: 90%; max-width: 500px; padding: 0; box-shadow: 0 20px 60px rgba(0,0,0,0.2);">
-        <div style="padding: 20px 24px; border-bottom: 1px solid #e2e8f0;">
-            <h2 style="margin: 0; font-size: 20px; font-weight: 700;">Nueva Numeración DIAN</h2>
+<div class="modal-overlay" id="modalNuevaNumeracion">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2>
+                <span class="material-symbols-rounded">add_circle</span>
+                Nueva Numeración DIAN
+            </h2>
+            <button type="button" class="modal-close" onclick="closeModal('modalNuevaNumeracion')">
+                <span class="material-symbols-rounded">close</span>
+            </button>
         </div>
         <form action="{{ route('dian.numeraciones.store') }}" method="POST">
             @csrf
-            <div style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
-                <div>
-                    <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Prefijo</label>
-                    <input type="text" name="prefix" class="form-input" placeholder="Ej: DS, FE" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #e2e8f0;">
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                    <div>
-                        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Número Inicial</label>
-                        <input type="number" name="start_number" required class="form-input" placeholder="1" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #e2e8f0;">
+            <div class="modal-body">
+                <div class="form-grid cols-2">
+                    <div class="form-group">
+                        <label class="form-label">Prefijo <span class="optional">(Opcional)</span></label>
+                        <input type="text" name="prefix" class="form-input" placeholder="Ej: FV, CC, NC" maxlength="10">
+                        <small class="form-help">Prefijo que aparecerá antes del número</small>
                     </div>
-                    <div>
-                        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Número Final</label>
-                        <input type="number" name="end_number" required class="form-input" placeholder="1000" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                    <div class="form-group">
+                        <label class="form-label">Nº Resolución</label>
+                        <input type="text" name="resolution_number" class="form-input" placeholder="Ej: 18760000001234">
                     </div>
                 </div>
-                <div>
-                    <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Número de Resolución</label>
-                    <input type="text" name="resolution_number" class="form-input" placeholder="18760000001234" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                
+                <div class="form-grid cols-3">
+                    <div class="form-group">
+                        <label class="form-label">Número Inicial <span class="required">*</span></label>
+                        <input type="number" name="start_number" class="form-input" required min="1" placeholder="1">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Número Final <span class="required">*</span></label>
+                        <input type="number" name="end_number" class="form-input" required min="2" placeholder="1000">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fecha Autorización</label>
+                        <input type="date" name="authorized_at" class="form-input">
+                    </div>
                 </div>
-                <div>
-                    <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Fecha Autorización</label>
-                    <input type="date" name="authorized_at" class="form-input" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #e2e8f0;">
+
+                <div class="form-group">
+                    <label class="form-label">Notas</label>
+                    <textarea name="notes" class="form-input" rows="2" placeholder="Observaciones opcionales..."></textarea>
                 </div>
-                <div>
-                    <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Notas</label>
-                    <textarea name="notes" rows="2" class="form-input" placeholder="Notas adicionales..." style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #e2e8f0; resize: vertical;"></textarea>
+
+                <div class="form-group">
+                    <label class="form-checkbox">
+                        <input type="checkbox" name="crear_consecutivo" value="1">
+                        <span class="checkmark"></span>
+                        <span>Crear consecutivo vinculado automáticamente</span>
+                    </label>
                 </div>
             </div>
-            <div style="padding: 16px 24px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 12px; background: #f8fafc; border-radius: 0 0 16px 16px;">
-                <button type="button" onclick="closeNuevaNumeracionModal()" class="btn-apple btn-apple-secondary">Cancelar</button>
-                <button type="submit" class="btn-apple">Guardar</button>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('modalNuevaNumeracion')">Cancelar</button>
+                <button type="submit" class="btn-primary">
+                    <span class="material-symbols-rounded">save</span>
+                    Guardar Numeración
+                </button>
             </div>
         </form>
     </div>
 </div>
 
+<!-- Modal Vincular Consecutivo -->
+<div class="modal-overlay" id="modalVincularConsecutivo">
+    <div class="modal-container modal-sm">
+        <div class="modal-header">
+            <h2>
+                <span class="material-symbols-rounded">link</span>
+                Vincular Consecutivo
+            </h2>
+            <button type="button" class="modal-close" onclick="closeModal('modalVincularConsecutivo')">
+                <span class="material-symbols-rounded">close</span>
+            </button>
+        </div>
+        <form id="formVincular" method="POST">
+            @csrf
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Seleccionar Consecutivo</label>
+                    <select name="consecutivo_id" class="form-input" required id="selectConsecutivo">
+                        <option value="">-- Seleccione --</option>
+                        @foreach($consecutivos->whereNull('dian_numeration_id') as $cons)
+                            <option value="{{ $cons->id }}">{{ $cons->prefijo }} - {{ $cons->nombre ?? 'Sin nombre' }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <p class="form-info">
+                    <span class="material-symbols-rounded">info</span>
+                    Solo se muestran consecutivos activos que no tienen numeración vinculada.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('modalVincularConsecutivo')">Cancelar</button>
+                <button type="submit" class="btn-primary">
+                    <span class="material-symbols-rounded">link</span>
+                    Vincular
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+@endsection
+
 @push('scripts')
 <script>
 function openNuevaNumeracionModal() {
-    document.getElementById('nuevaNumeracionModal').style.display = 'flex';
+    document.getElementById('modalNuevaNumeracion').classList.add('active');
 }
-function closeNuevaNumeracionModal() {
-    document.getElementById('nuevaNumeracionModal').style.display = 'none';
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
 }
+
+function vincularConsecutivo(numeracionId) {
+    document.getElementById('formVincular').action = `/dian/numeraciones/${numeracionId}/vincular`;
+    document.getElementById('modalVincularConsecutivo').classList.add('active');
+}
+
 function editarNumeracion(id) {
-    alert('Editar numeración #' + id + ' - Funcionalidad en desarrollo');
+    alert('Editar numeración ' + id);
 }
+
 function toggleNumeracion(id, estado) {
-    if (confirm('¿Desea ' + (estado ? 'activar' : 'desactivar') + ' esta numeración?')) {
-        alert('Toggle numeración #' + id + ' - Funcionalidad en desarrollo');
+    if (confirm('¿Está seguro de ' + (estado ? 'activar' : 'desactivar') + ' esta numeración?')) {
+        // Crear formulario dinámico para el POST
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/dian/numeraciones/${id}/toggle`;
+        
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_token';
+        csrfInput.value = '{{ csrf_token() }}';
+        form.appendChild(csrfInput);
+        
+        document.body.appendChild(form);
+        form.submit();
     }
 }
-document.getElementById('nuevaNumeracionModal').addEventListener('click', function(e) {
-    if (e.target === this) closeNuevaNumeracionModal();
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', function(e) {
+        if (e.target === this) this.classList.remove('active');
+    });
 });
 </script>
 @endpush
-@endsection

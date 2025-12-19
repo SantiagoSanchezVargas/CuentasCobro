@@ -7,20 +7,76 @@
     min-height: calc(100vh - 48px);
 }
 
+/* Sidebar Toggle Button */
+.sidebar-toggle {
+    position: fixed;
+    top: 56px;
+    left: 8px;
+    z-index: 1001;
+    background: white;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 8px;
+    padding: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.2s;
+}
+
+.sidebar-toggle:hover {
+    background: var(--apple-light-gray);
+}
+
 .sidebar {
     width: var(--sidebar-width);
     background: white;
     border-right: 1px solid rgba(0, 0, 0, 0.08);
     padding: 24px 0;
-    position: sticky;
+    position: fixed;
     top: 48px;
+    left: 0;
     height: calc(100vh - 48px);
     overflow-y: auto;
+    z-index: 1000;
+    transform: translateX(0);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.sidebar.collapsed {
+    transform: translateX(-100%);
+    box-shadow: none;
+}
+
+.sidebar.open {
+    transform: translateX(0);
+    box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+}
+
+/* Overlay when sidebar is open on mobile */
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s;
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
 }
 
 .sidebar-section {
     padding: 0 24px;
     margin-bottom: 32px;
+}
+
+.sidebar-section:first-child {
+    padding-top: 40px; /* Space for toggle button */
 }
 
 .sidebar-title {
@@ -70,7 +126,42 @@
 .main-content {
     flex: 1;
     padding: 32px;
-    max-width: 1400px;
+    max-width: 1200px;
     margin: 0 auto;
     width: 100%;
+    transition: margin-left 0.3s ease;
+}
+
+/* When sidebar is visible (desktop) */
+@media (min-width: 1024px) {
+    .sidebar {
+        position: sticky;
+        transform: translateX(0) !important;
+    }
+    
+    .sidebar.collapsed {
+        width: 0;
+        padding: 0;
+        overflow: hidden;
+        transform: translateX(0) !important;
+    }
+    
+    .sidebar-overlay {
+        display: none;
+    }
+}
+
+/* Mobile styles */
+@media (max-width: 1023px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+    
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+    }
 }

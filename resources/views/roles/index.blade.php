@@ -298,6 +298,7 @@
     .bg-gradient-purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
     .bg-gradient-green { background: linear-gradient(135deg, #10b981, #059669); }
     .bg-gradient-orange { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .bg-gradient-teal { background: linear-gradient(135deg, #14b8a6, #0d9488); }
     .bg-gradient-slate { background: linear-gradient(135deg, #64748b, #475569); }
 
 </style>
@@ -364,18 +365,20 @@
         @foreach($roles as $role)
             @php
                 $gradientClass = match($role->name) {
-                    'administrador', 'admin' => 'bg-gradient-purple',
+                    'super_admin' => 'bg-gradient-purple',
                     'admin_programa' => 'bg-gradient-blue',
-                    'contratista' => 'bg-gradient-green',
-                    'supervisor' => 'bg-gradient-orange',
+                    'administrador' => 'bg-gradient-orange',
+                    'auxiliar' => 'bg-gradient-green',
+                    'tesoreria' => 'bg-gradient-teal',
                     default => 'bg-gradient-slate'
                 };
                 
                 $icon = match($role->name) {
-                    'administrador', 'admin' => 'admin_panel_settings',
+                    'super_admin' => 'admin_panel_settings',
                     'admin_programa' => 'manage_accounts',
-                    'contratista' => 'engineering',
-                    'supervisor' => 'visibility',
+                    'administrador' => 'supervisor_account',
+                    'auxiliar' => 'support_agent',
+                    'tesoreria' => 'account_balance',
                     default => 'badge'
                 };
             @endphp

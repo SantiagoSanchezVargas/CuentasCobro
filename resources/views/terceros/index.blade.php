@@ -535,6 +535,7 @@
                         <th>Nombre / Razón Social</th>
                         <th>Email</th>
                         <th>Teléfono</th>
+                        <th>País</th>
                         <th>Ciudad</th>
                         <th>Creado</th>
                         <th style="width: 100px; text-align: center;">Acciones</th>
@@ -578,6 +579,9 @@
                                 <span class="cell-value">{{ $tercero->telefono ?: '-' }}</span>
                                 <span class="material-symbols-rounded edit-icon">edit</span>
                             </div>
+                        </td>
+                        <td>
+                            <span title="{{ $tercero->pais ?? 'Colombia' }}">{{ $tercero->pais ?? 'Colombia' }}</span>
                         </td>
                         <td>
                             <div class="editable-cell" data-field="ciudad" data-id="{{ $tercero->id }}">

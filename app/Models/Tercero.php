@@ -15,6 +15,8 @@ class Tercero extends Model
         'razon_social',
         'nombre_comercial',
         'direccion',
+        'pais',
+        'pais_codigo',
         'ciudad',
         'departamento',
         'codigo_pais',

@@ -11,14 +11,14 @@ Sistema de gestión de cuentas de cobro con flujo de aprobación obligatorio par
 
 ## 🌟 Características Principales
 
-### ✅ Flujo de Aprobación Obligatorio (v2.1)
-- **5 etapas secuenciales:** Supervisor → Ordenador del Gasto → Contratación → Alcalde → Tesorería
+### ✅ Flujo de Aprobación Obligatorio (v3.0)
+- **3 etapas secuenciales:** Auxiliar → Administrador → Tesorería
 - **No se pueden saltar etapas** (excepto Super Admin)
 - **Trazabilidad completa** de todas las decisiones
 
 ### 👥 Sistema de Roles
-- 7 roles definidos con permisos específicos
-- Contratista, Supervisor, Ordenador del Gasto, Contratación, Alcalde, Tesorería, Super Admin
+- 5 roles definidos con permisos específicos
+- Auxiliar, Administrador, Tesorería, Admin Programa, Super Admin
 - **Matriz de permisos granular** por rol y etapa
 
 ### 🔄 Opciones de Intervención
@@ -342,29 +342,23 @@ El proyecto utiliza un sistema de diseño inspirado en Apple con:
 
 ## 📊 Flujo del Sistema
 
-### Flujo Obligatorio de Aprobación
+### Flujo Obligatorio de Aprobación (v3.0)
 
 ```
-1. Contratista → Crea cuenta de cobro
+1. Auxiliar → Crea y valida cuenta de cobro
         ↓
-2. Supervisor → Valida documentos
+2. Administrador → Aprueba y gestiona
         ↓
-3. Ordenador del Gasto → Valida presupuesto
+3. Tesorería → Registra pago
         ↓
-4. Contratación → Valida contrato
-        ↓
-5. Alcalde → Aprobación ejecutiva
-        ↓
-6. Tesorería → Registra pago
-        ↓
-7. ✅ Finalizado (Pagado)
+4. ✅ Finalizado (Pagado)
 ```
 
 ### Opciones en Cada Etapa
 
 - ✅ **Enviar al siguiente nivel** - Continúa el flujo
 - ❌ **Rechazar** - Finaliza definitivamente (con motivo)
-- 🔄 **Devolver para corrección** - Regresa al contratista (solo Contratación)
+- 🔄 **Devolver para corrección** - Regresa para edición
 - 🔙 **Devolver a etapa anterior** - Regresa una etapa
 - 📝 **Agregar interacción** - Comentario sin cambiar estado
 

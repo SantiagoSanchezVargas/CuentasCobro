@@ -1,7 +1,30 @@
 /* Apple-Inspired Theme - Cuentas de Cobro */
+/* Sistema de Diseño Unificado */
 
 :root {
-    /* Primary Colors - Apple Style */
+    /* ========== Colores Principales Siigo ========== */
+    --siigo-primary: #00b5e2;
+    --siigo-primary-dark: #0097be;
+    --siigo-primary-light: #e0f7fa;
+    --siigo-secondary: #6c5ce7;
+    --siigo-success: #00b894;
+    --siigo-warning: #fdcb6e;
+    --siigo-danger: #e74c3c;
+    --siigo-dark: #2d3436;
+    --siigo-gray-100: #f8f9fa;
+    --siigo-gray-200: #e9ecef;
+    --siigo-gray-300: #dfe6e9;
+    --siigo-gray-400: #b2bec3;
+    --siigo-gray-500: #636e72;
+    --siigo-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --siigo-radius: 8px;
+    
+    /* Gradiente Principal (para headers, iconos destacados) */
+    --siigo-gradient-dark: linear-gradient(135deg, var(--siigo-dark), #34495e);
+    --siigo-gradient-primary: linear-gradient(135deg, var(--siigo-primary), var(--siigo-primary-dark));
+    --siigo-gradient-success: linear-gradient(135deg, var(--siigo-success), #00a080);
+    
+    /* ========== Colores Apple (Legacy) ========== */
     --apple-blue: #0071e3;
     --apple-blue-hover: #0077ED;
     --apple-blue-light: #e3f2fd;
@@ -18,17 +41,18 @@
     --apple-red: #ff3b30;
     --apple-purple: #bf5af2;
     
-    /* Legacy Support */
-    --brand: #0071e3;
-    --brand-600: #0077ED;
-    --brand-700: #005bb5;
-    --accent: #1d1d1f;
-    --muted: #86868b;
-    --bg: #f5f5f7;
+    /* ========== Aliases Unificados ========== */
+    --brand: var(--siigo-primary);
+    --brand-600: var(--siigo-primary-dark);
+    --brand-700: #007a99;
+    --accent: var(--siigo-dark);
+    --muted: var(--siigo-gray-500);
+    --bg: var(--siigo-gray-100);
     --surface: #ffffff;
-    --border: rgba(0, 0, 0, 0.08);
-    --warning: #ff9500;
-    --danger: #ff3b30;
+    --border: var(--siigo-gray-300);
+    --warning: var(--siigo-warning);
+    --danger: var(--siigo-danger);
+    --success: var(--siigo-success);
     
     /* Spacing */
     --spacing-xs: 4px;
@@ -513,3 +537,140 @@ a:hover {
     }
 }
 
+/* ========== CLASES UTILITARIAS GLOBALES ========== */
+
+/* Gradientes */
+.bg-gradient-dark {
+    background: var(--siigo-gradient-dark);
+    color: white;
+}
+
+.bg-gradient-primary {
+    background: var(--siigo-gradient-primary);
+    color: white;
+}
+
+.bg-gradient-success {
+    background: var(--siigo-gradient-success);
+    color: white;
+}
+
+/* Iconos con Gradiente */
+.icon-gradient-dark {
+    background: var(--siigo-gradient-dark);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Contenedores de Iconos */
+.icon-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    background: var(--siigo-gradient-dark);
+    color: white;
+}
+
+.icon-box.sm {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+}
+
+.icon-box.lg {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+}
+
+.icon-box.xl {
+    width: 56px;
+    height: 56px;
+    font-size: 28px;
+}
+
+.icon-box.primary {
+    background: var(--siigo-gradient-primary);
+}
+
+.icon-box.success {
+    background: var(--siigo-gradient-success);
+}
+
+.icon-box.light {
+    background: var(--siigo-gray-100);
+    color: var(--siigo-dark);
+}
+
+/* Headers con Gradiente */
+.header-gradient {
+    background: var(--siigo-gradient-dark);
+    color: white;
+    padding: 20px;
+    border-radius: var(--radius-sm);
+}
+
+.header-gradient h1,
+.header-gradient h2,
+.header-gradient h3,
+.header-gradient h4 {
+    color: white;
+}
+
+/* Cards con Header Gradiente */
+.card-header-gradient {
+    background: var(--siigo-gradient-dark);
+    color: white;
+    padding: 16px 20px;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+/* Badges */
+.badge-gradient {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--siigo-gradient-dark);
+    color: white;
+    border-radius: var(--radius-pill);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Colores de Estado */
+.text-success { color: var(--siigo-success) !important; }
+.text-warning { color: var(--siigo-warning) !important; }
+.text-danger { color: var(--siigo-danger) !important; }
+.text-primary { color: var(--siigo-primary) !important; }
+.text-muted { color: var(--siigo-gray-500) !important; }
+.text-dark { color: var(--siigo-dark) !important; }
+
+.bg-success { background-color: var(--siigo-success) !important; }
+.bg-warning { background-color: var(--siigo-warning) !important; }
+.bg-danger { background-color: var(--siigo-danger) !important; }
+.bg-primary { background-color: var(--siigo-primary) !important; }
+.bg-light { background-color: var(--siigo-gray-100) !important; }
+.bg-dark { background-color: var(--siigo-dark) !important; }
+
+/* Bordes de Estado */
+.border-success { border-color: var(--siigo-success) !important; }
+.border-warning { border-color: var(--siigo-warning) !important; }
+.border-danger { border-color: var(--siigo-danger) !important; }
+.border-primary { border-color: var(--siigo-primary) !important; }
+
+/* Sombras */
+.shadow-sm { box-shadow: var(--shadow-sm) !important; }
+.shadow-md { box-shadow: var(--shadow-md) !important; }
+.shadow-lg { box-shadow: var(--shadow-lg) !important; }
+.shadow-siigo { box-shadow: var(--siigo-shadow) !important; }
+
+/* Bordes redondeados */
+.rounded-sm { border-radius: var(--radius-sm) !important; }
+.rounded-md { border-radius: var(--radius-md) !important; }
+.rounded-lg { border-radius: var(--radius-lg) !important; }
+.rounded-pill { border-radius: var(--radius-pill) !important; }
