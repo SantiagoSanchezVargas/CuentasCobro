@@ -1558,7 +1558,7 @@ class CuentaCobroController extends Controller
         // Obtener estadísticas
         $stats = [
             'total_cuentas' => CuentaCobro::count(),
-            'monto_total' => CuentaCobro::sum('monto_total'),
+            'monto_total' => CuentaCobro::sum('total'),
             'pendientes' => CuentaCobro::where('estado', 'enviado')->count(),
             'pagadas' => CuentaCobro::where('estado', 'pagado')->count(),
         ];
