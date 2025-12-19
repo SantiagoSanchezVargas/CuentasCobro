@@ -52,19 +52,19 @@ class DianController extends Controller
             ->get();
 
         // Obtener consecutivos para vincular
-        $consecutivos = DB::table('consecutivos')
-            ->select('consecutivos.*')
+       $consecutivos = DB::table('consecutivos')
+            ->select('consecutivos.*', 'dian_numerations.prefijo as dian_prefijo')
             ->leftJoin('dian_numerations', 'consecutivos.dian_numeration_id', '=', 'dian_numerations.id')
             ->get()
             ->map(function ($consecutivo) {
                 return (object)[
                     'id' => $consecutivo->id,
-                    'nombre' => $consecutivo->nombre,
-                    'prefijo' => $consecutivo->prefijo,
+                    // CAMBIO AQUÍ: Usamos 'tipo_documento' que es el nombre real en tu DB
+                    'nombre' => $consecutivo->tipo_documento, 
+                    'prefijo' => $consecutivo->prefijo ?? $consecutivo->dian_prefijo,
                     'dian_numeration_id' => $consecutivo->dian_numeration_id,
                 ];
-            });
-
+         });
         // Stats
         $stats = [
             'total' => $numeraciones->count(),
