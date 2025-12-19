@@ -86,7 +86,10 @@ class TerceroController extends Controller
             $validated['responsabilidad_fiscal'] = $validated['responsabilidades_fiscales'];
             unset($validated['responsabilidades_fiscales']);
         }
-
+        if (isset($validated['pais_codigo'])) {
+            $validated['codigo_pais'] = $validated['pais_codigo'];
+            unset($validated['pais_codigo']); // Quitamos el nombre que NO existe en la DB
+        }
         $tercero = Tercero::create($validated);
 
         return response()->json([
@@ -136,9 +139,13 @@ class TerceroController extends Controller
             'responsabilidades_fiscales' => 'nullable|array',
         ]);
 
-        if (isset($validated['responsabilidades_fiscales'])) {
+         if (isset($validated['responsabilidades_fiscales'])) {
             $validated['responsabilidad_fiscal'] = $validated['responsabilidades_fiscales'];
             unset($validated['responsabilidades_fiscales']);
+        }
+        if (isset($validated['pais_codigo'])) {
+            $validated['codigo_pais'] = $validated['pais_codigo'];
+            unset($validated['pais_codigo']); // Quitamos el nombre que NO existe en la DB
         }
 
         $tercero->update($validated);
