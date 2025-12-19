@@ -9,6 +9,39 @@ class PucCatalogoSeeder extends Seeder
 {
     public function run(): void
     {
+        // Clear existing data
+        DB::table('puc_catalogo')->truncate();
+
+        $path = database_path('data/puc_codes.php');
+        
+        if (!file_exists($path)) {
+            // Fallback to hardcoded basic list if file doesn't exist
+            $this->command->warn("File not found: $path. Using basic fallback list.");
+            $this->seedBasicList();
+            return;
+        }
+
+        $puc = require $path;
+        
+        $this->command->info('Seeding PUC codes... found ' . count($puc) . ' entries.');
+
+        $chunks = array_chunk($puc, 500);
+        
+        foreach ($chunks as $chunk) {
+            $dataToInsert = [];
+            foreach ($chunk as $cuenta) {
+                $dataToInsert[] = array_merge($cuenta, [
+                    'activo' => true,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+            DB::table('puc_catalogo')->insert($dataToInsert);
+        }
+    }
+
+    private function seedBasicList()
+    {
         $puc = [
             // Clase 1 - Activos
             ['codigo' => '1', 'nombre' => 'ACTIVO', 'naturaleza' => 'Débito', 'clase' => 'Activo', 'grupo' => null],

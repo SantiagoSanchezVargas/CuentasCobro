@@ -100,10 +100,15 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // ========================================
-    // TERCEROS (AJAX)
+    // TERCEROS (CRUD + AJAX)
     // ========================================
+    Route::get('/terceros', [TerceroController::class, 'index'])->name('terceros.index');
     Route::get('/terceros/search', [TerceroController::class, 'search'])->name('terceros.search');
     Route::post('/terceros/store', [TerceroController::class, 'store'])->name('terceros.store');
+    Route::get('/terceros/{id}/edit', [TerceroController::class, 'edit'])->name('terceros.edit');
+    Route::put('/terceros/{id}', [TerceroController::class, 'update'])->name('terceros.update');
+    Route::delete('/terceros/{id}', [TerceroController::class, 'destroy'])->name('terceros.destroy');
+    Route::post('/terceros/{id}/update-inline', [TerceroController::class, 'updateInline'])->name('terceros.updateInline');
 
     // ========================================
     // DIAN (Admin Programa, Tesorería, Administrador)
@@ -113,6 +118,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('envios', [DianController::class, 'envios'])->name('envios');
         Route::get('numeraciones', [DianController::class, 'numeraciones'])->name('numeraciones');
         Route::post('numeraciones', [DianController::class, 'storeNumeracion'])->name('numeraciones.store');
+        Route::post('numeraciones/{id}/vincular', [DianController::class, 'vincularConsecutivo'])->name('numeraciones.vincular');
+        Route::post('numeraciones/{id}/toggle', [DianController::class, 'toggleNumeracion'])->name('numeraciones.toggle');
+        Route::delete('numeraciones/{id}', [DianController::class, 'destroyNumeracion'])->name('numeraciones.destroy');
         Route::get('configuracion', [DianController::class, 'configuracion'])->name('configuracion');
         Route::put('configuracion', [DianController::class, 'updateConfiguracion'])->name('configuracion.update');
     });
@@ -210,6 +218,14 @@ Route::middleware(['auth'])->group(function () {
         // Vista de PDFs generados
         Route::get('cuentas_cobro/pdfs', [CuentaCobroController::class, 'pdfs'])
             ->name('cuentas_cobro.pdfs');
+
+        // Movimientos General (reporte Excel)
+        Route::get('cuentas_cobro/movimientos', [CuentaCobroController::class, 'movimientosGeneral'])
+            ->name('cuentas_cobro.movimientos');
+        
+        // Exportar Movimientos a Excel
+        Route::get('cuentas_cobro/movimientos/export', [CuentaCobroController::class, 'exportMovimientos'])
+            ->name('cuentas_cobro.movimientos.export');
 
         // Seguimiento de Aprobación
         Route::get('cuentas_cobro/{id}/seguimiento', [CuentaCobroController::class, 'seguimiento'])

@@ -2992,17 +2992,17 @@
         if(selectedCard) selectedCard.style.display = 'flex';
         if(resultsDiv) resultsDiv.style.display = 'none';
 
-        // Update Card
-        const name = tercero.tipo_persona === 'juridica' ? tercero.razon_social : tercero.nombre_completo;
+        // Update Card - use computed 'nombre' attribute or fallback
+        const name = tercero.nombre || (tercero.tipo_persona === 'juridica' ? tercero.razon_social : tercero.nombre_completo);
         const dispName = document.getElementById(`${target}-display-name`);
         const dispId = document.getElementById(`${target}-display-id`);
         
-        if(dispName) dispName.textContent = name;
-        if(dispId) dispId.textContent = `${tercero.tipo_identificacion} ${tercero.identificacion}`;
+        if(dispName) dispName.textContent = name || 'Sin nombre';
+        if(dispId) dispId.textContent = `${tercero.tipo_identificacion || ''} ${tercero.identificacion || ''}`;
         
-        if(target === 'deudor' && tercero.email) {
+        if(target === 'deudor') {
              const emailSpan = document.getElementById(`${target}-display-email`);
-             if(emailSpan) emailSpan.textContent = tercero.email;
+             if(emailSpan) emailSpan.textContent = tercero.email || '';
         }
 
         // Fill Hidden Fields

@@ -396,7 +396,7 @@
             </div>
 
             @php
-                $isSystemRole = in_array($role->name, ['contratista', 'supervisor', 'alcalde', 'ordenador_gasto', 'tesoreria', 'contratacion', 'super_admin']);
+                $isSystemRole = in_array($role->name, ['auxiliar', 'administrador', 'tesoreria', 'admin_programa', 'super_admin']);
             @endphp
 
             @if($isSystemRole)

@@ -15,8 +15,11 @@ class Tercero extends Model
         'razon_social',
         'nombre_comercial',
         'direccion',
+        'pais',
+        'pais_codigo',
         'ciudad',
         'departamento',
+        'codigo_pais',
         'telefono',
         'email',
         'responsabilidad_fiscal',
@@ -29,6 +32,9 @@ class Tercero extends Model
         'es_cliente' => 'boolean',
         'es_proveedor' => 'boolean',
     ];
+
+    // Append computed attributes to JSON
+    protected $appends = ['nombre'];
 
     // Helper to get display name
     public function getNombreAttribute()

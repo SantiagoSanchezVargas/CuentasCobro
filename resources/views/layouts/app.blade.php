@@ -24,6 +24,7 @@
         <link rel="stylesheet" href="{{ asset('css/components/cards.css') }}">
         <link rel="stylesheet" href="{{ asset('css/components/tables.css') }}">
         <link rel="stylesheet" href="{{ asset('css/components/modals.css') }}">
+        <link rel="stylesheet" href="{{ asset('css/components.css') }}">
     
         @stack('styles')
     @auth
@@ -244,6 +245,12 @@
                                         Pagos
                                     </a>
                                 </li>
+                                <li>
+                                    <a href="{{ route('cuentas_cobro.movimientos') }}" class="sidebar-link {{ request()->routeIs('cuentas_cobro.movimientos') ? 'active' : '' }}">
+                                        <span class="material-symbols-rounded">table_chart</span>
+                                        Movimientos General
+                                    </a>
+                                </li>
                             </ul>
                         </details>
                     </li>
@@ -279,6 +286,12 @@
                                 Roles
                             </a>
                         @endif
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ route('terceros.index') }}" class="sidebar-link {{ request()->routeIs('terceros.*') ? 'active' : '' }}">
+                            <span class="material-symbols-rounded">contacts</span>
+                            Terceros / Clientes
+                        </a>
                     </li>
                 </ul>
             </div>
@@ -410,11 +423,19 @@
             @endif
         </aside>
 
+        <!-- Sidebar Overlay (for mobile) -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
         <!-- Main Content -->
         <main class="main-content">
             @yield('content')
         </main>
     </div>
+
+    <!-- Sidebar Toggle Button -->
+    <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="Mostrar/Ocultar menú">
+        <span class="material-symbols-rounded" id="sidebarToggleIcon">menu</span>
+    </button>
 
     <!-- Permission Denied Modal -->
     <div id="permissionModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
@@ -443,6 +464,55 @@
         // Close on click outside
         document.getElementById('permissionModal').addEventListener('click', function(e) {
             if (e.target === this) closePermissionModal();
+        });
+        
+        // Sidebar Toggle functionality
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const icon = document.getElementById('sidebarToggleIcon');
+            const isMobile = window.innerWidth < 1024;
+            
+            if (isMobile) {
+                // Mobile: use open class
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('active');
+                icon.textContent = sidebar.classList.contains('open') ? 'close' : 'menu';
+            } else {
+                // Desktop: use collapsed class
+                sidebar.classList.toggle('collapsed');
+                icon.textContent = sidebar.classList.contains('collapsed') ? 'menu' : 'menu_open';
+            }
+        }
+        
+        // Initialize sidebar state based on screen size
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.querySelector('.sidebar');
+            const icon = document.getElementById('sidebarToggleIcon');
+            const isMobile = window.innerWidth < 1024;
+            
+            if (isMobile) {
+                sidebar.classList.remove('open');
+                icon.textContent = 'menu';
+            } else {
+                // Default collapsed on desktop for more content space
+                sidebar.classList.add('collapsed');
+                icon.textContent = 'menu';
+            }
+        });
+        
+        // Handle resize
+        window.addEventListener('resize', function() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const icon = document.getElementById('sidebarToggleIcon');
+            const isMobile = window.innerWidth < 1024;
+            
+            if (!isMobile) {
+                // Desktop: reset mobile classes
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+            }
         });
     </script>
 

@@ -19,6 +19,13 @@ use Carbon\Carbon;
 
 use App\Mail\CuentaCobroNotification;
 use Illuminate\Support\Facades\Mail;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CuentaCobroController extends Controller
 {
@@ -62,31 +69,66 @@ class CuentaCobroController extends Controller
         }
         ksort($departamentosFormateados);
         
-        // Obtener consecutivo activo
-        $consecutivo = \App\Models\Consecutivo::where('tipo_documento', 'Cuenta de Cobro')
-            ->where('activo', true)
-            ->whereDate('vigencia_inicio', '<=', now())
-            ->whereDate('vigencia_fin', '>=', now())
-            ->first();
-
+        // Obtener estado del consecutivo usando el nuevo método
+        $estadoConsecutivo = \App\Models\Consecutivo::getEstadoConsecutivo('Cuenta de Cobro');
+        
         $siguienteNumero = null;
-        if ($consecutivo && ($consecutivo->numero_actual + 1) <= $consecutivo->numero_final) {
-            $siguienteNumero = $consecutivo->siguiente_numero;
+        $consecutivoInfo = null;
+        
+        if ($estadoConsecutivo['valido']) {
+            $consecutivo = $estadoConsecutivo['consecutivo'];
+            $siguienteNumero = $estadoConsecutivo['siguiente_numero'];
+            $consecutivoInfo = [
+                'prefijo' => $consecutivo->prefijo,
+                'disponibles' => $estadoConsecutivo['disponibles'],
+                'porcentaje_uso' => $estadoConsecutivo['porcentaje_uso'],
+                'dias_restantes' => $estadoConsecutivo['dias_restantes'],
+                'vigencia_formato' => $estadoConsecutivo['vigencia_formato'] ?? '',
+                'vigencia_fin' => $consecutivo->vigencia_fin->format('d/m/Y'),
+                'resolucion' => $consecutivo->resolucion,
+                'alertas' => $estadoConsecutivo['alertas'] ?? [],
+            ];
         } else {
-            $siguienteNumero = 'CC-' . (CuentaCobro::count() + 1);
-            session()->flash('warning', 'No hay consecutivo activo/vigente disponible, se usará numeración automática.');
+            // No hay consecutivo válido - redirigir con mensaje
+            $mensaje = $estadoConsecutivo['mensaje'];
+            
+            // Si es admin, redirigir a crear consecutivo
+            if ($user->hasRole('super_admin') || $user->hasRole('admin_programa')) {
+                return redirect()->route('admin.consecutivos.create')
+                    ->with('warning', $mensaje . ' Por favor configure un consecutivo antes de crear cuentas de cobro.');
+            }
+            
+            // Si no es admin, mostrar error
+            return redirect()->route('cuentas_cobro.index')
+                ->with('error', $mensaje . ' Contacte al administrador para configurar un consecutivo.');
         }
 
         // Obtener terceros para búsqueda
-        $terceros = Tercero::select('id', 'tipo_identificacion', 'identificacion', 'nombre_completo as nombre', 'telefono', 'email', 'direccion', 'tipo_persona as tipo')
+        $terceros = Tercero::select('id', 'tipo_identificacion', 'identificacion', 'nombre_completo', 'razon_social', 'tipo_persona', 'telefono', 'email', 'direccion')
             ->orderBy('nombre_completo')
-            ->get();
+            ->get()
+            ->map(function($t) {
+                return [
+                    'id' => $t->id,
+                    'nombre' => $t->nombre,
+                    'tipo_identificacion' => $t->tipo_identificacion,
+                    'identificacion' => $t->identificacion,
+                    'telefono' => $t->telefono,
+                    'email' => $t->email,
+                    'direccion' => $t->direccion,
+                    'tipo' => $t->tipo_persona === 'juridica' ? 'Persona Jurídica' : 'Persona Natural'
+                ];
+            });
 
         // Cargar departamentos con municipios
         $departamentos = Departamento::with('municipios')->orderBy('nombre')->get();
 
         // Cargar catálogos para el formulario
-        $paises = \Illuminate\Support\Facades\DB::table('paises')->where('activo', true)->orderBy('nombre')->get();
+        $paises = \Illuminate\Support\Facades\DB::table('paises')
+            ->where('activo', true)
+            ->orderBy('nombre')
+            ->get();
+
         $responsabilidadesFiscales = \Illuminate\Support\Facades\DB::table('responsabilidades_fiscales')->where('activo', true)->get();
         $pucCatalogo = \Illuminate\Support\Facades\DB::table('puc_catalogo')->where('activo', true)->orderBy('codigo')->get();
         $productosServicios = \Illuminate\Support\Facades\DB::table('productos_servicios')->where('activo', true)->orderBy('nombre')->get();
@@ -97,6 +139,7 @@ class CuentaCobroController extends Controller
             'departamentos' => $departamentos,
             'terceros' => $terceros,
             'siguienteNumero' => $siguienteNumero,
+            'consecutivoInfo' => $consecutivoInfo,
             'paises' => $paises,
             'responsabilidadesFiscales' => $responsabilidadesFiscales,
             'pucCatalogo' => $pucCatalogo,
@@ -205,20 +248,29 @@ class CuentaCobroController extends Controller
     // Calcular total neto
     $valorTotal = round($subtotal + $iva - $retFuente - $retIca - $retIva, 2);
 
-    // Actualizar consecutivo si existe
-    $consecutivo = \App\Models\Consecutivo::where('tipo_documento', 'Cuenta de Cobro')
-        ->where('activo', true)
-        ->whereDate('vigencia_inicio', '<=', now())
-        ->whereDate('vigencia_fin', '>=', now())
-        ->first();
-
-    $numeroCuenta = $request->numero;
-    $consecutivoUsado = false;
-    if ($consecutivo && ($consecutivo->numero_actual + 1) <= $consecutivo->numero_final) {
-        $numeroCuenta = $consecutivo->siguiente_numero;
-        $consecutivo->increment('numero_actual');
-        $consecutivoUsado = true;
+    // Obtener y consumir consecutivo usando el nuevo método
+    $consecutivo = \App\Models\Consecutivo::getConsecutivoValido('Cuenta de Cobro');
+    
+    if (!$consecutivo) {
+        // No hay consecutivo válido - esto no debería pasar si create() valida correctamente
+        return redirect()->back()
+            ->withInput()
+            ->with('error', 'No hay consecutivo válido disponible. Por favor configure un consecutivo antes de crear cuentas de cobro.');
     }
+    
+    // Consumir el siguiente número del consecutivo
+    $numeroConsumido = $consecutivo->consumirNumero();
+    
+    if (!$numeroConsumido) {
+        // El consecutivo se agotó durante la transacción
+        return redirect()->back()
+            ->withInput()
+            ->with('error', 'El consecutivo se ha agotado. Por favor configure un nuevo consecutivo.');
+    }
+    
+    $numeroCuenta = $numeroConsumido['numero_formateado'];
+    $nextConsecutive = $numeroConsumido['numero'];
+    $prefijoConsecutivo = $numeroConsumido['prefijo'];
 
     // Preparar contrato_id: solo si es numérico y existe, sino null
     $contratoId = null;
@@ -276,27 +328,11 @@ class CuentaCobroController extends Controller
         $legalData['email_acreedor'] = auth()->user()?->email;
     }
 
-    // Lógica de Consecutivos
-    if (isset($numeroCuenta) && $numeroCuenta) {
-        $numeroConsecutivo = $numeroCuenta;
-        $nextConsecutive = (int) preg_replace('/[^0-9]/', '', $numeroCuenta); // Extraer solo números para el campo entero
-    } else {
-        // Generar consecutivo automático: YYYYMMSequence (e.g. 2025121)
-        $now = \Carbon\Carbon::now();
-        $year = $now->year;
-        $month = $now->format('m');
+    // El número ya fue obtenido del consecutivo arriba
+    $numeroConsecutivo = $numeroCuenta;
 
-        // Reset consecutive every month
-        $lastConsecutive = CuentaCobro::whereYear('created_at', $year)
-            ->whereMonth('created_at', $now->month)
-            ->max('consecutivo_cuenta');
-
-        $nextConsecutive = $lastConsecutive ? $lastConsecutive + 1 : 1;
-        $numeroConsecutivo = $year . $month . $nextConsecutive;
-    }
-
-    // Manually set parts
-    $legalData['prefijo_cuenta'] = null;
+    // Guardar información del consecutivo
+    $legalData['prefijo_cuenta'] = $prefijoConsecutivo;
     $legalData['serie_cuenta'] = now()->format('Ym');
     $legalData['consecutivo_cuenta'] = $nextConsecutive;
     $legalData['subtotal'] = $subtotal;
@@ -717,11 +753,29 @@ class CuentaCobroController extends Controller
         return redirect()->route('cuentas_cobro.show', $cuenta->id)->with('error', 'No tienes permisos para editar esta cuenta.');
     }
 
+    // Obtener terceros para búsqueda
+    $terceros = Tercero::select('id', 'tipo_identificacion', 'identificacion', 'nombre_completo', 'razon_social', 'tipo_persona', 'telefono', 'email', 'direccion')
+        ->orderBy('nombre_completo')
+        ->get();
+
+    // Cargar catálogos para el formulario
+    $paises = \Illuminate\Support\Facades\DB::table('paises')->where('activo', true)->orderBy('nombre')->get();
+    $responsabilidadesFiscales = \Illuminate\Support\Facades\DB::table('responsabilidades_fiscales')->where('activo', true)->get();
+    $pucCatalogo = \Illuminate\Support\Facades\DB::table('puc_catalogo')->where('activo', true)->orderBy('codigo')->get();
+    $productosServicios = \Illuminate\Support\Facades\DB::table('productos_servicios')->where('activo', true)->orderBy('nombre')->get();
+    $centrosCosto = \Illuminate\Support\Facades\DB::table('centros_costo')->where('activo', true)->orderBy('codigo')->get();
+
     return view('cuentas_cobro.edit', [
         'cuenta' => $cuenta,
         'contratos' => $contratos,
         'departamentos' => $departamentosFormateados,
+        'terceros' => $terceros,
         'readonly' => $readonly,
+        'paises' => $paises,
+        'responsabilidadesFiscales' => $responsabilidadesFiscales,
+        'pucCatalogo' => $pucCatalogo,
+        'productos' => $productosServicios,
+        'centrosCosto' => $centrosCosto,
     ]);
 }
 
@@ -1415,10 +1469,8 @@ class CuentaCobroController extends Controller
 
         // Conteo por etapa
         $porEtapa = [
-            'supervisor' => CuentaCobro::where('etapa_aprobacion', 'supervisor')->whereIn('estado_aprobacion', ['pendiente', 'en_revision'])->count(),
-            'ordenador_gasto' => CuentaCobro::where('etapa_aprobacion', 'ordenador_gasto')->whereIn('estado_aprobacion', ['pendiente', 'en_revision'])->count(),
-            'contratacion' => CuentaCobro::where('etapa_aprobacion', 'contratacion')->whereIn('estado_aprobacion', ['pendiente', 'en_revision'])->count(),
-            'alcalde' => CuentaCobro::where('etapa_aprobacion', 'alcalde')->whereIn('estado_aprobacion', ['pendiente', 'en_revision'])->count(),
+            'auxiliar' => CuentaCobro::where('etapa_aprobacion', 'auxiliar')->whereIn('estado_aprobacion', ['pendiente', 'en_revision'])->count(),
+            'administrador' => CuentaCobro::where('etapa_aprobacion', 'administrador')->whereIn('estado_aprobacion', ['pendiente', 'en_revision'])->count(),
             'tesoreria' => CuentaCobro::where('etapa_aprobacion', 'tesoreria')->whereIn('estado_aprobacion', ['pendiente', 'en_revision'])->count(),
         ];
 
@@ -1467,5 +1519,227 @@ class CuentaCobroController extends Controller
 
         return view('cuentas_cobro.pdfs', compact('cuentas'));
     }
-}
 
+    /**
+     * Movimientos General - Vista tipo Excel de todas las cuentas de cobro
+     */
+    public function movimientosGeneral(Request $request)
+    {
+        $query = CuentaCobro::with(['items', 'user', 'user.role'])
+            ->select('cuentas_cobro.*');
+
+        // Filtros
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('numero', 'like', "%{$search}%")
+                  ->orWhere('nombre_beneficiario', 'like', "%{$search}%")
+                  ->orWhere('nombre_comprador', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        if ($request->filled('fecha_desde')) {
+            $query->whereDate('fecha_emision', '>=', $request->fecha_desde);
+        }
+
+        if ($request->filled('fecha_hasta')) {
+            $query->whereDate('fecha_emision', '<=', $request->fecha_hasta);
+        }
+
+        // Ordenar por fecha de emisión descendente por defecto
+        $orderBy = $request->get('order_by', 'fecha_emision');
+        $orderDir = $request->get('order_dir', 'desc');
+        $query->orderBy($orderBy, $orderDir);
+
+        // Obtener estadísticas
+        $stats = [
+            'total_cuentas' => CuentaCobro::count(),
+            'monto_total' => CuentaCobro::sum('monto_total'),
+            'pendientes' => CuentaCobro::where('estado', 'enviado')->count(),
+            'pagadas' => CuentaCobro::where('estado', 'pagado')->count(),
+        ];
+
+        $cuentas = $query->paginate(50)->withQueryString();
+
+        return view('cuentas_cobro.movimientos', compact('cuentas', 'stats'));
+    }
+
+    /**
+     * Exportar movimientos a Excel con formato estandarizado
+     */
+    public function exportMovimientos(Request $request): StreamedResponse
+    {
+        $query = CuentaCobro::with(['items', 'user', 'user.role'])
+            ->select('cuentas_cobro.*');
+
+        // Aplicar los mismos filtros que en la vista
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('numero', 'like', "%{$search}%")
+                  ->orWhere('nombre_beneficiario', 'like', "%{$search}%")
+                  ->orWhere('nombre_comprador', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        if ($request->filled('fecha_desde')) {
+            $query->whereDate('fecha_emision', '>=', $request->fecha_desde);
+        }
+
+        if ($request->filled('fecha_hasta')) {
+            $query->whereDate('fecha_emision', '<=', $request->fecha_hasta);
+        }
+
+        $query->orderBy('fecha_emision', 'desc');
+        $cuentas = $query->get();
+
+        // Crear el spreadsheet
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Movimientos');
+
+        // Configurar encabezado de la empresa
+        $sheet->mergeCells('A1:L1');
+        $sheet->setCellValue('A1', 'REPORTE DE MOVIMIENTOS GENERAL - CUENTAS DE COBRO');
+        $sheet->getStyle('A1')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 16, 'color' => ['rgb' => '1E3A5F']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+        ]);
+
+        // Información del reporte
+        $sheet->mergeCells('A2:L2');
+        $sheet->setCellValue('A2', 'Generado: ' . Carbon::now()->format('d/m/Y H:i:s') . ' | Total registros: ' . $cuentas->count());
+        $sheet->getStyle('A2')->applyFromArray([
+            'font' => ['italic' => true, 'size' => 10, 'color' => ['rgb' => '666666']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+        ]);
+
+        // Encabezados de columnas (fila 4)
+        $headers = [
+            'A4' => 'N°',
+            'B4' => 'CONSECUTIVO',
+            'C4' => 'FECHA EMISIÓN',
+            'D4' => 'EMITIDO POR',
+            'E4' => 'CARGO',
+            'F4' => 'BENEFICIARIO',
+            'G4' => 'ID BENEFICIARIO',
+            'H4' => 'COMPRADOR',
+            'I4' => 'CONCEPTO',
+            'J4' => 'SUBTOTAL',
+            'K4' => 'IVA',
+            'L4' => 'TOTAL',
+            'M4' => 'ESTADO',
+            'N4' => 'VENCIMIENTO',
+        ];
+
+        foreach ($headers as $cell => $value) {
+            $sheet->setCellValue($cell, $value);
+        }
+
+        // Estilo de encabezados
+        $headerStyle = [
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 11],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '1E3A5F'],
+            ],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => [
+                'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '000000']],
+            ],
+        ];
+        $sheet->getStyle('A4:N4')->applyFromArray($headerStyle);
+        $sheet->getRowDimension(4)->setRowHeight(25);
+
+        // Llenar datos
+        $row = 5;
+        $index = 1;
+        foreach ($cuentas as $cuenta) {
+            $sheet->setCellValue('A' . $row, $index);
+            $sheet->setCellValue('B' . $row, $cuenta->numero ?? 'Sin número');
+            $sheet->setCellValue('C' . $row, $cuenta->fecha_emision ? Carbon::parse($cuenta->fecha_emision)->format('d/m/Y') : '-');
+            $sheet->setCellValue('D' . $row, $cuenta->user->name ?? 'N/A');
+            $sheet->setCellValue('E' . $row, $cuenta->user->role->name ?? '');
+            $sheet->setCellValue('F' . $row, $cuenta->nombre_beneficiario ?? '-');
+            $sheet->setCellValue('G' . $row, ($cuenta->tipo_identificacion_beneficiario ?? '') . ' ' . ($cuenta->identificacion_beneficiario ?? ''));
+            $sheet->setCellValue('H' . $row, $cuenta->nombre_comprador ?? '-');
+            $sheet->setCellValue('I' . $row, $cuenta->concepto_cobro ?? '');
+            $sheet->setCellValue('J' . $row, $cuenta->subtotal ?? 0);
+            $sheet->setCellValue('K' . $row, $cuenta->valor_iva ?? 0);
+            $sheet->setCellValue('L' . $row, $cuenta->monto_total ?? 0);
+            $sheet->setCellValue('M' . $row, ucfirst($cuenta->estado ?? 'borrador'));
+            $sheet->setCellValue('N' . $row, $cuenta->fecha_vencimiento ? Carbon::parse($cuenta->fecha_vencimiento)->format('d/m/Y') : '-');
+
+            // Alternar colores de filas
+            if ($row % 2 == 0) {
+                $sheet->getStyle('A' . $row . ':N' . $row)->applyFromArray([
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F8F9FA']],
+                ]);
+            }
+
+            $index++;
+            $row++;
+        }
+
+        // Aplicar bordes a todas las celdas de datos
+        $lastRow = $row - 1;
+        if ($lastRow >= 5) {
+            $sheet->getStyle('A5:N' . $lastRow)->applyFromArray([
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CCCCCC']]],
+            ]);
+
+            // Formato de moneda para columnas J, K, L
+            $sheet->getStyle('J5:L' . $lastRow)->getNumberFormat()->setFormatCode('"$"#,##0');
+            $sheet->getStyle('J5:L' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        }
+
+        // Fila de totales
+        $totalRow = $row + 1;
+        $sheet->mergeCells('A' . $totalRow . ':I' . $totalRow);
+        $sheet->setCellValue('A' . $totalRow, 'TOTALES');
+        $sheet->setCellValue('J' . $totalRow, '=SUM(J5:J' . $lastRow . ')');
+        $sheet->setCellValue('K' . $totalRow, '=SUM(K5:K' . $lastRow . ')');
+        $sheet->setCellValue('L' . $totalRow, '=SUM(L5:L' . $lastRow . ')');
+
+        $sheet->getStyle('A' . $totalRow . ':N' . $totalRow)->applyFromArray([
+            'font' => ['bold' => true, 'size' => 11],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E5E7EB']],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_MEDIUM, 'color' => ['rgb' => '1E3A5F']]],
+        ]);
+        $sheet->getStyle('J' . $totalRow . ':L' . $totalRow)->getNumberFormat()->setFormatCode('"$"#,##0');
+        $sheet->getStyle('J' . $totalRow . ':L' . $totalRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+        // Ajustar ancho de columnas
+        $columnWidths = [
+            'A' => 6, 'B' => 18, 'C' => 14, 'D' => 22, 'E' => 18,
+            'F' => 28, 'G' => 18, 'H' => 28, 'I' => 40,
+            'J' => 15, 'K' => 12, 'L' => 16, 'M' => 12, 'N' => 14,
+        ];
+        foreach ($columnWidths as $col => $width) {
+            $sheet->getColumnDimension($col)->setWidth($width);
+        }
+
+        // Congelar fila de encabezados
+        $sheet->freezePane('A5');
+
+        // Generar archivo
+        $filename = 'movimientos_cuentas_cobro_' . Carbon::now()->format('Y-m-d_His') . '.xlsx';
+
+        return new StreamedResponse(function () use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Cache-Control' => 'max-age=0',
+        ]);
+    }
+}
